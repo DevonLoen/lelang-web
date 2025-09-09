@@ -1,7 +1,15 @@
-import Login from "./pages/Auth/Login";
+import { RouterProvider } from "react-router";
+import { router } from "./routes/index.route";
+import { ToastProvider } from "./contexts/toast-context";
 
 function App() {
-  return <Login />;
+  return (
+    <ToastProvider>
+      {" "}
+      {/* Wrap the entire app with ToastProvider */}
+      <RouterProvider router={router} />
+    </ToastProvider>
+  );
 }
 
 export default App;
