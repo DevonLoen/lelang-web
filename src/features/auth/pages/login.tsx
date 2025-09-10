@@ -1,21 +1,93 @@
 import { useState } from "react";
 import Logo from "../../../assets/logo.png";
 import { FaPhone } from "react-icons/fa";
-import { FaEye, FaEyeSlash } from "react-icons/fa6";
 import { ToastType } from "../../../enums/toast-type";
 import { useToast } from "../../../contexts/toast-context";
+import { AuthService } from "../services/auth.service";
+import { InputFieldPhone } from "../../../components/input-field-phone";
+import { InputFieldPassword } from "../../../components/input-field-password";
+import { capitalizeWords } from "../../../utils/string";
+
+interface LoginFieldState {
+  phone: string;
+  password: string;
+}
+
+interface LoginFieldErrors {
+  phone: string;
+  password: string;
+}
 
 export default function LoginPage() {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [field, setField] = useState<LoginFieldState>({
+    phone: "",
+    password: "",
+  });
+
+  const [errors, setErrors] = useState<LoginFieldErrors>({
+    phone: "",
+    password: "",
+  });
+
+  const [isLoading, setIsLoading] = useState(false); // ⬅️ Tambahkan state loading
+  const [isSubmitting, setIsSubmitting] = useState(false); // ⬅️ Khusus untuk submit
+
   const { showToast } = useToast();
 
-  const handleLogin = async () => {
-    console.log("Login with:", { email, password });
-    showToast("Invalid Phone or Password", ToastType.ERROR);
+  const validateField = async () => {
+    const newErrors: LoginFieldErrors = {
+      phone: "",
+      password: "",
+    };
+    if (!field.phone.trim()) {
+      newErrors.phone = "Phone is required";
+    }
+    if (!/^\d+$/.test(field.phone)) {
+      newErrors.phone = "Phone must be a number";
+    }
+
+    if (!field.password.trim()) {
+      newErrors.password = "Password is required";
+    }
+
+    setErrors(newErrors);
+    return Object.values(newErrors).every((error) => !error);
   };
 
-  const [showPassword, setShowPassword] = useState(false);
+  const handleLogin = async () => {
+    if (await validateField()) {
+      try {
+        setIsSubmitting(true);
+        const payload = {
+          phone: field.phone,
+          password: field.password,
+        };
+        await new AuthService().login(payload);
+        showToast("Login Successfully", ToastType.SUCCESS);
+      } catch (error: any) {
+        const finalMessage = `${
+          error?.response?.data?.message || error?.message || "Unknown error"
+        }`;
+        showToast(finalMessage, ToastType.ERROR);
+      } finally {
+        setIsSubmitting(false);
+      }
+    }
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+
+    setErrors((prev) => ({
+      ...prev,
+      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : "",
+    }));
+  };
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setField((prev) => ({ ...prev, [name]: value as any }));
+  };
 
   return (
     <div className="flex h-screen">
@@ -23,27 +95,19 @@ export default function LoginPage() {
       <div className="flex w-full max-w-md flex-col justify-center bg-[#1f2c44] p-8 sm:w-1/3  border-r border-white">
         <div className="mx-auto w-4/5">
           <h2 className="mb-6 text-3xl font-bold text-white">LOGIN</h2>
-
-          {/* Phone Input */}
           <div className="mb-6 relative">
-            <input
+            <InputFieldPhone
+              label="Phone +62"
               type="text"
+              name="phone"
               id="phone"
-              placeholder="Phone"
-              className="peer w-full border-b border-gray-500 bg-transparent px-4 pt-5 pb-2 text-gray-200 
-               placeholder-transparent focus:border-white focus:outline-none"
+              value={field.phone}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.phone}
+              errorMessage={errors.phone}
+              icon={<FaPhone className="h-5 w-5" />}
             />
-            <label
-              htmlFor="phone"
-              className="absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
-               peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-               peer-focus:top-0 peer-focus:text-sm peer-focus:text-white"
-            >
-              Phone +62
-            </label>
-            <span className="absolute right-3 top-7 -translate-y-1/2 text-gray-400 pointer-events-none">
-              <FaPhone className="h-5 w-5" />
-            </span>
             <a
               href="#"
               className="mt-1 block text-right text-xs  text-yellow-400 hover:underline"
@@ -52,45 +116,35 @@ export default function LoginPage() {
             </a>
           </div>
 
-          {/* Password Input */}
           <div className="mb-6 relative">
-            <input
-              type={showPassword ? "text" : "password"}
+            <InputFieldPassword
+              label="Password"
+              name="password"
               id="password"
-              placeholder="Password"
-              className="peer w-full border-b border-gray-500 bg-transparent px-4 pt-5 pb-2 text-gray-200 
-               placeholder-transparent focus:border-white focus:outline-none"
+              value={field.password}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.password}
+              errorMessage={errors.password}
             />
-            <label
-              htmlFor="password"
-              className="absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
-               peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-               peer-focus:top-0 peer-focus:text-sm peer-focus:text-white"
-            >
-              Password
-            </label>
-            <span
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
-              onMouseDown={() => setShowPassword(true)}
-              onMouseUp={() => setShowPassword(false)}
-              onMouseLeave={() => setShowPassword(false)} // kalau mouse geser keluar icon
-              onTouchStart={() => setShowPassword(true)} // support mobile
-              onTouchEnd={() => setShowPassword(false)}
-            >
-              {showPassword ? (
-                <FaEye className="h-5 w-5" />
-              ) : (
-                <FaEyeSlash className="h-5 w-5" />
-              )}
-            </span>
           </div>
 
           {/* Login Button */}
           <button
             onClick={handleLogin}
-            className="w-full rounded-xl bg-yellow-500 py-2 font-bold text-white transition hover:bg-yellow-600"
+            className="w-full h-12 rounded-xl bg-yellow-500 font-bold text-white transition hover:bg-yellow-600"
           >
-            LOGIN
+            <div className="flex justify-center items-center w-full">
+              {isSubmitting ? (
+                <div className="flex justify-center space-x-1">
+                  <div className="h-4 w-1 bg-white animate-pulse"></div>
+                  <div className="h-4 w-1 bg-white animate-pulse [animation-delay:0.2s]"></div>
+                  <div className="h-4 w-1 bg-white animate-pulse [animation-delay:0.4s]"></div>
+                </div>
+              ) : (
+                "LOGIN"
+              )}
+            </div>
           </button>
 
           {/* Signup */}
