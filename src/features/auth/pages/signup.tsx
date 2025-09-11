@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Logo from "../../../assets/logo.png";
-import { FaPhone } from "react-icons/fa";
+import { FaPhone, FaIdCard, FaUser } from "react-icons/fa";
 import { ToastType } from "../../../enums/toast-type";
 import { useToast } from "../../../contexts/toast-context";
 import { AuthService } from "../services/auth.service";
@@ -8,25 +8,37 @@ import { InputField } from "../../../components/input-field";
 import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
 
-interface LoginFieldState {
+interface SignupFieldState {
+  fullname: string;
   phone: string;
+  nik: string;
   password: string;
+  confirmPassword: string;
 }
 
-interface LoginFieldErrors {
+interface SignupFieldErrors {
+  fullname: string;
   phone: string;
+  nik: string;
   password: string;
+  confirmPassword: string;
 }
 
-export default function LoginPage() {
-  const [field, setField] = useState<LoginFieldState>({
+export default function SignupPage() {
+  const [field, setField] = useState<SignupFieldState>({
+    fullname: "",
     phone: "",
+    nik: "",
     password: "",
+    confirmPassword: "",
   });
 
-  const [errors, setErrors] = useState<LoginFieldErrors>({
+  const [errors, setErrors] = useState<SignupFieldErrors>({
+    fullname: "",
     phone: "",
+    nik: "",
     password: "",
+    confirmPassword: "",
   });
 
   const [isLoading, setIsLoading] = useState(false); // ⬅️ Tambahkan state loading
@@ -35,35 +47,62 @@ export default function LoginPage() {
   const { showToast } = useToast();
 
   const validateField = async () => {
-    const newErrors: LoginFieldErrors = {
+    const newErrors: SignupFieldErrors = {
+      fullname: "",
       phone: "",
+      nik: "",
       password: "",
+      confirmPassword: "",
     };
+
+    if (!/^\d+$/.test(field.phone)) {
+      newErrors.phone = "Phone must be a number";
+    }
+
     if (!field.phone.trim()) {
       newErrors.phone = "Phone is required";
     }
+
     if (!/^\d+$/.test(field.phone)) {
-      newErrors.phone = "Phone must be a number";
+      newErrors.nik = "Nik must be a number";
+    }
+
+    if (!field.nik.trim()) {
+      newErrors.nik = "Nik is required";
+    }
+
+    if (!field.fullname.trim()) {
+      newErrors.fullname = "Fullname is required";
     }
 
     if (!field.password.trim()) {
       newErrors.password = "Password is required";
     }
 
+    if (!field.confirmPassword.trim()) {
+      newErrors.confirmPassword = "Confirm Password is required";
+    }
+
+    if (field.password != field.confirmPassword) {
+      newErrors.confirmPassword = "Confirm Password must match Password";
+    }
+
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error);
   };
 
-  const handleLogin = async () => {
+  const handleSignup = async () => {
     if (await validateField()) {
       try {
         setIsSubmitting(true);
         const payload = {
+          fullname: field.fullname,
           phone: field.phone,
+          nik: field.nik,
           password: field.password,
         };
-        await new AuthService().login(payload);
-        showToast("Login Successfully", ToastType.SUCCESS);
+        await new AuthService().signup(payload);
+        showToast("Sign Up Successfully", ToastType.SUCCESS);
       } catch (error: any) {
         const finalMessage = `${
           error?.response?.data?.message || error?.message || "Unknown error"
@@ -94,7 +133,23 @@ export default function LoginPage() {
       {/* Left Panel */}
       <div className="flex w-full max-w-md flex-col justify-center bg-[#1f2c44] p-8 sm:w-1/3  border-r border-white">
         <div className="mx-auto w-4/5">
-          <h2 className="mb-6 text-3xl font-bold text-white">LOGIN</h2>
+          <h2 className="mb-3 text-3xl font-bold text-white">SIGN UP</h2>
+
+          <div className="mb-3 relative">
+            <InputField
+              label="Fullname"
+              type="text"
+              name="fullname"
+              id="fullname"
+              value={field.fullname}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.fullname}
+              errorMessage={errors.fullname}
+              icon={<FaUser className="h-5 w-5" />}
+              inputMode="decimal"
+            />
+          </div>
 
           <div className="mb-3 relative">
             <InputField
@@ -110,12 +165,22 @@ export default function LoginPage() {
               icon={<FaPhone className="h-5 w-5" />}
               inputMode="decimal"
             />
-            <a
-              href="#"
-              className="mt-1 block text-right text-xs  text-yellow-400 hover:underline"
-            >
-              Forgot Password?
-            </a>
+          </div>
+
+          <div className="mb-3 relative">
+            <InputField
+              label="Nik"
+              type="text"
+              name="nik"
+              id="nik"
+              value={field.nik}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.nik}
+              errorMessage={errors.nik}
+              icon={<FaIdCard className="h-5 w-5" />}
+              inputMode="decimal"
+            />
           </div>
 
           <div className="mb-3 relative">
@@ -131,9 +196,43 @@ export default function LoginPage() {
             />
           </div>
 
+          <div className="mb-3 relative">
+            <InputFieldPassword
+              label="Confirm Password"
+              name="confirmPassword"
+              id="confirmPassword"
+              value={field.confirmPassword}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.confirmPassword}
+              errorMessage={errors.confirmPassword}
+            />
+          </div>
+
+          <p className="mb-3 text-center text-xs text-gray-400 leading-relaxed">
+            By selecting <span className="font-medium text-white">Sign Up</span>
+            , you agree to our{" "}
+            <a
+              href="/user-agreement"
+              style={{ color: "#1A73E8" }}
+              className="hover:underline"
+            >
+              User Agreement
+            </a>{" "}
+            and acknowledge reading our{" "}
+            <a
+              href="/privacy-notice"
+              style={{ color: "#1A73E8" }}
+              className="hover:underline"
+            >
+              User Privacy Notice
+            </a>
+            .
+          </p>
+
           {/* Login Button */}
           <button
-            onClick={handleLogin}
+            onClick={handleSignup}
             className="w-full h-12 rounded-xl bg-yellow-500 font-bold text-white transition hover:bg-yellow-600"
           >
             <div className="flex justify-center items-center w-full">
@@ -144,16 +243,16 @@ export default function LoginPage() {
                   <div className="h-4 w-1 bg-white animate-pulse [animation-delay:0.4s]"></div>
                 </div>
               ) : (
-                "LOGIN"
+                "SIGN UP"
               )}
             </div>
           </button>
 
           {/* Signup */}
           <p className="mt-8 text-center text-sm text-gray-400">
-            Don’t have an Account?{" "}
-            <a href="/signup" className="text-yellow-400 hover:underline">
-              Sign Up Here
+            Already have an Account?{" "}
+            <a href="/login" className="text-yellow-400 hover:underline">
+              Log In Here
             </a>
           </p>
         </div>

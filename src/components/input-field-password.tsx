@@ -32,7 +32,7 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
         name={name}
         value={value}
         onBlur={onBlur}
-        // placeholder="Password"
+        placeholder=" "
         onChange={onChange}
         className={`peer w-full bg-transparent px-4 pt-5 pb-2 text-gray-200 
       placeholder-transparent focus:outline-none
@@ -49,7 +49,7 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
       )}
 
       <label
-        htmlFor="password"
+        htmlFor={name}
         className="absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
        peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
        peer-focus:top-0 peer-focus:text-sm peer-focus:text-white"
@@ -57,7 +57,7 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
         {label}
       </label>
       <span
-        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+        className="absolute right-3 top-7 -translate-y-1/2 text-gray-400 cursor-pointer"
         onMouseDown={() => setShowPassword(true)}
         onMouseUp={() => setShowPassword(false)}
         onMouseLeave={() => setShowPassword(false)} // kalau mouse geser keluar icon
