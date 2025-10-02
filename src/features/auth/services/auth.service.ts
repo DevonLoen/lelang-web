@@ -18,6 +18,12 @@ interface SignupPayload {
   password?: string;
 }
 
+interface VerifyOtpPayload {
+  otp?: string;
+}
+
+interface SendOtpPayload {}
+
 export class AuthService {
   async login(data: LoginPayload) {
     try {
@@ -36,6 +42,26 @@ export class AuthService {
       return res.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Sign Up failed");
+    }
+  }
+
+  async verifyOtp(data: VerifyOtpPayload) {
+    try {
+      const res = await axios.post(`${AUTH_URL}/verify-otp`, data);
+      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Verify Otp failed");
+    }
+  }
+
+  async sendOtp(data: SendOtpPayload) {
+    try {
+      const res = await axios.post(`${AUTH_URL}/send-otp`, data);
+      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Send Otp failed");
     }
   }
 
