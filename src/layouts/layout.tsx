@@ -13,9 +13,8 @@ export default function MainLayout() {
         navigate("/login");
       }
     };
-    console.log("asem");
     check();
   }, [navigate, location.pathname]);
 
-  return <div>h</div>;
+  return <div>tes</div>;
 }

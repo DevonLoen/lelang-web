@@ -4,7 +4,7 @@ import { FaPhone } from "react-icons/fa";
 import { ToastType } from "../../../enums/toast-type";
 import { useToast } from "../../../contexts/toast-context";
 import { AuthService } from "../services/auth.service";
-import { InputFieldPhone } from "../../../components/input-field-phone";
+import { InputField } from "../../../components/input-field";
 import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
 
@@ -95,8 +95,9 @@ export default function LoginPage() {
       <div className="flex w-full max-w-md flex-col justify-center bg-[#1f2c44] p-8 sm:w-1/3  border-r border-white">
         <div className="mx-auto w-4/5">
           <h2 className="mb-6 text-3xl font-bold text-white">LOGIN</h2>
-          <div className="mb-6 relative">
-            <InputFieldPhone
+
+          <div className="mb-3 relative">
+            <InputField
               label="Phone +62"
               type="text"
               name="phone"
@@ -107,6 +108,7 @@ export default function LoginPage() {
               error={!!errors.phone}
               errorMessage={errors.phone}
               icon={<FaPhone className="h-5 w-5" />}
+              inputMode="decimal"
             />
             <a
               href="#"
@@ -116,7 +118,7 @@ export default function LoginPage() {
             </a>
           </div>
 
-          <div className="mb-6 relative">
+          <div className="mb-3 relative">
             <InputFieldPassword
               label="Password"
               name="password"
@@ -150,7 +152,7 @@ export default function LoginPage() {
           {/* Signup */}
           <p className="mt-8 text-center text-sm text-gray-400">
             Don’t have an Account?{" "}
-            <a href="#" className="text-yellow-400 hover:underline">
+            <a href="/signup" className="text-yellow-400 hover:underline">
               Sign Up Here
             </a>
           </p>

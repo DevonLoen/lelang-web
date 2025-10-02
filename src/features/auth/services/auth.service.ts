@@ -6,19 +6,36 @@ const API_URL = import.meta.env.VITE_API_URL;
 const AUTH_URL = `${API_URL}/api/v1/auth`;
 const AUTH_TOKEN_KEY = Auth.TOKEN_KEY;
 
-interface loginPayload {
-  email?: string;
+interface LoginPayload {
+  phone?: string;
+  password?: string;
+}
+
+interface SignupPayload {
+  fullname?: string;
+  phone?: string;
+  nik?: string;
   password?: string;
 }
 
 export class AuthService {
-  async login(data: loginPayload) {
+  async login(data: LoginPayload) {
     try {
       const res = await axios.post(`${AUTH_URL}/login`, data);
       Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Login failed");
+    }
+  }
+
+  async signup(data: SignupPayload) {
+    try {
+      const res = await axios.post(`${AUTH_URL}/signup`, data);
+      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Sign Up failed");
     }
   }
 
