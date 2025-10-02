@@ -3,7 +3,9 @@ import Cookies from "js-cookie";
 import { Auth } from "../../../enums/auth-token";
 
 const API_URL = import.meta.env.VITE_API_URL;
-const AUTH_URL = `${API_URL}/api/v1/auth`;
+const AUTH_URL = `${API_URL}/v1/auth`;
+const USER_URL = `${API_URL}/v1/users`;
+
 const AUTH_TOKEN_KEY = Auth.TOKEN_KEY;
 
 interface LoginPayload {
@@ -11,18 +13,24 @@ interface LoginPayload {
   password?: string;
 }
 
-interface SignupPayload {
-  fullname?: string;
-  phone?: string;
-  nik?: string;
-  password?: string;
+export interface SignupPayload {
+  fullname: string;
+  phone: string;
+  nik: string;
+  birth: string;
+  gender: string;
+  bankAccountNumber: string;
+  password: string;
+  otp: string;
 }
 
 interface VerifyOtpPayload {
   otp?: string;
 }
 
-interface SendOtpPayload {}
+interface SendOtpPayload {
+  phone?: string;
+}
 
 interface ForgotPasswordPayload {
   phone?: string;
@@ -36,41 +44,33 @@ interface ResetPasswordPayload {
 export class AuthService {
   async login(data: LoginPayload) {
     try {
-      const res = await axios.post(`${AUTH_URL}/login`, data);
+      const res = await axios.post(`${USER_URL}/login`, data);
       Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Login failed");
+      throw new Error(error.response?.data?.error?.message || "Login failed");
     }
   }
 
   async signup(data: SignupPayload) {
     try {
-      const res = await axios.post(`${AUTH_URL}/signup`, data);
+      const res = await axios.post(`${USER_URL}/`, data);
       Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Sign Up failed");
-    }
-  }
-
-  async verifyOtp(data: VerifyOtpPayload) {
-    try {
-      const res = await axios.post(`${AUTH_URL}/verify-otp`, data);
-      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
-      return res.data;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Verify Otp failed");
+      throw new Error(error.response?.data?.error?.message || "Sign Up failed");
     }
   }
 
   async sendOtp(data: SendOtpPayload) {
     try {
-      const res = await axios.post(`${AUTH_URL}/send-otp`, data);
+      const res = await axios.post(`${AUTH_URL}/request-otp`, data);
       Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Send Otp failed");
+      throw new Error(
+        error.response?.data?.error?.message || "Send Otp failed"
+      );
     }
   }
 
@@ -81,7 +81,7 @@ export class AuthService {
       return res.data;
     } catch (error: any) {
       throw new Error(
-        error.response?.data?.message || "Forgot Password failed"
+        error.response?.data?.error?.message || "Forgot Password failed"
       );
     }
   }
@@ -92,7 +92,9 @@ export class AuthService {
       Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Reset Password failed");
+      throw new Error(
+        error.response?.data?.error?.message || "Reset Password failed"
+      );
     }
   }
 
@@ -101,7 +103,7 @@ export class AuthService {
       Cookies.remove(AUTH_TOKEN_KEY);
       return;
     } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Logout failed");
+      throw new Error(error.response?.data?.error?.message || "Logout failed");
     }
   }
 

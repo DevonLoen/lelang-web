@@ -2,7 +2,19 @@ import { useEffect, useRef, useState } from "react";
 import Logo from "../../../assets/logo.png";
 import { useToast } from "../../../contexts/toast-context";
 import { ToastType } from "../../../enums/toast-type";
-import { AuthService } from "../services/auth.service";
+import { AuthService, type SignupPayload } from "../services/auth.service";
+import { useNavigate } from "react-router";
+
+interface SendOtpFieldState {
+  fullname: string;
+  phone: string;
+  nik: string;
+  password: string;
+  confirmPassword: string;
+  gender: string;
+  bankAccountNumber: string;
+  birth: string;
+}
 
 export default function VerifyOtpPage() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
@@ -10,6 +22,40 @@ export default function VerifyOtpPage() {
   const [timer, setTimer] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { showToast } = useToast();
+  const navigate = useNavigate();
+
+  const [field, setField] = useState<SendOtpFieldState>({
+    fullname: "",
+    phone: "",
+    nik: "",
+    password: "",
+    confirmPassword: "",
+    gender: "",
+    bankAccountNumber: "",
+    birth: "",
+  });
+
+  const loadDataAndValidate = () => {
+    const savedDataString = localStorage.getItem("signupPayload");
+
+    if (savedDataString) {
+      try {
+        const savedData = JSON.parse(savedDataString);
+
+        setField(savedData);
+        console.log(field);
+      } catch (error) {
+        showToast(
+          "Invalid registration data. Please sign up again.",
+          ToastType.ERROR
+        );
+        navigate("/signup");
+      }
+    } else {
+      showToast("Please complete the registration form first.", ToastType.INFO);
+      navigate("/signup");
+    }
+  };
 
   useEffect(() => {
     const savedExpire = localStorage.getItem("otp_expire");
@@ -21,6 +67,19 @@ export default function VerifyOtpPage() {
       }
     }
   }, []);
+
+  useEffect(() => {
+    const savedExpire = localStorage.getItem("otp_expire");
+    if (savedExpire) {
+      const expireTime = parseInt(savedExpire, 10);
+      const now = Date.now();
+      if (expireTime > now) {
+        setTimer(Math.floor((expireTime - now) / 1000));
+      }
+    }
+
+    loadDataAndValidate();
+  }, [navigate, showToast]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -67,9 +126,17 @@ export default function VerifyOtpPage() {
 
     try {
       setIsSubmitting(true);
-      await new AuthService().verifyOtp({ otp: code });
-      showToast("OTP Verified Successfully", ToastType.SUCCESS);
-      window.location.href = "/login";
+
+      const payload = {
+        ...field,
+        otp: code,
+      };
+
+      await new AuthService().signup(payload);
+      localStorage.removeItem("signupPayload");
+      localStorage.removeItem("otp_expire");
+      showToast("Sign Up Successfully", ToastType.SUCCESS);
+      navigate("/login");
     } catch (err: any) {
       const finalMessage =
         err?.response?.data?.message || err?.message || "Invalid OTP";
@@ -85,7 +152,7 @@ export default function VerifyOtpPage() {
       localStorage.setItem("otp_expire", expireTime.toString());
       setTimer(60);
 
-      await new AuthService().sendOtp({});
+      await new AuthService().sendOtp({ phone: field.phone });
       showToast("OTP Resent", ToastType.INFO);
     } catch (err: any) {
       showToast("Failed to resend OTP", ToastType.ERROR);
