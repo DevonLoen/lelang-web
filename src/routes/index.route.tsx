@@ -6,14 +6,15 @@ import { createBrowserRouter } from "react-router";
 
 export const router = createBrowserRouter([
   {
-    path: "*",
-    element: <NotFoundPage />,
-  },
-  ...authRoutes,
-  {
     path: "/",
-    element: <MainLayout />, // Gunakan element bukan Component
-    errorElement: <ThrowErrorPage />, // ✅ Pasang di sini
-    children: [],
+    // element: <MainLayout />,
+    errorElement: <ThrowErrorPage />, // Pasang di root
+    children: [
+      ...authRoutes,
+      {
+        path: "*",
+        element: <NotFoundPage />,
+      },
+    ],
   },
 ]);
