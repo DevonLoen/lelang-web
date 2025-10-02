@@ -1,12 +1,20 @@
 import { useState } from "react";
 import Logo from "../../../assets/logo.png";
-import { FaPhone, FaIdCard, FaUser } from "react-icons/fa";
+import {
+  FaPhone,
+  FaIdCard,
+  FaUser,
+  FaLandmark,
+  FaCalendarAlt,
+} from "react-icons/fa";
 import { ToastType } from "../../../enums/toast-type";
 import { useToast } from "../../../contexts/toast-context";
 import { AuthService } from "../services/auth.service";
 import { InputField } from "../../../components/input-field";
 import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
+import DropdownField from "../../../components/dropdown";
+import { DatePicker } from "../../../components/date-picker";
 
 interface SignupFieldState {
   fullname: string;
@@ -14,6 +22,9 @@ interface SignupFieldState {
   nik: string;
   password: string;
   confirmPassword: string;
+  gender: string;
+  bankAccountNumber: string;
+  birth: string;
 }
 
 interface SignupFieldErrors {
@@ -22,6 +33,9 @@ interface SignupFieldErrors {
   nik: string;
   password: string;
   confirmPassword: string;
+  gender: string;
+  bankAccountNumber: string;
+  birth: string;
 }
 
 export default function SignupPage() {
@@ -31,6 +45,9 @@ export default function SignupPage() {
     nik: "",
     password: "",
     confirmPassword: "",
+    gender: "",
+    bankAccountNumber: "",
+    birth: "",
   });
 
   const [errors, setErrors] = useState<SignupFieldErrors>({
@@ -39,6 +56,9 @@ export default function SignupPage() {
     nik: "",
     password: "",
     confirmPassword: "",
+    gender: "",
+    bankAccountNumber: "",
+    birth: "",
   });
 
   const [isLoading, setIsLoading] = useState(false); // ⬅️ Tambahkan state loading
@@ -53,8 +73,10 @@ export default function SignupPage() {
       nik: "",
       password: "",
       confirmPassword: "",
+      gender: "",
+      bankAccountNumber: "",
+      birth: "",
     };
-
     if (!/^\d+$/.test(field.phone)) {
       newErrors.phone = "Phone must be a number";
     }
@@ -63,12 +85,28 @@ export default function SignupPage() {
       newErrors.phone = "Phone is required";
     }
 
-    if (!/^\d+$/.test(field.phone)) {
+    if (!/^\d+$/.test(field.nik)) {
       newErrors.nik = "Nik must be a number";
     }
 
     if (!field.nik.trim()) {
       newErrors.nik = "Nik is required";
+    }
+
+    if (!/^\d+$/.test(field.bankAccountNumber)) {
+      newErrors.bankAccountNumber = "Bank Account must be a number";
+    }
+
+    if (!field.bankAccountNumber.trim()) {
+      newErrors.bankAccountNumber = "Bank Account is required";
+    }
+
+    if (!field.gender.trim()) {
+      newErrors.gender = "Gender is required";
+    }
+
+    if (!field.birth.trim()) {
+      newErrors.birth = "Birth is required";
     }
 
     if (!field.fullname.trim()) {
@@ -114,7 +152,9 @@ export default function SignupPage() {
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement> | React.FocusEvent<HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
 
     setErrors((prev) => ({
@@ -123,10 +163,23 @@ export default function SignupPage() {
     }));
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setField((prev) => ({ ...prev, [name]: value as any }));
   };
+
+  const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    handleChange(e);
+  };
+
+  const genderOptions = [
+    { value: "female", label: "Female" },
+    { value: "male", label: "Male" },
+  ];
 
   return (
     <div className="flex h-screen">
@@ -180,6 +233,51 @@ export default function SignupPage() {
               errorMessage={errors.nik}
               icon={<FaIdCard className="h-5 w-5" />}
               inputMode="decimal"
+            />
+          </div>
+
+          <div className="mb-3 relative">
+            <InputField
+              label="Bank Account Number"
+              type="text"
+              name="bankAccountNumber"
+              id="bankAccountNumber"
+              value={field.bankAccountNumber}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.bankAccountNumber}
+              errorMessage={errors.bankAccountNumber}
+              icon={<FaLandmark className="h-5 w-5" />}
+              inputMode="decimal"
+            />
+          </div>
+
+          <div className="mb-3 relative">
+            <DropdownField
+              label="Gender"
+              name="gender"
+              id="gender"
+              icon={<FaIdCard className="h-5 w-5" />}
+              value={field.gender} // Hubungkan ke state
+              onChange={handleChange} // Hubungkan ke fungsi handler
+              options={genderOptions} // Berikan daftar pilihan
+              error={!!errors.gender}
+              errorMessage={errors.gender}
+              onBlur={handleBlur}
+            />
+          </div>
+
+          <div className="mb-3 relative">
+            <DatePicker
+              label="Birth"
+              name="birth"
+              id="birth"
+              value={field.birth}
+              onChange={handleDateTimeChange}
+              onBlur={handleBlur}
+              error={!!errors.birth}
+              errorMessage={errors.birth}
+              icon={<FaCalendarAlt className="h-5 w-5" />}
             />
           </div>
 
