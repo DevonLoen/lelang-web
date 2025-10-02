@@ -95,7 +95,7 @@ export default function VerifyOtpPage() {
   return (
     <div className="flex h-screen">
       {/* Left Panel */}
-      <div className="flex w-full max-w-md flex-col justify-center bg-[#1f2c44] p-8 sm:w-1/3 border-r border-white">
+      <div className="flex w-full max-w-md flex-col justify-center bg-gradient-to-br from-blue-950 via-blue-800 to-purple-900 p-8 sm:w-1/3 border-r border-blue-300 shadow-lg">
         <div className="mx-auto w-4/5">
           <h2 className="mb-3 text-3xl font-bold text-white">VERIFY OTP</h2>
           <p className="mb-6 text-gray-300 text-sm">
@@ -156,7 +156,7 @@ export default function VerifyOtpPage() {
       </div>
 
       {/* Right Panel */}
-      <div className="hidden flex-1 flex-col items-center justify-center bg-[#0d1c36] px-6 text-center sm:flex">
+      <div className="hidden flex-1 flex-col items-center justify-center bg-animated-gradient shadow-lg px-6 text-center sm:flex">
         <div className="mb-4 flex items-center">
           <img src={Logo} alt="Logo" className="h-40 w-40" />
           <h1 className="text-6xl font-bold text-white">AUCTION</h1>

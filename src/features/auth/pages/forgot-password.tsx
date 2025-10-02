@@ -7,26 +7,23 @@ import { AuthService } from "../services/auth.service";
 import { InputField } from "../../../components/input-field";
 import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
+import { useNavigate } from "react-router";
 
-interface LoginFieldState {
+interface ForgotPasswordFieldState {
   phone: string;
-  password: string;
 }
 
-interface LoginFieldErrors {
+interface ForgotPasswordFieldErrors {
   phone: string;
-  password: string;
 }
 
-export default function LoginPage() {
-  const [field, setField] = useState<LoginFieldState>({
+export default function ForgotPasswordPage() {
+  const [field, setField] = useState<ForgotPasswordFieldState>({
     phone: "",
-    password: "",
   });
 
-  const [errors, setErrors] = useState<LoginFieldErrors>({
+  const [errors, setErrors] = useState<ForgotPasswordFieldErrors>({
     phone: "",
-    password: "",
   });
 
   const [isLoading, setIsLoading] = useState(false); // ⬅️ Tambahkan state loading
@@ -35,9 +32,8 @@ export default function LoginPage() {
   const { showToast } = useToast();
 
   const validateField = async () => {
-    const newErrors: LoginFieldErrors = {
+    const newErrors: ForgotPasswordFieldErrors = {
       phone: "",
-      password: "",
     };
     if (!field.phone.trim()) {
       newErrors.phone = "Phone is required";
@@ -46,24 +42,25 @@ export default function LoginPage() {
       newErrors.phone = "Phone must be a number";
     }
 
-    if (!field.password.trim()) {
-      newErrors.password = "Password is required";
-    }
-
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error);
   };
 
-  const handleLogin = async () => {
+  const navigate = useNavigate();
+
+  const handleForgotPassword = async () => {
     if (await validateField()) {
       try {
         setIsSubmitting(true);
         const payload = {
           phone: field.phone,
-          password: field.password,
         };
-        await new AuthService().login(payload);
-        showToast("Login Successfully", ToastType.SUCCESS);
+        // await new AuthService().forgotPassword(payload);
+        navigate(`/login`);
+        showToast(
+          "Reset Password Link has been sent to your Whatsapp",
+          ToastType.SUCCESS
+        );
       } catch (error: any) {
         const finalMessage = `${
           error?.response?.data?.message || error?.message || "Unknown error"
@@ -94,7 +91,9 @@ export default function LoginPage() {
       {/* Left Panel */}
       <div className="flex w-full max-w-md flex-col justify-center bg-gradient-to-br from-blue-950 via-blue-800 to-purple-900 p-8 sm:w-1/3 border-r border-blue-300 shadow-lg">
         <div className="mx-auto w-4/5">
-          <h2 className="mb-6 text-3xl font-bold text-white">LOGIN</h2>
+          <h2 className="mb-6 text-3xl font-bold text-white">
+            FORGOT PASSWORD?
+          </h2>
 
           <div className="mb-3 relative">
             <InputField
@@ -110,30 +109,10 @@ export default function LoginPage() {
               icon={<FaPhone className="h-5 w-5" />}
               inputMode="decimal"
             />
-            <a
-              href="/forgot-password"
-              className="mt-1 block text-right text-xs  text-yellow-400 hover:underline"
-            >
-              Forgot Password?
-            </a>
           </div>
 
-          <div className="mb-3 relative">
-            <InputFieldPassword
-              label="Password"
-              name="password"
-              id="password"
-              value={field.password}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!errors.password}
-              errorMessage={errors.password}
-            />
-          </div>
-
-          {/* Login Button */}
           <button
-            onClick={handleLogin}
+            onClick={handleForgotPassword}
             className="w-full h-12 rounded-xl bg-yellow-500 font-bold text-white transition hover:bg-yellow-600"
           >
             <div className="flex justify-center items-center w-full">
@@ -144,16 +123,15 @@ export default function LoginPage() {
                   <div className="h-4 w-1 bg-white animate-pulse [animation-delay:0.4s]"></div>
                 </div>
               ) : (
-                "LOGIN"
+                "RESET PASSWORD"
               )}
             </div>
           </button>
 
           {/* Signup */}
           <p className="mt-8 text-center text-sm text-gray-400">
-            Don’t have an Account?{" "}
             <a href="/signup" className="text-yellow-400 hover:underline">
-              Sign Up Here
+              Back to Login
             </a>
           </p>
         </div>

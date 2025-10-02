@@ -24,6 +24,15 @@ interface VerifyOtpPayload {
 
 interface SendOtpPayload {}
 
+interface ForgotPasswordPayload {
+  phone?: string;
+}
+interface ResetPasswordPayload {
+  // phone?: string;
+  token: string;
+  password?: string;
+}
+
 export class AuthService {
   async login(data: LoginPayload) {
     try {
@@ -62,6 +71,28 @@ export class AuthService {
       return res.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Send Otp failed");
+    }
+  }
+
+  async forgotPassword(data: ForgotPasswordPayload) {
+    try {
+      const res = await axios.post(`${AUTH_URL}/forgot-password`, data);
+      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(
+        error.response?.data?.message || "Forgot Password failed"
+      );
+    }
+  }
+
+  async resetPassword(data: ResetPasswordPayload) {
+    try {
+      const res = await axios.post(`${AUTH_URL}/reset-password`, data);
+      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      return res.data;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Reset Password failed");
     }
   }
 
