@@ -5,7 +5,6 @@ import { ToastType } from "../../../enums/toast-type";
 import { useToast } from "../../../contexts/toast-context";
 import { AuthService } from "../services/auth.service";
 import { InputField } from "../../../components/input-field";
-import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
 import { useNavigate } from "react-router";
 
@@ -55,10 +54,10 @@ export default function ForgotPasswordPage() {
         const payload = {
           phone: field.phone,
         };
-        // await new AuthService().forgotPassword(payload);
+        await new AuthService().forgotPassword(payload);
         navigate(`/login`);
         showToast(
-          "Reset Password Link has been sent to your Whatsapp",
+          "Reset Password Link has been sent to your Phone Number",
           ToastType.SUCCESS
         );
       } catch (error: any) {

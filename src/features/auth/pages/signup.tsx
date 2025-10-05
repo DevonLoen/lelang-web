@@ -15,6 +15,7 @@ import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
 import DropdownField from "../../../components/dropdown";
 import { DatePicker } from "../../../components/date-picker";
+import { useNavigate } from "react-router";
 
 interface SignupFieldState {
   fullname: string;
@@ -65,6 +66,8 @@ export default function SignupPage() {
   const [isSubmitting, setIsSubmitting] = useState(false); // ⬅️ Khusus untuk submit
 
   const { showToast } = useToast();
+
+  const navigate = useNavigate();
 
   const validateField = async () => {
     const newErrors: SignupFieldErrors = {
@@ -129,18 +132,34 @@ export default function SignupPage() {
     return Object.values(newErrors).every((error) => !error);
   };
 
+  const saveDataToLocalStorage = async () => {
+    const payloadSignup = {
+      fullname: field.fullname,
+      phone: field.phone,
+      nik: field.nik,
+      birth: field.birth,
+      gender: field.gender,
+      bankAccountNumber: field.bankAccountNumber,
+      password: field.password,
+    };
+    localStorage.setItem("signupPayload", JSON.stringify(payloadSignup));
+  };
+
   const handleSignup = async () => {
     if (await validateField()) {
       try {
         setIsSubmitting(true);
+
         const payload = {
-          fullname: field.fullname,
           phone: field.phone,
-          nik: field.nik,
-          password: field.password,
         };
-        await new AuthService().signup(payload);
-        showToast("Sign Up Successfully", ToastType.SUCCESS);
+        await new AuthService().sendOtp(payload);
+        showToast(
+          "OTP has been sent to your Phone Number Successfully",
+          ToastType.SUCCESS
+        );
+        await saveDataToLocalStorage();
+        navigate("/verify-otp");
       } catch (error: any) {
         const finalMessage = `${
           error?.response?.data?.message || error?.message || "Unknown error"
@@ -184,7 +203,7 @@ export default function SignupPage() {
   return (
     <div className="flex h-screen">
       {/* Left Panel */}
-      <div className="flex w-full max-w-md flex-col justify-center bg-gradient-to-br from-blue-950 via-blue-800 to-purple-900 p-8 sm:w-1/3 border-r border-blue-300 shadow-lg">
+      <div className="flex w-full max-w-md flex-col justify-start bg-gradient-to-br from-blue-950 via-blue-800 to-purple-900 p-8 sm:w-1/3 border-r border-blue-300 shadow-lg overflow-y-auto py-12 scrollbar-hide">
         <div className="mx-auto w-4/5">
           <h2 className="mb-3 text-3xl font-bold text-white">SIGN UP</h2>
 

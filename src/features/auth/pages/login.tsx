@@ -7,6 +7,7 @@ import { AuthService } from "../services/auth.service";
 import { InputField } from "../../../components/input-field";
 import { InputFieldPassword } from "../../../components/input-field-password";
 import { capitalizeWords } from "../../../utils/string";
+import { useNavigate } from "react-router";
 
 interface LoginFieldState {
   phone: string;
@@ -33,6 +34,7 @@ export default function LoginPage() {
   const [isSubmitting, setIsSubmitting] = useState(false); // ⬅️ Khusus untuk submit
 
   const { showToast } = useToast();
+  const navigate = useNavigate();
 
   const validateField = async () => {
     const newErrors: LoginFieldErrors = {
@@ -64,6 +66,7 @@ export default function LoginPage() {
         };
         await new AuthService().login(payload);
         showToast("Login Successfully", ToastType.SUCCESS);
+        navigate(`/`);
       } catch (error: any) {
         const finalMessage = `${
           error?.response?.data?.message || error?.message || "Unknown error"
@@ -112,7 +115,7 @@ export default function LoginPage() {
             />
             <a
               href="/forgot-password"
-              className="mt-1 block text-right text-xs  text-yellow-400 hover:underline"
+              className="mt-1 absolute right-0 text-right text-xs mb-5 text-yellow-400 hover:underline "
             >
               Forgot Password?
             </a>

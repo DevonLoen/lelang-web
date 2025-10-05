@@ -5,12 +5,12 @@ import { authRoutes } from "./auth.route";
 import { createBrowserRouter } from "react-router";
 
 export const router = createBrowserRouter([
+  ...authRoutes,
   {
     path: "/",
-    // element: <MainLayout />,
+    element: <MainLayout />,
     errorElement: <ThrowErrorPage />, // Pasang di root
     children: [
-      ...authRoutes,
       {
         path: "*",
         element: <NotFoundPage />,
