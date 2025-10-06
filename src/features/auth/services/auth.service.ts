@@ -54,8 +54,7 @@ export class AuthService {
 
   async signup(data: SignupPayload) {
     try {
-      const res = await axios.post(`${USER_URL}/`, data);
-      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      const res = await axios.post(`${USER_URL}`, data);
       return res.data;
     } catch (error: any) {
       throw new Error(error.response?.data?.error?.message || "Sign Up failed");
@@ -65,7 +64,6 @@ export class AuthService {
   async sendOtp(data: SendOtpPayload) {
     try {
       const res = await axios.post(`${AUTH_URL}/request-otp`, data);
-      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
       throw new Error(
@@ -77,7 +75,6 @@ export class AuthService {
   async forgotPassword(data: ForgotPasswordPayload) {
     try {
       const res = await axios.post(`${AUTH_URL}/forgot-password`, data);
-      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
       throw new Error(
@@ -89,7 +86,6 @@ export class AuthService {
   async resetPassword(data: ResetPasswordPayload) {
     try {
       const res = await axios.post(`${AUTH_URL}/reset-password`, data);
-      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res.data;
     } catch (error: any) {
       throw new Error(
