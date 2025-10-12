@@ -25,7 +25,8 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <div>
+    // 1. Tambahkan `relative` di sini
+    <div className="relative">
       <input
         type={showPassword ? "text" : "password"}
         id={id}
@@ -34,13 +35,14 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
         onBlur={onBlur}
         placeholder=" "
         onChange={onChange}
-        className={`peer w-full bg-transparent px-4 pt-5 pb-2 text-gray-200 
-      placeholder-transparent focus:outline-none
-      ${
-        error
-          ? "border-b border-red-500 focus:border-red-500"
-          : "border-b border-gray-500 focus:border-white"
-      }`}
+        // 2. Tambahkan `truncate` dan atur padding kanan untuk memberi ruang pada ikon
+        className={`peer w-full bg-transparent pl-4 pr-10 pt-5 pb-2 text-gray-200 
+        placeholder-transparent focus:outline-none truncate
+        ${
+          error
+            ? "border-b border-red-500 focus:border-red-500"
+            : "border-b border-gray-500 focus:border-white"
+        }`}
       />
       {error && (
         <div className="rounded px-2 py-1 text-sm text-red-500">
@@ -50,18 +52,21 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
 
       <label
         htmlFor={name}
+        // 3. Tambahkan `truncate` dan batas kanan agar tidak menimpa ikon
         className="absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
-       peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-       peer-focus:top-0 peer-focus:text-sm peer-focus:text-white"
+        peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
+        peer-focus:top-0 peer-focus:text-sm peer-focus:text-white
+        truncate right-10"
       >
         {label}
       </label>
       <span
         className="absolute right-3 top-7 -translate-y-1/2 text-gray-400 cursor-pointer"
+        // Logika "tekan dan tahan" yang Anda buat sebelumnya
         onMouseDown={() => setShowPassword(true)}
         onMouseUp={() => setShowPassword(false)}
-        onMouseLeave={() => setShowPassword(false)} // kalau mouse geser keluar icon
-        onTouchStart={() => setShowPassword(true)} // support mobile
+        onMouseLeave={() => setShowPassword(false)}
+        onTouchStart={() => setShowPassword(true)}
         onTouchEnd={() => setShowPassword(false)}
       >
         {showPassword ? (

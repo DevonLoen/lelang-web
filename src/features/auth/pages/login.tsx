@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Logo from "../../../assets/logo.png";
 import { FaPhone } from "react-icons/fa";
 import { ToastType } from "../../../enums/toast-type";
@@ -91,6 +91,11 @@ export default function LoginPage() {
     const { name, value } = e.target;
     setField((prev) => ({ ...prev, [name]: value as any }));
   };
+
+  useEffect(() => {
+    localStorage.removeItem("signupPayload");
+    localStorage.removeItem("otp_expire");
+  }, []);
 
   return (
     <div className="flex h-screen">

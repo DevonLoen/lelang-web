@@ -133,8 +133,7 @@ export default function VerifyOtpPage() {
       };
 
       await new AuthService().signup(payload);
-      localStorage.removeItem("signupPayload");
-      localStorage.removeItem("otp_expire");
+
       showToast("Sign Up Successfully", ToastType.SUCCESS);
       navigate("/login");
     } catch (err: any) {
