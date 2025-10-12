@@ -1,3 +1,5 @@
+import React from "react";
+
 interface InputFieldProps {
   label: string;
   type?: string;
@@ -28,7 +30,7 @@ export const InputField: React.FC<InputFieldProps> = ({
   inputMode = "text",
 }) => {
   return (
-    <div>
+    <div className="relative">
       <input
         type={type}
         id={id}
@@ -39,8 +41,10 @@ export const InputField: React.FC<InputFieldProps> = ({
         inputMode={inputMode}
         onChange={onChange}
         readOnly={readOnly}
-        className={`peer w-full bg-transparent px-4 pt-5 pb-2 text-gray-200 
-        placeholder-transparent focus:outline-none
+        // --- PERUBAHAN DI SINI ---
+        className={`peer w-full bg-transparent pl-4 pt-5 pb-2 text-gray-200 
+        placeholder-transparent focus:outline-none truncate 
+        ${icon ? "pr-10" : "pr-4"} {/* Memberi ruang untuk ikon */}
         ${
           error
             ? "border-b border-red-500 focus:border-red-500"
@@ -55,9 +59,10 @@ export const InputField: React.FC<InputFieldProps> = ({
 
       <label
         htmlFor={name}
-        className="absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
+        className={`absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
           peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-          peer-focus:top-0 peer-focus:text-sm peer-focus:text-white"
+          peer-focus:top-0 peer-focus:text-sm peer-focus:text-white
+          truncate ${icon ? "right-10" : "right-4"}`}
       >
         {label}
       </label>

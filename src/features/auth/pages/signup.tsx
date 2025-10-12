@@ -16,6 +16,7 @@ import { capitalizeWords } from "../../../utils/string";
 import DropdownField from "../../../components/dropdown";
 import { DatePicker } from "../../../components/date-picker";
 import { useNavigate } from "react-router";
+import { formatDateReq } from "../../../utils/date";
 
 interface SignupFieldState {
   fullname: string;
@@ -137,7 +138,7 @@ export default function SignupPage() {
       fullname: field.fullname,
       phone: field.phone,
       nik: field.nik,
-      birth: field.birth,
+      birth: formatDateReq(field.birth),
       gender: field.gender,
       bankAccountNumber: field.bankAccountNumber,
       password: field.password,
@@ -153,6 +154,7 @@ export default function SignupPage() {
         const payload = {
           phone: field.phone,
         };
+
         await new AuthService().sendOtp(payload);
         showToast(
           "OTP has been sent to your Phone Number Successfully",
@@ -196,8 +198,8 @@ export default function SignupPage() {
   };
 
   const genderOptions = [
-    { value: "female", label: "Female" },
-    { value: "male", label: "Male" },
+    { value: "FEMALE", label: "Female" },
+    { value: "MALE", label: "Male" },
   ];
 
   return (
