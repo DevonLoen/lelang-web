@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { checkAuth } from "../utils/auth";
+import Header from "./header";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -19,9 +20,10 @@ export default function MainLayout() {
 
   return (
     <div>
-      {/* ...header/nav... */}
+      <Header />
       <Outlet />
-      {/* ...footer... */}
     </div>
   );
 }
+
+

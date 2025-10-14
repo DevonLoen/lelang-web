@@ -68,9 +68,8 @@ export default function LoginPage() {
         showToast("Login Successfully", ToastType.SUCCESS);
         navigate(`/`);
       } catch (error: any) {
-        const finalMessage = `${
-          error?.response?.data?.message || error?.message || "Unknown error"
-        }`;
+        const finalMessage = `${error?.response?.data?.message || error?.message || "Unknown error"
+          }`;
         showToast(finalMessage, ToastType.ERROR);
       } finally {
         setIsSubmitting(false);
