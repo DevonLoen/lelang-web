@@ -8,8 +8,8 @@ export default function ProductPage() {
     return <>
         <main className="flex w-full justify-center mt-10">
             <div className="flex flex-col sm:flex-row max-w-7xl w-full sm:space-x-10">
-                {ProductListPage()}
-                {ProductListInformationPage()}
+                {ProductListSection()}
+                {ProductListInformationSection()}
             </div>
 
         </main>
@@ -22,7 +22,7 @@ const productStatusFilterOption: { text: string, value: ProductStatus | "ALL" }[
     { text: "On Bids", value: ProductStatus.ON_BIDS },
     { text: "Rejected", value: ProductStatus.REJECTED },
 ]
-function ProductListPage(): JSX.Element {
+function ProductListSection(): JSX.Element {
     const [activeStatusFilter, setActiveStatusFilter] = useState<ProductStatus | "ALL">("ALL");
     const handleFilterClick = (filterText: ProductStatus | "ALL") => {
         setActiveStatusFilter(filterText);
@@ -76,7 +76,7 @@ function ProductListPage(): JSX.Element {
     </>
 }
 
-function ProductListInformationPage() {
+function ProductListInformationSection() {
     return <aside className="flex-col w-full sm:w-1/3 space-y-5">
         <div className="bg-white p-6 rounded-2xl shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Ringkasan Produk</h3>
@@ -131,4 +131,3 @@ function ProductListInformationPage() {
         </div>
     </aside>;
 }
-
