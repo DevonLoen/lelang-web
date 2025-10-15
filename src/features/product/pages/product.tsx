@@ -77,7 +77,7 @@ function ProductListPage(): JSX.Element {
 }
 
 function ProductListInformationPage() {
-    return <div className="flex-col w-full sm:w-1/3 space-y-5">
+    return <aside className="flex-col w-full sm:w-1/3 space-y-5">
         <div className="bg-white p-6 rounded-2xl shadow-sm">
             <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Ringkasan Produk</h3>
             <div className="space-y-4">
@@ -129,6 +129,6 @@ function ProductListInformationPage() {
                 </li>
             </ul>
         </div>
-    </div>;
+    </aside>;
 }
 
