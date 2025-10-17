@@ -8,10 +8,10 @@ export default function ProductPage() {
     return <>
         <main className="flex w-full justify-center mt-10">
             <div className="flex flex-col sm:flex-row max-w-7xl w-full sm:space-x-10">
-                {ProductListSection()}
-                {ProductListInformationSection()}
+                <ProductListSection />
+                <ProductListInformationSection />
             </div>
-            {CreateProductPopup()}
+            <CreateProductPopup />
         </main>
     </>
 }
