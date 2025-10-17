@@ -42,7 +42,7 @@ function ProductCard({ product }: ProductCardProps) {
             <div className="p-5">
                 <span className="text-xs font-semibold text-indigo-600 uppercase">{category}</span>
                 <h3 className="text-lg font-bold text-gray-800 mt-1 truncate group-hover:text-indigo-600 transition-colors">{title}</h3>
-                <p className="text-sm text-gray-500 mt-2">Harga Awal:</p>
+                <p className="text-sm text-gray-500 mt-2">Starting Price:</p>
                 <p className="text-xl font-bold text-gray-900">{formattedPrice}</p>
             </div>
         </div>
