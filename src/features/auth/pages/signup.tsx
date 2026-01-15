@@ -163,9 +163,8 @@ export default function SignupPage() {
         await saveDataToLocalStorage();
         navigate("/verify-otp");
       } catch (error: any) {
-        const finalMessage = `${
-          error?.response?.data?.message || error?.message || "Unknown error"
-        }`;
+        const finalMessage = `${error?.response?.data?.message || error?.message || "Unknown error"
+          }`;
         showToast(finalMessage, ToastType.ERROR);
       } finally {
         setIsSubmitting(false);
