@@ -8,7 +8,7 @@ export const productRoutes: RouteObject[] = [
     errorElement: <ThrowErrorPage />,
     children: [
       {
-        path: '/product',
+        path: '/my-product',
         children: [
           { index: true, element: <ProductPage /> },
           { path: ':id', element: <ProductDetail /> },

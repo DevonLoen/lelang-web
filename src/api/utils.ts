@@ -12,8 +12,10 @@ export const PaginationMetaSchema = z.object({
   totalData: z.number(),
 });
 
+export type PaginationMeta = z.infer<typeof PaginationMetaSchema>;
+
 export interface PaginatedResponse<T> {
-  meta: z.infer<typeof PaginationMetaSchema>;
+  meta: PaginationMeta;
   data: T[];
 }
 

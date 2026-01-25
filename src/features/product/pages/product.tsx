@@ -1,18 +1,32 @@
 import { useState, type JSX } from 'react';
-import Button from '../../../components/button';
-import FilterButton from '../components/filter-button';
+import { useProducts } from '../hooks/use-product-query';
 import ProductCard from '../components/product-card';
 import CreateProductPopup from './create-product';
-import { ProductStatus } from '../services/product.schema';
-import { useProducts } from '../hooks/use-product-query';
+
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search, Plus } from 'lucide-react';
+import { ProductCondition, ProductStatus } from '../services/product.schema';
+
+import { ProductPagination } from '@/components/pagination';
+
+const productStatusFilterOption: { text: string; value: ProductStatus | undefined }[] = [
+  { text: 'All', value: undefined },
+  { text: 'Request', value: ProductStatus.REQUEST },
+  { text: 'Verified', value: ProductStatus.VERIFIED },
+  { text: 'On Bids', value: ProductStatus.ON_BIDS },
+  { text: 'Rejected', value: ProductStatus.REJECTED },
+];
 
 export default function ProductPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   return (
     <>
       <CreateProductPopup isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
-      <main className="flex w-full justify-center mt-10">
-        <div className="flex flex-col sm:flex-row max-w-7xl w-full sm:space-x-10">
+      <main className="flex w-full justify-center mt-10 px-4">
+        <div className="flex flex-col lg:flex-row max-w-7xl w-full gap-10">
           <ProductListSection onOpenModal={() => setIsModalOpen(true)} />
           <ProductListInformationSection />
         </div>
@@ -20,139 +34,107 @@ export default function ProductPage() {
     </>
   );
 }
-const productStatusFilterOption: { text: string; value: ProductStatus | 'ALL' }[] = [
-  { text: 'All', value: 'ALL' },
-  { text: 'Waiting', value: ProductStatus.REQUEST },
-  { text: 'Approved', value: ProductStatus.VERIFIED },
-  { text: 'On Bids', value: ProductStatus.ON_BIDS },
-  { text: 'Rejected', value: ProductStatus.REJECTED },
-];
+
 function ProductListSection({ onOpenModal }: { onOpenModal: () => void }): JSX.Element {
-  const [activeStatusFilter, setActiveStatusFilter] = useState<ProductStatus | 'ALL'>('ALL');
-  const handleFilterClick = (filterText: ProductStatus | 'ALL') => {
-    setActiveStatusFilter(filterText);
-  };
-  const { data, isLoading, error } = useProducts(0, 5);
+  const [status, setStatus] = useState<ProductStatus | undefined>(undefined);
+
+  const [condition, setCondition] = useState<ProductCondition | undefined>(ProductCondition.NEW);
+  const [filter, setFilter] = useState<string | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const { data, isLoading } = useProducts(currentPage, 9, status, condition, filter);
   const products = data?.data || [];
+  const meta = data?.meta;
 
   return (
-    <>
-      <div className="bg-white w-full shadow-sm sm:w-2/3 p-5 relative z-0">
-        <div className="flex flex-wrap sm:flex-nowrap justify-between">
-          <div className="flex-col space-y-2">
-            <h1 className="text-black font-bold text-4xl">My Products</h1>
-            <h3 className="text-gray-600">Submit, manage, and track the status of your auction items here.</h3>
-          </div>
-          <Button className="mt-2" onClick={onOpenModal}>
-            <div className="flex justify-center text-xs md:text-sm items-center w-full">+ Submit Auction Item</div>
-          </Button>
-        </div>
-        <hr className="my-8 h-px border-0 bg-gray-200" />
-        <div className="flex flex-wrap sm:flex-nowrap gap-2 border rounded-lg p-1 bg-gray-100 mb-6 mt-2">
-          {productStatusFilterOption.map((option) => {
-            return (
-              <FilterButton
-                key={option.text}
-                isActive={activeStatusFilter === option.value}
-                onClick={() => handleFilterClick(option.value)}
-              >
-                {option.text}
-              </FilterButton>
-            );
-          })}
+    <div className="w-full lg:w-2/3 space-y-8">
+      {/* Header */}
+
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">My Products</h1>
+          <p className="text-muted-foreground mt-1">Submit, manage, and track the status of your auction items here.</p>
         </div>
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-          <div className="relative w-full sm:max-w-xs">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
-                <path
-                  fillRule="evenodd"
-                  d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </div>
-            <input
-              type="text"
-              id="searchBar"
-              placeholder="Cari produk Anda..."
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-            />
-          </div>
-          <div className="flex items-center gap-2 w-full sm:w-auto">
-            <label htmlFor="sortOrder" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-              Sort By:
-            </label>
-            <select
-              id="sortOrder"
-              name="sortOrder"
-              className="block w-full sm:w-auto pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+        <Button onClick={onOpenModal} className="shrink-0" variant={'indigo'} size={'lg'}>
+          <Plus className="mr-2 h-4 w-4" /> Submit Auction Item
+        </Button>
+      </div>
+      <div className="bg-gray-100">
+        <div className="flex flex-wrap sm:flex-nowrap gap-2 p-1 bg-secondary rounded-lg">
+          {productStatusFilterOption.map((option) => (
+            <Button
+              className="flex-1"
+              key={option.text}
+              variant={status === option.value ? 'white' : 'ghost'}
+              size="lg"
+              onClick={() => {
+                setStatus(option.value);
+                setCurrentPage(1);
+              }}
             >
-              <option value="terbaru">Newest</option>
-              <option value="harga-terendah">Highest Price</option>
-              <option value="harga-tertinggi">Lowest Price</option>
-            </select>
-          </div>
-        </div>
-        <div id="productGrid" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {isLoading && <p className="col-span-full text-center py-10">Loading...</p>}
-
-          {products.map((productData) => (
-            <ProductCard key={productData.id} product={{ ...productData, startingPrice: 5000 }} />
+              {option.text}
+            </Button>
           ))}
         </div>
       </div>
-    </>
+
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search your products..."
+            className="pl-10 w-3/4"
+            value={filter || ''}
+            onChange={(e) => {
+              setFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <label className="text-sm font-medium text-gray-700 whitespace-nowrap">Sort By:</label>
+          <Select defaultValue="newest">
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Sort By" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="newest">Newest</SelectItem>
+              <SelectItem value="price-low">Lowest Price</SelectItem>
+              <SelectItem value="price-high">Highest Price</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+      <div className="flex items-start justify-between border-t pt-6">
+        {meta && <ProductPagination meta={meta} onPageChange={(newPage) => setCurrentPage(newPage)} />}
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+        {isLoading
+          ? Array(6)
+              .fill(0)
+              .map((_, i) => <div key={i} className="h-64 rounded-xl bg-muted animate-pulse" />)
+          : products.map((p) => <ProductCard key={p.id} product={{ ...p, startingPrice: 5000 }} />)}
+      </div>
+    </div>
   );
 }
 
 function ProductListInformationSection() {
   return (
-    <aside className="flex-col w-full sm:w-1/3 space-y-5">
-      <div className="bg-white p-6 rounded-2xl shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-800 border-b pb-3 mb-4">Product Summary</h3>
-        <div className="space-y-4">
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600">Total Submitted Products</span>
-            <span id="total-count" className="font-bold text-gray-900">
-              6
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-yellow-500"></span> Menunggu
-            </span>
-            <span id="menunggu-count" className="font-bold text-yellow-600">
-              2
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-blue-500"></span> Disetujui
-            </span>
-            <span id="disetujui-count" className="font-bold text-blue-600">
-              1
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-green-500"></span> Dilelang
-            </span>
-            <span id="dilelang-count" className="font-bold text-green-600">
-              2
-            </span>
-          </div>
-          <div className="flex justify-between items-center text-sm">
-            <span className="text-gray-600 flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-red-500"></span> Ditolak
-            </span>
-            <span id="ditolak-count" className="font-bold text-red-600">
-              1
-            </span>
-          </div>
-        </div>
-      </div>
+    <aside className="w-full lg:w-1/3 space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-lg border-b pb-3">Product Summary</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <SummaryRow label="Total Product Submitted" count={6} />
+          <SummaryRow label="Waiting" count={2} colorClass="bg-yellow-500" textClass="text-yellow-600" />
+          <SummaryRow label="Approved" count={1} colorClass="bg-blue-500" textClass="text-blue-600" />
+          <SummaryRow label="On Bids" count={2} colorClass="bg-green-500" textClass="text-green-600" />
+          <SummaryRow label="Rejected" count={2} colorClass="bg-red-600" textClass="text-red-600" />
+        </CardContent>
+      </Card>
 
       <div className="bg-white p-6 rounded-2xl shadow-sm">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Selling Tips</h3>
@@ -188,5 +170,26 @@ function ProductListInformationSection() {
         </ul>
       </div>
     </aside>
+  );
+}
+
+function SummaryRow({
+  label,
+  count,
+  colorClass,
+  textClass,
+}: {
+  label: string;
+  count: number;
+  colorClass?: string;
+  textClass?: string;
+}) {
+  return (
+    <div className="flex justify-between items-center text-sm">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        {colorClass && <span className={`h-2 w-2 rounded-full ${colorClass}`} />} {label}
+      </span>
+      <span className={`font-bold ${textClass || 'text-black'}`}>{count}</span>
+    </div>
   );
 }

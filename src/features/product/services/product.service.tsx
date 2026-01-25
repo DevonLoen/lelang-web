@@ -5,6 +5,8 @@ import {
   type CreateProductPayload,
   type ProductFormData,
   type Product,
+  ProductStatus,
+  ProductCondition,
 } from './product.schema';
 import { auctionClient } from '../../../lib/axios';
 import { withDataEnvelope, withPaginationEnvelope, type PaginatedResponse } from '../../../api/utils';
@@ -48,8 +50,22 @@ export const productService = {
     return createProductResponse;
   },
 
-  getProducts: async (page = 0, size = 10): Promise<PaginatedResponse<Product>> => {
-    const res = await auctionClient.get('/v1/products/me');
+  getMyProducts: async (
+    page = 0,
+    size = 5,
+    status?: ProductStatus,
+    condition?: ProductCondition,
+    filter?: string,
+  ): Promise<PaginatedResponse<Product>> => {
+    const res = await auctionClient.get(`/v1/products/me`, {
+      params: {
+        pageNumber: page,
+        pageSize: size,
+        status,
+        condition,
+        filter: filter?.trim() || undefined,
+      },
+    });
     const validatedResponse = withPaginationEnvelope(z.array(ProductSchema)).parse(res);
     return validatedResponse;
   },
