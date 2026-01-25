@@ -32,7 +32,7 @@ function ProductCard({ product }: ProductCardProps) {
     minimumFractionDigits: 0,
   }).format(price);
   return (
-    <Link to={`/product/${product.id}`}>
+    <Link to={`/my-product/${product.id}`}>
       <div className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
         <div className="relative">
           <img src={imageUrl} alt={title} className="w-full h-48 object-cover" />
