@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { checkAuth } from "../utils/auth";
+import Header from "./header";
 
 export default function MainLayout() {
   const location = useLocation();
@@ -18,10 +19,12 @@ export default function MainLayout() {
   }, [navigate, location.pathname]);
 
   return (
-    <div>
-      {/* ...header/nav... */}
+    <div className="bg-slate-50 min-h-screen relative">
+      <Header />
+      <div className="h-20"></div>
       <Outlet />
-      {/* ...footer... */}
     </div>
   );
 }
+
+

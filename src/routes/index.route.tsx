@@ -3,6 +3,7 @@ import ThrowErrorPage from "../features/error/pages/throw-error-page";
 import MainLayout from "../layouts/layout";
 import { authRoutes } from "./auth.route";
 import { createBrowserRouter } from "react-router";
+import { productRoutes } from "./product-route";
 
 export const router = createBrowserRouter([
   ...authRoutes,
@@ -11,10 +12,11 @@ export const router = createBrowserRouter([
     element: <MainLayout />,
     errorElement: <ThrowErrorPage />, // Pasang di root
     children: [
+      ...productRoutes,
       {
         path: "*",
         element: <NotFoundPage />,
-      },
+      }
     ],
   },
 ]);
