@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Gavel, Package, Wallet, MapPin, Menu, X as XIcon, CreditCard } from 'lucide-react';
+import { User, LogOut, Gavel, Package, Wallet, MapPin, Menu, X as XIcon, CreditCard, ChevronDown } from 'lucide-react';
 import Logo from '../assets/logo.png';
-import { Link, useNavigate } from 'react-router';
+import { Link, useNavigate, useLocation } from 'react-router';
 import { AuthService } from '../features/auth/services/auth.service';
 import { useToast } from '../contexts/toast-context';
 import { ToastType } from '../enums/toast-type';
@@ -12,6 +12,7 @@ export default function Header() {
   const [profileOpen, setProfileOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const location = useLocation();
   const { showToast } = useToast();
   const { data: user } = useProfile();
 
@@ -28,6 +29,11 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
+  // Close mobile menu on route change
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [location.pathname]);
+
   const handleLogout = async () => {
     await new AuthService().logout();
     showToast('Logged out successfully', ToastType.SUCCESS);
@@ -35,204 +41,178 @@ export default function Header() {
   };
 
   const navLinks = [
+    { to: '/auctions', label: 'Browse Auctions' },
     ...(isSeller ? [{ to: '/own/auctions', label: 'My Auctions' }] : []),
-    ...(isBidder  ? [{ to: '/own/bids',     label: 'My Bids'     }] : []),
+    ...(isBidder ? [{ to: '/own/bids', label: 'My Bids' }] : []),
     ...(isSeller ? [{ to: '/own/products', label: 'My Products' }] : []),
   ];
 
+  const isActiveLink = (path: string) => location.pathname === path;
+
   return (
-    <div className="flex lg:justify-center h-20 bg-[rgb(30,41,59)] fixed w-full z-50 shadow-lg">
-      <div className="grow-[2] ml-4 md:ml-10">
-        <div className="flex space-x-2 md:space-x-8 h-full items-center">
-          {/* Logo */}
-          <Link to="/auctions" className="flex flex-shrink-0 items-center space-x-2">
-            <img src={Logo} alt="Logo" className="h-12 w-12" />
-            <h1 className="font-bold text-white tracking-wide">AUCTION</h1>
-          </Link>
+    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50">
+      <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+        {/* Logo */}
+        <Link to="/auctions" className="flex items-center gap-2.5 flex-shrink-0">
+          <img src={Logo} alt="Auction" className="h-9 w-9" />
+          <span className="font-bold text-slate-900 text-lg hidden sm:block">AUCTION</span>
+        </Link>
 
-          {/* Desktop Nav */}
+        {/* Desktop Nav */}
+        <nav className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => (
             <Link
               key={link.to}
               to={link.to}
-              className="text-gray-300 hover:bg-slate-700 hover:text-white px-3 py-2 rounded-md font-medium transition-colors hidden md:block text-sm"
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActiveLink(link.to)
+                  ? 'bg-amber-50 text-amber-600'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
             >
               {link.label}
             </Link>
           ))}
-        </div>
-      </div>
+        </nav>
 
-      {/* Right side */}
-      <div className="flex items-center pr-4 md:pr-10 gap-3">
-        {/* Profile dropdown */}
-        <div className="relative" ref={profileRef}>
+        {/* Right side */}
+        <div className="flex items-center gap-2">
+          {/* Profile dropdown */}
+          <div className="relative" ref={profileRef}>
+            <button
+              onClick={() => setProfileOpen((o) => !o)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                profileOpen
+                  ? 'bg-slate-100 text-slate-900'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center">
+                <User className="h-4 w-4 text-amber-600" />
+              </div>
+              <span className="hidden sm:block max-w-[100px] truncate">
+                {user?.fullname?.split(' ')[0] || 'Profile'}
+              </span>
+              <ChevronDown className={`h-4 w-4 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            {profileOpen && (
+              <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
+                {/* User info header */}
+                <div className="px-4 py-3 border-b border-slate-100">
+                  <p className="text-sm font-semibold text-slate-900 truncate">{user?.fullname || 'User'}</p>
+                  <p className="text-xs text-slate-500 truncate">{user?.phone || ''}</p>
+                </div>
+
+                <div className="py-1">
+                  <Link
+                    to="/profile"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <User className="h-4 w-4 text-slate-400" /> My Profile
+                  </Link>
+                  {isSeller && (
+                    <>
+                      <Link
+                        to="/own/products"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <Package className="h-4 w-4 text-slate-400" /> My Products
+                      </Link>
+                      <Link
+                        to="/own/auctions"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <Gavel className="h-4 w-4 text-slate-400" /> My Auctions
+                      </Link>
+                    </>
+                  )}
+                  {isBidder && (
+                    <>
+                      <Link
+                        to="/own/bids"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <Gavel className="h-4 w-4 text-slate-400" /> My Bids
+                      </Link>
+                      <Link
+                        to="/own/payments"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                      >
+                        <CreditCard className="h-4 w-4 text-slate-400" /> My Payments
+                      </Link>
+                    </>
+                  )}
+                  <Link
+                    to="/own/withdrawal"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <Wallet className="h-4 w-4 text-slate-400" /> Withdrawal
+                  </Link>
+                  <Link
+                    to="/own/addresses"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <MapPin className="h-4 w-4 text-slate-400" /> My Addresses
+                  </Link>
+                </div>
+
+                <div className="border-t border-slate-100 pt-1">
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" /> Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
           <button
-            onClick={() => setProfileOpen((o) => !o)}
-            className="flex items-center gap-2 text-gray-300 hover:text-white px-3 py-2 rounded-md hover:bg-slate-700 transition-colors"
+            className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label="Toggle menu"
           >
-            <User className="h-4 w-4" />
-            <span className="hidden md:block text-sm font-medium">Profile</span>
+            {menuOpen ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-
-          {profileOpen && (
-            <div className="absolute right-0 top-full mt-2 w-44 bg-white rounded-xl shadow-xl border border-gray-100 py-1 z-50">
-              <Link
-                to="/profile"
-                onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-              >
-                <User className="h-3.5 w-3.5" /> My Profile
-              </Link>
-              {isSeller && (
-                <>
-                  <Link
-                    to="/own/products"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                  >
-                    <Package className="h-3.5 w-3.5" /> My Products
-                  </Link>
-                  <Link
-                    to="/own/auctions"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                  >
-                    <Gavel className="h-3.5 w-3.5" /> My Auctions
-                  </Link>
-                </>
-              )}
-              {isBidder && (
-                <>
-                  <Link
-                    to="/own/bids"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                  >
-                    <Gavel className="h-3.5 w-3.5" /> My Bids
-                  </Link>
-                  <Link
-                    to="/own/payments"
-                    onClick={() => setProfileOpen(false)}
-                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                  >
-                    <CreditCard className="h-3.5 w-3.5" /> My Payments
-                  </Link>
-                </>
-              )}
-              <Link
-                  to="/own/withdrawal"
-                  onClick={() => setProfileOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-                >
-                  <Wallet className="h-3.5 w-3.5" /> Withdrawal
-                </Link>
-              <Link
-                to="/own/addresses"
-                onClick={() => setProfileOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
-              >
-                <MapPin className="h-3.5 w-3.5" /> My Addresses
-              </Link>
-              <hr className="my-1 border-gray-100" />
-              <button
-                onClick={handleLogout}
-                className="flex items-center gap-2 w-full px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-              >
-                <LogOut className="h-3.5 w-3.5" /> Logout
-              </button>
-            </div>
-          )}
         </div>
-
-        {/* Mobile menu button */}
-        <button
-          className="md:hidden text-gray-300 hover:text-white p-2 rounded-md"
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          {menuOpen ? <XIcon className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
       </div>
 
-      {/* Mobile Nav */}
+      {/* Mobile Nav Overlay */}
       {menuOpen && (
-        <div className="absolute top-20 left-0 right-0 bg-[rgb(30,41,59)] border-t border-slate-700 md:hidden z-40">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              onClick={() => setMenuOpen(false)}
-              className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <Link
-            to="/profile"
+        <>
+          <div 
+            className="fixed inset-0 bg-black/20 md:hidden z-40" 
             onClick={() => setMenuOpen(false)}
-            className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-          >
-            Profile
-          </Link>
-          {isSeller && (
-            <>
-              <Link
-                to="/own/products"
-                onClick={() => setMenuOpen(false)}
-                className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-              >
-                My Products
-              </Link>
-              <Link
-                to="/own/auctions"
-                onClick={() => setMenuOpen(false)}
-                className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-              >
-                My Auctions
-              </Link>
-            </>
-          )}
-          {isBidder && (
-            <>
-              <Link
-                to="/own/bids"
-                onClick={() => setMenuOpen(false)}
-                className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-              >
-                My Bids
-              </Link>
-              <Link
-                to="/own/payments"
-                onClick={() => setMenuOpen(false)}
-                className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-              >
-                My Payments
-              </Link>
-            </>
-          )}
-          <Link
-            to="/own/withdrawal"
-            onClick={() => setMenuOpen(false)}
-            className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-          >
-            Withdrawal
-          </Link>
-          <Link
-            to="/own/addresses"
-            onClick={() => setMenuOpen(false)}
-            className="block px-6 py-3 text-gray-300 hover:text-white hover:bg-slate-700 font-medium text-sm transition-colors"
-          >
-            My Addresses
-          </Link>
-          <button
-            onClick={handleLogout}
-            className="block w-full text-left px-6 py-3 text-red-400 hover:text-red-300 hover:bg-slate-700 font-medium text-sm transition-colors"
-          >
-            Logout
-          </button>
-        </div>
+          />
+          <div className="absolute top-16 left-0 right-0 bg-white border-b border-slate-200 md:hidden z-50 shadow-lg">
+            <nav className="py-2">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`block px-4 py-3 text-sm font-medium transition-colors ${
+                    isActiveLink(link.to)
+                      ? 'bg-amber-50 text-amber-600'
+                      : 'text-slate-700 hover:bg-slate-50'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        </>
       )}
-    </div>
+    </header>
   );
 }
-
