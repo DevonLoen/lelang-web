@@ -4,15 +4,19 @@ import MainLayout from "../layouts/layout";
 import { authRoutes } from "./auth.route";
 import { createBrowserRouter } from "react-router";
 import { productRoutes } from "./product-route";
+import { auctionRoutes } from "./auction.route";
+import { ownRoutes } from "./own.route";
 
 export const router = createBrowserRouter([
   ...authRoutes,
   {
     path: "/",
     element: <MainLayout />,
-    errorElement: <ThrowErrorPage />, // Pasang di root
+    errorElement: <ThrowErrorPage />,
     children: [
       ...productRoutes,
+      ...auctionRoutes,
+      ...ownRoutes,
       {
         path: "*",
         element: <NotFoundPage />,

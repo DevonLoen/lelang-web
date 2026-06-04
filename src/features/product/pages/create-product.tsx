@@ -105,6 +105,22 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
               ></textarea>
             </div>
             <div>
+              <label htmlFor="weight_gram" className="block text-sm font-medium text-gray-700">
+                Weight (grams)
+              </label>
+              <input
+                {...register('weight_gram')}
+                type="number"
+                id="weight_gram"
+                min={1}
+                required
+                placeholder="e.g. 1000 for 1 kg"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+              />
+              {errors.weight_gram && <p className="text-red-500 text-xs">{errors.weight_gram.message}</p>}
+            </div>
+
+            <div>
               <label htmlFor="condition" className="block text-sm font-medium text-gray-700">
                 Condition
               </label>

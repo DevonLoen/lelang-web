@@ -4,7 +4,6 @@ import {
   FaPhone,
   FaIdCard,
   FaUser,
-  FaLandmark,
   FaCalendarAlt,
 } from "react-icons/fa";
 import { ToastType } from "../../../enums/toast-type";
@@ -21,22 +20,16 @@ import { formatDateReq } from "../../../utils/date";
 interface SignupFieldState {
   fullname: string;
   phone: string;
-  nik: string;
   password: string;
-  confirmPassword: string;
   gender: string;
-  bankAccountNumber: string;
   birth: string;
 }
 
 interface SignupFieldErrors {
   fullname: string;
   phone: string;
-  nik: string;
   password: string;
-  confirmPassword: string;
   gender: string;
-  bankAccountNumber: string;
   birth: string;
 }
 
@@ -44,26 +37,19 @@ export default function SignupPage() {
   const [field, setField] = useState<SignupFieldState>({
     fullname: "",
     phone: "",
-    nik: "",
     password: "",
-    confirmPassword: "",
     gender: "",
-    bankAccountNumber: "",
     birth: "",
   });
 
   const [errors, setErrors] = useState<SignupFieldErrors>({
     fullname: "",
     phone: "",
-    nik: "",
     password: "",
-    confirmPassword: "",
     gender: "",
-    bankAccountNumber: "",
     birth: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false); // ⬅️ Tambahkan state loading
   const [isSubmitting, setIsSubmitting] = useState(false); // ⬅️ Khusus untuk submit
 
   const { showToast } = useToast();
@@ -74,11 +60,8 @@ export default function SignupPage() {
     const newErrors: SignupFieldErrors = {
       fullname: "",
       phone: "",
-      nik: "",
       password: "",
-      confirmPassword: "",
       gender: "",
-      bankAccountNumber: "",
       birth: "",
     };
     if (!/^\d+$/.test(field.phone)) {
@@ -87,22 +70,6 @@ export default function SignupPage() {
 
     if (!field.phone.trim()) {
       newErrors.phone = "Phone is required";
-    }
-
-    if (!/^\d+$/.test(field.nik)) {
-      newErrors.nik = "Nik must be a number";
-    }
-
-    if (!field.nik.trim()) {
-      newErrors.nik = "Nik is required";
-    }
-
-    if (!/^\d+$/.test(field.bankAccountNumber)) {
-      newErrors.bankAccountNumber = "Bank Account must be a number";
-    }
-
-    if (!field.bankAccountNumber.trim()) {
-      newErrors.bankAccountNumber = "Bank Account is required";
     }
 
     if (!field.gender.trim()) {
@@ -121,14 +88,6 @@ export default function SignupPage() {
       newErrors.password = "Password is required";
     }
 
-    if (!field.confirmPassword.trim()) {
-      newErrors.confirmPassword = "Confirm Password is required";
-    }
-
-    if (field.password != field.confirmPassword) {
-      newErrors.confirmPassword = "Confirm Password must match Password";
-    }
-
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error);
   };
@@ -137,10 +96,8 @@ export default function SignupPage() {
     const payloadSignup = {
       fullname: field.fullname,
       phone: field.phone,
-      nik: field.nik,
       birth: formatDateReq(field.birth),
       gender: field.gender,
-      bankAccountNumber: field.bankAccountNumber,
       password: field.password,
     };
     localStorage.setItem("signupPayload", JSON.stringify(payloadSignup));
@@ -155,17 +112,15 @@ export default function SignupPage() {
           phone: field.phone,
         };
 
-        await new AuthService().sendOtp(payload);
+        const result = await new AuthService().sendOtp(payload);
         showToast(
-          "OTP has been sent to your Phone Number Successfully",
+          result.message || 'OTP has been sent to your Phone Number',
           ToastType.SUCCESS
         );
         await saveDataToLocalStorage();
         navigate("/verify-otp");
       } catch (error: any) {
-        const finalMessage = `${error?.response?.data?.message || error?.message || "Unknown error"
-          }`;
-        showToast(finalMessage, ToastType.ERROR);
+        showToast(error.message || 'Failed to send OTP', ToastType.ERROR);
       } finally {
         setIsSubmitting(false);
       }
@@ -226,7 +181,7 @@ export default function SignupPage() {
 
           <div className="mb-3 relative">
             <InputField
-              label="Phone +62"
+              label="Phone"
               type="text"
               name="phone"
               id="phone"
@@ -236,38 +191,6 @@ export default function SignupPage() {
               error={!!errors.phone}
               errorMessage={errors.phone}
               icon={<FaPhone className="h-5 w-5" />}
-              inputMode="decimal"
-            />
-          </div>
-
-          <div className="mb-3 relative">
-            <InputField
-              label="Nik"
-              type="text"
-              name="nik"
-              id="nik"
-              value={field.nik}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!errors.nik}
-              errorMessage={errors.nik}
-              icon={<FaIdCard className="h-5 w-5" />}
-              inputMode="decimal"
-            />
-          </div>
-
-          <div className="mb-3 relative">
-            <InputField
-              label="Bank Account Number"
-              type="text"
-              name="bankAccountNumber"
-              id="bankAccountNumber"
-              value={field.bankAccountNumber}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!errors.bankAccountNumber}
-              errorMessage={errors.bankAccountNumber}
-              icon={<FaLandmark className="h-5 w-5" />}
               inputMode="decimal"
             />
           </div>
@@ -311,19 +234,6 @@ export default function SignupPage() {
               onBlur={handleBlur}
               error={!!errors.password}
               errorMessage={errors.password}
-            />
-          </div>
-
-          <div className="mb-3 relative">
-            <InputFieldPassword
-              label="Confirm Password"
-              name="confirmPassword"
-              id="confirmPassword"
-              value={field.confirmPassword}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!errors.confirmPassword}
-              errorMessage={errors.confirmPassword}
             />
           </div>
 

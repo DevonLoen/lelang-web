@@ -1,78 +1,140 @@
-import axios from 'axios';
+import { apiClient } from '../../../lib/axios';
 import {
-  ProductSchema,
-  CreateProductPayloadSchema, // Use the schema for validation
-  type CreateProductPayload,
   type ProductFormData,
   type Product,
   ProductStatus,
   ProductCondition,
 } from './product.schema';
-import { auctionClient } from '../../../lib/axios';
-import { withDataEnvelope, withPaginationEnvelope, type PaginatedResponse } from '../../../api/utils';
-import z from 'zod';
+import type { PaginatedResponse } from '../../../api/utils';
+
+const BASE_URL = import.meta.env.VITE_API_URL as string;
+
+const throwMsg = (e: any, fallback: string): never => {
+  throw new Error(e?.response?.data?.message || e?.message || fallback);
+};
+
+async function uploadFile(file: File): Promise<string> {
+  const form = new FormData();
+  form.append('file', file);
+  const res = await apiClient.post('/own/files/upload', form, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+  return res.data.path as string;
+}
+
+function toImageUrl(path: string | undefined | null): string {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${BASE_URL}/storage/public/${path}`;
+}
 
 export const productService = {
   createProductRequest: async (productData: ProductFormData): Promise<Product> => {
-    const payload: CreateProductPayload = {
-      name: productData.name,
-      description: productData.description,
-      condition: productData.condition,
-      image_count: productData.imageUrls.length,
-    };
+    try {
+      let coverImagePath: string | undefined;
+      if (productData.coverImageUrl instanceof File) {
+        coverImagePath = await uploadFile(productData.coverImageUrl);
+      }
 
-    CreateProductPayloadSchema.parse(payload);
-
-    const res = await auctionClient.post('/v1/products', payload);
-
-    const createProductResponse = withDataEnvelope(ProductSchema).parse(res).data;
-
-    const uploads: Promise<any>[] = [];
-
-    if (createProductResponse.coverImageUrl && productData.coverImageUrl) {
-      uploads.push(
-        axios.put(createProductResponse.coverImageUrl, productData.coverImageUrl, {
-          headers: { 'Content-Type': productData.coverImageUrl.type },
-        }),
-      );
-    }
-
-    if (createProductResponse.imageUrls && productData.imageUrls.length > 0) {
-      createProductResponse.imageUrls.forEach((url, index) => {
-        const file = productData.imageUrls[index];
-        if (file) {
-          uploads.push(axios.put(url, file, { headers: { 'Content-Type': file.type } }));
+      const imagePaths: string[] = [];
+      if (productData.imageUrls && productData.imageUrls.length > 0) {
+        for (const file of productData.imageUrls) {
+          if (file instanceof File) {
+            imagePaths.push(await uploadFile(file));
+          }
         }
-      });
-    }
+      }
 
-    await Promise.all(uploads);
-    return createProductResponse;
+      const res = await apiClient.post('/own/products', {
+        name: productData.name,
+        description: productData.description ?? undefined,
+        condition: productData.condition,
+        weight_gram: productData.weight_gram,
+        cover_image_path: coverImagePath,
+        image_paths: imagePaths,
+      });
+
+      const p = res.data.product;
+      return {
+        id: p.id,
+        userId: p.user_id,
+        name: p.name,
+        description: p.description,
+        condition: p.condition as ProductCondition,
+        coverImageUrl: toImageUrl(p.cover_image_link),
+        imageUrls: (p.image_links ?? []).map(toImageUrl),
+        status: p.status as ProductStatus,
+        createdAt: p.created_at ? new Date(p.created_at) : undefined,
+        updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
+      };
+    } catch (e) {
+      return throwMsg(e, 'Failed to create product');
+    }
   },
 
   getMyProducts: async (
-    page = 0,
-    size = 5,
+    page = 1,
+    size = 9,
     status?: ProductStatus,
     condition?: ProductCondition,
     filter?: string,
   ): Promise<PaginatedResponse<Product>> => {
-    const res = await auctionClient.get(`/v1/products/me`, {
-      params: {
-        pageNumber: page,
-        pageSize: size,
+    try {
+      const res = await apiClient.post('/own/products/filter', {
+        page,
+        limit: size,
         status,
         condition,
-        filter: filter?.trim() || undefined,
-      },
-    });
-    const validatedResponse = withPaginationEnvelope(z.array(ProductSchema)).parse(res);
-    return validatedResponse;
+        search: filter?.trim() || undefined,
+        sorts: [{ field: 'created_at', direction: 'desc' }],
+      });
+
+      const { total, page: currentPage, limit, nodes } = res.data;
+      const totalPage = Math.ceil(total / limit);
+
+      return {
+        meta: {
+          page: currentPage,
+          size: limit,
+          totalPage,
+          totalData: total,
+        },
+        data: (nodes as any[]).map((p: any) => ({
+          id: p.id,
+          userId: p.user_id,
+          name: p.name,
+          description: p.description,
+          condition: p.condition as ProductCondition,
+          coverImageUrl: toImageUrl(p.cover_image_link),
+          imageUrls: (p.image_links ?? []).map(toImageUrl),
+          status: p.status as ProductStatus,
+          createdAt: p.created_at ? new Date(p.created_at) : undefined,
+          updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
+        })),
+      };
+    } catch (e) {
+      return throwMsg(e, 'Failed to load products');
+    }
   },
 
-  getProductById: async (id: number): Promise<Product> => {
-    const res = await auctionClient.get(`/v1/products/${id}`);
-    const validatedResponse = withDataEnvelope(ProductSchema).parse(res);
-    return validatedResponse.data;
+  getProductById: async (id: string | number): Promise<Product> => {
+    try {
+      const res = await apiClient.get(`/products/${id}`);
+      const p = res.data.product;
+      return {
+        id: p.id,
+        userId: p.user_id,
+        name: p.name,
+        description: p.description,
+        condition: p.condition as ProductCondition,
+        coverImageUrl: toImageUrl(p.cover_image_link),
+        imageUrls: (p.image_links ?? []).map(toImageUrl),
+        status: p.status as ProductStatus,
+        createdAt: p.created_at ? new Date(p.created_at) : undefined,
+        updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
+      };
+    } catch (e) {
+      return throwMsg(e, 'Failed to load product');
+    }
   },
 };

@@ -24,7 +24,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   value,
   icon,
   onChange,
-  onBlur,
+  onBlur: _onBlur,
   error = false,
   errorMessage = "",
   disabled = false,
@@ -164,16 +164,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const handleCancel = () => {
     setIsOpen(false);
     setTimeout(() => inputRef.current?.blur(), 0);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (pickerRef.current?.contains(e.relatedTarget as Node)) {
-      return;
-    }
-    setIsOpen(false);
-    if (onBlur) {
-      onBlur(e);
-    }
   };
 
   const isSelected = (day: number) => {

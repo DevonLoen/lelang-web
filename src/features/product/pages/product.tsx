@@ -38,7 +38,7 @@ export default function ProductPage() {
 function ProductListSection({ onOpenModal }: { onOpenModal: () => void }): JSX.Element {
   const [status, setStatus] = useState<ProductStatus | undefined>(undefined);
 
-  const [condition, setCondition] = useState<ProductCondition | undefined>(ProductCondition.NEW);
+  const [condition, _setCondition] = useState<ProductCondition | undefined>(ProductCondition.NEW);
   const [filter, setFilter] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
 

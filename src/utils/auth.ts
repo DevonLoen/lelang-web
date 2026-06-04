@@ -10,10 +10,11 @@ interface DecodedToken {
 export const checkAuth = async (): Promise<boolean> => {
   const token = Cookies.get(Auth.TOKEN_KEY);
 
-  if (!token) return false;
+  if (!token || token === 'undefined' || token === 'null') return false;
 
   try {
-    const decoded = jwtDecode<DecodedToken>(token);
+    const rawToken = token.replace(/^Bearer\s+/i, '');
+    const decoded = jwtDecode<DecodedToken>(rawToken);
 
     const isExpired = decoded.exp * 1000 < Date.now();
     if (isExpired) {

@@ -1,6 +1,14 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body {
+  background:
+    radial-gradient(circle at top right, rgba(245, 158, 11, 0.09), transparent 45%),
+    radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.09), transparent 45%);
+  font-family: 'Manrope', 'Plus Jakarta Sans', 'Segoe UI', sans-serif;
+}
+
 input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
@@ -37,13 +45,4 @@ input[type="password"]::-webkit-clear-button {
   background: linear-gradient(135deg, #0f172a, #2d3a8c, #7c3aed);
   background-size: 200% 200%;
   animation: gradientMove 8s ease-in-out infinite;
-}
-@keyframes gradientMove {
-  0%,
-  100% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
 }
