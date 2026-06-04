@@ -76,7 +76,7 @@ const POST_AUCTION = new Set([
   'WAITING_FOR_SELLER_DECISION', 'WAITING_FOR_PAYMENT',
   'WAITING_FOR_SHIPMENT', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED',
 ]);
-const SHIPMENT_PHASE = new Set(['WAITING_FOR_SHIPMENT', 'SHIPPED', 'DELIVERED', 'COMPLETED']);
+const SHIPMENT_PHASE = new Set(['WAITING_FOR_SHIPMENT','WAITING_FOR_BUYER_ADDRESS', 'SHIPPED', 'DELIVERED', 'COMPLETED']);
 
 export default function AuctionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -558,7 +558,7 @@ export default function AuctionDetailPage() {
               <div className="space-y-5">
 
                 {/* Address selection */}
-                {!shipment?.buyer_address_id && (auction.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction.status === AuctionStatus.WAITING_FOR_SHIPMENT) && (
+                {(auction.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS) && (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-slate-700">Select your delivery address:</p>
                     {addresses.length === 0 ? (
