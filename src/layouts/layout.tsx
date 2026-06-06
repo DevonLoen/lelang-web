@@ -19,12 +19,11 @@ export default function MainLayout() {
   }, [navigate, location.pathname]);
 
   return (
-    <div className="bg-slate-50 min-h-screen relative">
+    <div className="min-h-screen bg-slate-50">
       <Header />
-      <div className="h-20"></div>
-      <Outlet />
+      <main className="pt-16">
+        <Outlet />
+      </main>
     </div>
   );
 }
-
-

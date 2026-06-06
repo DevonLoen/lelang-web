@@ -177,6 +177,41 @@ export interface ShipmentResponse {
   updated_at: string;
 }
 
+export interface ShipmentTrackingCourier {
+  company: string;
+  driver_name: string;
+  driver_phone: string;
+  name: string;
+  phone: string;
+}
+
+export interface ShipmentTrackingLocation {
+  address: string;
+  contact_name: string;
+}
+
+export interface ShipmentTrackingHistory {
+  note: string;
+  service_type: string;
+  status: string;
+  updated_at: string;
+}
+
+export interface ShipmentTrackingResponse {
+  courier: ShipmentTrackingCourier;
+  destination: ShipmentTrackingLocation;
+  history: ShipmentTrackingHistory[];
+  id: string;
+  link: string;
+  message: string;
+  object: string;
+  order_id: string;
+  origin: ShipmentTrackingLocation;
+  status: string;
+  success: boolean;
+  waybill_id: string;
+}
+
 export interface UserAddressResponse {
   id: string;
   user_id: string;

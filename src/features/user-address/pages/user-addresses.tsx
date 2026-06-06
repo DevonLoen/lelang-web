@@ -1,6 +1,6 @@
 ﻿import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { userAddressService } from '../services/user-address.service';
+import { ownService } from '../../own/services/own.service';
 import { biteshipService } from '../../biteship/services/biteship.service';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
@@ -36,7 +36,7 @@ export default function UserAddressesPage() {
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-addresses'],
-    queryFn: () => userAddressService.list(),
+    queryFn: () => ownService.listUserAddresses(),
   });
   const addresses = data?.nodes ?? [];
 
@@ -47,7 +47,7 @@ export default function UserAddressesPage() {
   });
 
   const { mutate: createAddress, isPending: isCreating } = useMutation({
-    mutationFn: () => userAddressService.create(form),
+    mutationFn: () => ownService.createUserAddress(form),
     onSuccess: () => {
       showToast('Address created!', ToastType.SUCCESS);
       cancelForm();
@@ -57,7 +57,7 @@ export default function UserAddressesPage() {
   });
 
   const { mutate: updateAddress, isPending: isUpdating } = useMutation({
-    mutationFn: () => userAddressService.update(editId!, form),
+    mutationFn: () => ownService.updateUserAddress(editId!, form),
     onSuccess: () => {
       showToast('Address updated!', ToastType.SUCCESS);
       cancelForm();
@@ -67,7 +67,7 @@ export default function UserAddressesPage() {
   });
 
   const { mutate: deleteAddress, isPending: isDeleting } = useMutation({
-    mutationFn: (addrId: string) => userAddressService.delete(addrId),
+    mutationFn: (addrId: string) => ownService.deleteUserAddress(addrId),
     onSuccess: () => {
       showToast('Address deleted!', ToastType.SUCCESS);
       setDeleteId(null);

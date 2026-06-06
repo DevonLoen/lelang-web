@@ -17,5 +17,16 @@ const attachToken = (config: any) => {
 
 const rejectError = (error: any) => Promise.reject(error);
 
+const handleError = (error: any) => {
+  if (error.response) {
+    const message = error.response.data?.message || error.response.data?.error || error.message;
+    return Promise.reject(new Error(message));
+  }
+  if (error.request) {
+    return Promise.reject(new Error('Network error. Please check your connection.'));
+  }
+  return Promise.reject(error);
+};
+
 apiClient.interceptors.request.use(attachToken, rejectError);
-apiClient.interceptors.response.use(unwrap);
+apiClient.interceptors.response.use(unwrap, handleError);

@@ -50,10 +50,9 @@ export default function SignupPage() {
     birth: "",
   });
 
-  const [isSubmitting, setIsSubmitting] = useState(false); // ⬅️ Khusus untuk submit
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { showToast } = useToast();
-
   const navigate = useNavigate();
 
   const validateField = async () => {
@@ -64,12 +63,15 @@ export default function SignupPage() {
       gender: "",
       birth: "",
     };
-    if (!/^\d+$/.test(field.phone)) {
-      newErrors.phone = "Phone must be a number";
+
+    if (!field.fullname.trim()) {
+      newErrors.fullname = "Full name is required";
     }
 
     if (!field.phone.trim()) {
       newErrors.phone = "Phone is required";
+    } else if (!/^\d+$/.test(field.phone)) {
+      newErrors.phone = "Phone must be a number";
     }
 
     if (!field.gender.trim()) {
@@ -77,11 +79,7 @@ export default function SignupPage() {
     }
 
     if (!field.birth.trim()) {
-      newErrors.birth = "Birth is required";
-    }
-
-    if (!field.fullname.trim()) {
-      newErrors.fullname = "Fullname is required";
+      newErrors.birth = "Birth date is required";
     }
 
     if (!field.password.trim()) {
@@ -114,7 +112,7 @@ export default function SignupPage() {
 
         const result = await new AuthService().sendOtp(payload);
         showToast(
-          result.message || 'OTP has been sent to your Phone Number',
+          result.message || 'OTP has been sent to your phone number',
           ToastType.SUCCESS
         );
         await saveDataToLocalStorage();
@@ -151,21 +149,38 @@ export default function SignupPage() {
     handleChange(e);
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !isSubmitting) {
+      handleSignup();
+    }
+  };
+
   const genderOptions = [
     { value: "FEMALE", label: "Female" },
     { value: "MALE", label: "Male" },
   ];
 
   return (
-    <div className="flex h-screen">
-      {/* Left Panel */}
-      <div className="flex w-full max-w-md flex-col justify-start bg-gradient-to-br from-blue-950 via-blue-800 to-purple-900 p-8 sm:w-1/3 border-r border-blue-300 shadow-lg overflow-y-auto py-12 scrollbar-hide">
-        <div className="mx-auto w-4/5">
-          <h2 className="mb-3 text-3xl font-bold text-white">SIGN UP</h2>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
+      {/* Mobile Header */}
+      <div className="lg:hidden flex items-center justify-center gap-3 py-6 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <img src={Logo} alt="Auction Logo" className="h-10 w-10" />
+        <h1 className="text-xl font-bold text-white">AUCTION</h1>
+      </div>
 
-          <div className="mb-3 relative">
+      {/* Left Panel - Form */}
+      <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-12 bg-slate-900 overflow-y-auto">
+        <div className="w-full max-w-md py-4" onKeyDown={handleKeyDown}>
+          {/* Header */}
+          <div className="mb-6">
+            <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
+            <p className="text-slate-400">Join our auction community today</p>
+          </div>
+
+          {/* Form */}
+          <div className="space-y-4">
             <InputField
-              label="Fullname"
+              label="Full Name"
               type="text"
               name="fullname"
               id="fullname"
@@ -174,14 +189,11 @@ export default function SignupPage() {
               onBlur={handleBlur}
               error={!!errors.fullname}
               errorMessage={errors.fullname}
-              icon={<FaUser className="h-5 w-5" />}
-              inputMode="decimal"
+              icon={<FaUser className="h-4 w-4" />}
             />
-          </div>
 
-          <div className="mb-3 relative">
             <InputField
-              label="Phone"
+              label="Phone Number"
               type="text"
               name="phone"
               id="phone"
@@ -190,29 +202,25 @@ export default function SignupPage() {
               onBlur={handleBlur}
               error={!!errors.phone}
               errorMessage={errors.phone}
-              icon={<FaPhone className="h-5 w-5" />}
-              inputMode="decimal"
+              icon={<FaPhone className="h-4 w-4" />}
+              inputMode="numeric"
             />
-          </div>
 
-          <div className="mb-3 relative">
             <DropdownField
               label="Gender"
               name="gender"
               id="gender"
-              icon={<FaIdCard className="h-5 w-5" />}
-              value={field.gender} // Hubungkan ke state
-              onChange={handleChange} // Hubungkan ke fungsi handler
-              options={genderOptions} // Berikan daftar pilihan
+              icon={<FaIdCard className="h-4 w-4" />}
+              value={field.gender}
+              onChange={handleChange}
+              options={genderOptions}
               error={!!errors.gender}
               errorMessage={errors.gender}
               onBlur={handleBlur}
             />
-          </div>
 
-          <div className="mb-3 relative">
             <DatePicker
-              label="Birth"
+              label="Date of Birth"
               name="birth"
               id="birth"
               value={field.birth}
@@ -220,11 +228,9 @@ export default function SignupPage() {
               onBlur={handleBlur}
               error={!!errors.birth}
               errorMessage={errors.birth}
-              icon={<FaCalendarAlt className="h-5 w-5" />}
+              icon={<FaCalendarAlt className="h-4 w-4" />}
             />
-          </div>
 
-          <div className="mb-3 relative">
             <InputFieldPassword
               label="Password"
               name="password"
@@ -235,67 +241,61 @@ export default function SignupPage() {
               error={!!errors.password}
               errorMessage={errors.password}
             />
-          </div>
 
-          <p className="mb-3 text-center text-xs text-gray-400 leading-relaxed">
-            By selecting <span className="font-medium text-white">Sign Up</span>
-            , you agree to our{" "}
-            <a
-              href="/user-agreement"
-              style={{ color: "#1A73E8" }}
-              className="hover:underline"
-            >
-              User Agreement
-            </a>{" "}
-            and acknowledge reading our{" "}
-            <a
-              href="/privacy-notice"
-              style={{ color: "#1A73E8" }}
-              className="hover:underline"
-            >
-              User Privacy Notice
-            </a>
-            .
-          </p>
+            <p className="text-xs text-slate-500 leading-relaxed">
+              By selecting <span className="font-medium text-slate-300">Sign Up</span>,
+              you agree to our{" "}
+              <a href="/user-agreement" className="text-amber-500 hover:text-amber-400">
+                User Agreement
+              </a>{" "}
+              and acknowledge reading our{" "}
+              <a href="/privacy-notice" className="text-amber-500 hover:text-amber-400">
+                Privacy Notice
+              </a>.
+            </p>
 
-          {/* Login Button */}
-          <button
-            onClick={handleSignup}
-            className="w-full h-12 rounded-xl bg-yellow-500 font-bold text-white transition hover:bg-yellow-600"
-          >
-            <div className="flex justify-center items-center w-full">
+            {/* Signup Button */}
+            <button
+              onClick={handleSignup}
+              disabled={isSubmitting}
+              className="w-full h-12 rounded-lg bg-amber-500 font-semibold text-white transition-all hover:bg-amber-600 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
+            >
               {isSubmitting ? (
-                <div className="flex justify-center space-x-1">
-                  <div className="h-4 w-1 bg-white animate-pulse"></div>
-                  <div className="h-4 w-1 bg-white animate-pulse [animation-delay:0.2s]"></div>
-                  <div className="h-4 w-1 bg-white animate-pulse [animation-delay:0.4s]"></div>
+                <div className="flex justify-center items-center gap-1">
+                  <div className="h-2 w-2 rounded-full bg-white animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 rounded-full bg-white animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 rounded-full bg-white animate-bounce"></div>
                 </div>
               ) : (
-                "SIGN UP"
+                "Create Account"
               )}
-            </div>
-          </button>
+            </button>
+          </div>
 
-          {/* Signup */}
-          <p className="mt-8 text-center text-sm text-gray-400">
-            Already have an Account?{" "}
-            <a href="/login" className="text-yellow-400 hover:underline">
-              Log In Here
+          {/* Login Link */}
+          <p className="mt-6 text-center text-slate-400">
+            Already have an account?{" "}
+            <a href="/login" className="text-amber-500 hover:text-amber-400 font-medium transition-colors">
+              Sign in
             </a>
           </p>
         </div>
       </div>
 
-      {/* Right Panel */}
-      <div className="hidden flex-1 flex-col items-center justify-center bg-animated-gradient shadow-lg px-6 text-center sm:flex">
-        <div className="mb-4 flex items-center">
-          <img src={Logo} alt="Logo" className="h-40 w-40" />
-          <h1 className="text-6xl font-bold text-white">AUCTION</h1>
+      {/* Right Panel - Branding (hidden on mobile) */}
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
+        <div className="max-w-md text-center">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <img src={Logo} alt="Auction Logo" className="h-20 w-20 drop-shadow-lg" />
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg">AUCTION</h1>
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Start Your Bidding Journey
+          </h2>
+          <p className="text-amber-100 text-lg">
+            Create an account and discover unique items from sellers around the world.
+          </p>
         </div>
-        <h2 className="mb-1 text-3xl font-bold text-white">
-          Enter the World of Bids
-        </h2>
-        <p className="text-gray-400">Your dream item is just one bid away.</p>
       </div>
     </div>
   );

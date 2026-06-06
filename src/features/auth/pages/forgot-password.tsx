@@ -1,32 +1,77 @@
 import Logo from "../../../assets/logo.png";
 import { useNavigate } from "react-router";
+import { FaArrowLeft, FaEnvelope } from "react-icons/fa";
 
 export default function ForgotPasswordPage() {
   const navigate = useNavigate();
 
   return (
-    <div className="flex h-screen">
-      <div className="flex w-full max-w-md flex-col justify-center bg-gradient-to-br from-blue-950 via-blue-800 to-purple-900 p-8 sm:w-1/3 border-r border-blue-300 shadow-lg">
-        <div className="mx-auto w-4/5">
-          <h2 className="mb-6 text-3xl font-bold text-white">FORGOT PASSWORD?</h2>
-          <div className="rounded-xl bg-white/10 border border-white/20 p-5 text-white space-y-3">
-            <p className="font-semibold text-yellow-300">Feature Not Available</p>
-            <p className="text-sm text-gray-300">Password reset via phone is currently not supported. Please contact support for assistance.</p>
+    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
+      {/* Mobile Header */}
+      <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <img src={Logo} alt="Auction Logo" className="h-12 w-12" />
+        <h1 className="text-2xl font-bold text-white">AUCTION</h1>
+      </div>
+
+      {/* Left Panel - Content */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-slate-900">
+        <div className="w-full max-w-md">
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-white mb-2">Forgot Password?</h2>
+            <p className="text-slate-400">{"Don't worry, we're here to help"}</p>
           </div>
-          <p className="mt-8 text-center text-sm text-gray-400">
-            <button onClick={() => navigate('/login')} className="text-yellow-400 hover:underline">
-              Back to Login
-            </button>
-          </p>
+
+          {/* Info Card */}
+          <div className="rounded-xl bg-slate-800 border border-slate-700 p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
+                <FaEnvelope className="h-5 w-5 text-amber-500" />
+              </div>
+              <h3 className="font-semibold text-white">Contact Support</h3>
+            </div>
+            <p className="text-slate-400 text-sm leading-relaxed">
+              Password reset via phone is currently not available. Please contact our support team for assistance with recovering your account.
+            </p>
+          </div>
+
+          {/* Support Options */}
+          <div className="space-y-3 mb-8">
+            <div className="rounded-lg bg-slate-800/50 border border-slate-700 p-4">
+              <p className="text-slate-300 text-sm">
+                <span className="text-slate-500">Email:</span>{" "}
+                <a href="mailto:support@auction.com" className="text-amber-500 hover:text-amber-400">
+                  support@auction.com
+                </a>
+              </p>
+            </div>
+          </div>
+
+          {/* Back Button */}
+          <button
+            onClick={() => navigate('/login')}
+            className="w-full h-12 rounded-lg bg-slate-800 border border-slate-700 font-semibold text-white transition-all hover:bg-slate-700 active:scale-[0.98] flex items-center justify-center gap-2"
+          >
+            <FaArrowLeft className="h-4 w-4" />
+            Back to Login
+          </button>
         </div>
       </div>
-      <div className="hidden flex-1 flex-col items-center justify-center bg-animated-gradient shadow-lg px-6 text-center sm:flex">
-        <div className="mb-4 flex items-center">
-          <img src={Logo} alt="Logo" className="h-40 w-40" />
-          <h1 className="text-6xl font-bold text-white">AUCTION</h1>
+
+      {/* Right Panel - Branding (hidden on mobile) */}
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
+        <div className="max-w-md text-center">
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <img src={Logo} alt="Auction Logo" className="h-20 w-20 drop-shadow-lg" />
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg">AUCTION</h1>
+          </div>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            We Have Got Your Back
+          </h2>
+          <p className="text-amber-100 text-lg">
+            Our support team is ready to help you regain access to your account.
+          </p>
         </div>
-        <h2 className="mb-1 text-3xl font-bold text-white">Enter the World of Bids</h2>
-        <p className="text-gray-400">Your dream item is just one bid away.</p>
       </div>
     </div>
   );
