@@ -7,6 +7,7 @@ import type {
   AuctionWinnerResponse,
   PaymentResponse,
   ShipmentResponse,
+  ShipmentTrackingResponse,
   PaginatedData,
 } from './auction.schema';
 
@@ -116,6 +117,15 @@ export const auctionService = {
     }
   },
 
+  updateSellerAddress: async (auctionId: string, shipmentId: string, address_id: string): Promise<ShipmentResponse> => {
+    try {
+      const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/seller-address`, { address_id });
+      return res.data.shipment;
+    } catch (e) {
+      return throwMsg(e, 'Failed to update seller address');
+    }
+  },
+
   shipItem: async (auctionId: string, shipmentId: string, payload: { courier_code: string; service_code: string }): Promise<ShipmentResponse> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/shipments/${shipmentId}/ship`, payload);
@@ -134,7 +144,12 @@ export const auctionService = {
     }
   },
 
-  getTracking: async (auctionId: string, shipmentId: string): Promise<unknown> => {
+  getTracking: async (auctionId: string, shipmentId: string): Promise<ShipmentTrackingResponse> => {
+    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!uuidPattern.test(auctionId) || !uuidPattern.test(shipmentId)) {
+      throw new Error('Invalid auction or shipment identifier');
+    }
+
     try {
       const res = await apiClient.get(`/auctions/${auctionId}/shipments/${shipmentId}/tracking`);
       return res.data.tracking;

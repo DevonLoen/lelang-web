@@ -16,6 +16,7 @@ export default function Header() {
   const { showToast } = useToast();
   const { data: user } = useProfile();
 
+  const isSuperAdmin = user?.roles?.some((r) => r.role === 'SUPERADMIN') ?? false;
   const isSeller = user?.roles?.some((r) => r.role === 'SELLER') ?? false;
   const isBidder = user?.roles?.some((r) => r.role === 'BIDDER') ?? false;
 
@@ -42,9 +43,9 @@ export default function Header() {
 
   const navLinks = [
     { to: '/auctions', label: 'Browse Auctions' },
-    ...(isSeller ? [{ to: '/own/auctions', label: 'My Auctions' }] : []),
-    ...(isBidder ? [{ to: '/own/bids', label: 'My Bids' }] : []),
-    ...(isSeller ? [{ to: '/own/products', label: 'My Products' }] : []),
+    ...(isSuperAdmin || isSeller ? [{ to: '/own/auctions', label: 'My Auctions' }] : []),
+    ...(isSuperAdmin || isBidder ? [{ to: '/own/bids', label: 'My Bids' }] : []),
+    ...(isSuperAdmin || isSeller ? [{ to: '/own/products', label: 'My Products' }] : []),
   ];
 
   const isActiveLink = (path: string) => location.pathname === path;
@@ -112,7 +113,7 @@ export default function Header() {
                   >
                     <User className="h-4 w-4 text-slate-400" /> My Profile
                   </Link>
-                  {isSeller && (
+                  {(isSuperAdmin || isSeller) && (
                     <>
                       <Link
                         to="/own/products"
@@ -130,7 +131,7 @@ export default function Header() {
                       </Link>
                     </>
                   )}
-                  {isBidder && (
+                  {(isSuperAdmin || isBidder) && (
                     <>
                       <Link
                         to="/own/bids"

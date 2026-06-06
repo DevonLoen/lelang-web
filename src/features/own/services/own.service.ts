@@ -21,8 +21,14 @@ import type {
   AuctionBidResponse,
   PaymentResponse,
   UserResponse,
+  UserAddressResponse,
   PaginatedData,
 } from '../../auction/services/auction.schema';
+import type {
+  UserAddressCreateRequest,
+  UserAddressUpdateRequest,
+  UserAddressFetchRequest,
+} from '../../user-address/services/user-address.schema';
 
 const throwMsg = (e: any, fallback: string): never => {
   throw new Error(e?.response?.data?.message || e?.message || fallback);
@@ -207,6 +213,51 @@ export const ownService = {
       return res.data.payment;
     } catch (e) {
       return throwMsg(e, 'Failed to load payment');
+    }
+  },
+
+  // ─── User Addresses (owner) ─────────────────────────────────────
+  listUserAddresses: async (params: UserAddressFetchRequest = {}): Promise<PaginatedData<UserAddressResponse>> => {
+    try {
+      const res = await apiClient.post('/own/user-addresses/filter', params);
+      return res.data;
+    } catch (e) {
+      return throwMsg(e, 'Failed to load addresses');
+    }
+  },
+
+  getUserAddress: async (userAddressId: string): Promise<UserAddressResponse> => {
+    try {
+      const res = await apiClient.get(`/own/user-addresses/${userAddressId}`);
+      return res.data.user_address;
+    } catch (e) {
+      return throwMsg(e, 'Failed to load address');
+    }
+  },
+
+  createUserAddress: async (payload: UserAddressCreateRequest): Promise<UserAddressResponse> => {
+    try {
+      const res = await apiClient.post('/own/user-addresses', payload);
+      return res.data.user_address;
+    } catch (e) {
+      return throwMsg(e, 'Failed to create address');
+    }
+  },
+
+  updateUserAddress: async (userAddressId: string, payload: UserAddressUpdateRequest): Promise<UserAddressResponse> => {
+    try {
+      const res = await apiClient.put(`/own/user-addresses/${userAddressId}`, payload);
+      return res.data.user_address;
+    } catch (e) {
+      return throwMsg(e, 'Failed to update address');
+    }
+  },
+
+  deleteUserAddress: async (userAddressId: string): Promise<void> => {
+    try {
+      await apiClient.delete(`/own/user-addresses/${userAddressId}`);
+    } catch (e) {
+      return throwMsg(e, 'Failed to delete address');
     }
   },
 

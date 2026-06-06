@@ -54,6 +54,7 @@ export default function ProfilePage() {
   });
 
   const isBidder = user?.roles?.some((r) => r.role === 'BIDDER') ?? false;
+  const isSuperAdmin = user?.roles?.some((r) => r.role === 'SUPERADMIN') ?? false;
 
   // Role requests
   const [requestedRole, setRequestedRole] = useState<string | null>(null);
@@ -106,7 +107,7 @@ export default function ProfilePage() {
   if (!user) return <div className="text-center py-20 text-slate-400">Failed to load profile.</div>;
 
   const isSeller = user.roles?.some((r) => r.role === 'SELLER') ?? false;
-  const showRoleCard = !isBidder || !isSeller;
+  const showRoleCard = !isSuperAdmin && (!isBidder || !isSeller);
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-12 space-y-5">

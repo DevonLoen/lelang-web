@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
 import { auctionService } from '../../auction/services/auction.service';
@@ -74,6 +74,7 @@ export default function OwnAuctionDetailPage() {
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [selectedCost, setSelectedCost] = useState('');
+  const [selectedSellerAddressId, setSelectedSellerAddressId] = useState('');
   const [selectedImg, setSelectedImg] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -141,6 +142,33 @@ export default function OwnAuctionDetailPage() {
     enabled: !!id && !!auction && SHIPMENT_STATUSES.has(auction.status),
   });
   const shipment = shipments?.[0];
+
+  // Owner addresses (for seller) - used to let seller choose a sender address before shipping
+  const { data: ownerAddressesData } = useQuery({
+    queryKey: ['own-user-addresses'],
+    queryFn: () => ownService.listUserAddresses(),
+    enabled: !!id && !!auction && auction.status === 'WAITING_FOR_SHIPMENT',
+  });
+  const ownerAddresses = ownerAddressesData?.nodes ?? [];
+
+  useEffect(() => {
+    if (!shipment || !ownerAddresses.length) return;
+    if (shipment.seller_address_id) {
+      setSelectedSellerAddressId(shipment.seller_address_id);
+      return;
+    }
+    const defaultAddress = ownerAddresses.find((addr) => addr.is_default);
+    if (defaultAddress) setSelectedSellerAddressId(defaultAddress.id);
+  }, [shipment, ownerAddresses]);
+
+  const { mutate: updateSellerAddress, isPending: isUpdatingSellerAddress } = useMutation({
+    mutationFn: () => auctionService.updateSellerAddress(id!, shipment!.id, selectedSellerAddressId),
+    onSuccess: () => {
+      showToast('Sender address selected!', ToastType.SUCCESS);
+      qc.invalidateQueries({ queryKey: ['own-auction-shipments', id] });
+    },
+    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+  });
 
   // Ship item
   const { mutate: shipItem, isPending: isShipping } = useMutation({
@@ -425,6 +453,94 @@ export default function OwnAuctionDetailPage() {
             </div>
             <div className="p-5 space-y-5">
 
+              {/* Seller address */}
+              {auction.status === 'WAITING_FOR_SHIPMENT' && (
+                <div className="space-y-4">
+                  <div className="space-y-3">
+                    <p className="text-sm font-semibold text-slate-700">Select your sender address:</p>
+                    {ownerAddresses.length === 0 ? (
+                      <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
+                        <MapPin className="h-8 w-8 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm text-slate-500 mb-1">No seller address on file.</p>
+                        <Link to="/own/addresses" className="text-indigo-600 text-sm font-medium hover:underline">
+                          + Add an address
+                        </Link>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="space-y-2">
+                          {ownerAddresses.map((addr) => (
+                            <label
+                              key={addr.id}
+                              className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
+                                selectedSellerAddressId === addr.id
+                                  ? 'border-indigo-500 bg-indigo-50 shadow-sm'
+                                  : 'border-slate-200 hover:border-indigo-300'
+                              }`}
+                            >
+                              <input
+                                type="radio"
+                                name="sellerAddress"
+                                value={addr.id}
+                                checked={selectedSellerAddressId === addr.id}
+                                onChange={(e) => setSelectedSellerAddressId(e.target.value)}
+                                className="mt-1 accent-indigo-600"
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold text-slate-800">
+                                  {addr.label}
+                                  {addr.is_default && (
+                                    <span className="ml-2 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full">
+                                      Default
+                                    </span>
+                                  )}
+                                </p>
+                                <p className="text-xs text-slate-500 mt-0.5">{addr.recipient_name} · {addr.phone}</p>
+                                <p className="text-xs text-slate-500">{addr.address}, {addr.city_name}, {addr.province_name} {addr.postal_code}</p>
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                        <button
+                          onClick={() => updateSellerAddress()}
+                          disabled={!selectedSellerAddressId || isUpdatingSellerAddress}
+                          className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                        >
+                          {isUpdatingSellerAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+                          {isUpdatingSellerAddress ? 'Saving…' : 'Use This Address'}
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  {shipment.seller_address_snapshot ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" /> Shipping From
+                      </p>
+                      <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 text-sm space-y-0.5">
+                        <p className="font-semibold text-slate-900">{shipment.seller_address_snapshot.recipient_name}</p>
+                        <p className="text-slate-500">{shipment.seller_address_snapshot.phone}</p>
+                        <p className="text-slate-600">{shipment.seller_address_snapshot.address}</p>
+                        <p className="text-slate-600">
+                          {shipment.seller_address_snapshot.city_name}, {shipment.seller_address_snapshot.province_name}{' '}
+                          {shipment.seller_address_snapshot.postal_code}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 text-sm">
+                      <p className="font-semibold text-slate-900">Shipping From</p>
+                      <p className="text-slate-500 mt-1">No sender address snapshot is available yet.</p>
+                      <p className="text-sm text-slate-500 mt-2">
+                        Please add your seller address in{' '}
+                        <Link to="/own/addresses" className="font-semibold text-indigo-600 hover:underline">My Addresses</Link> before shipping.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Buyer address */}
               {shipment.buyer_address_snapshot ? (
                 <div>
@@ -498,8 +614,20 @@ export default function OwnAuctionDetailPage() {
               {/* Tracking */}
               {shipment.tracking_number && (
                 <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-1.5">Tracking Number</p>
-                  <p className="font-mono font-bold text-purple-900 text-base">{shipment.tracking_number}</p>
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-1.5">Tracking Number</p>
+                      <p className="font-mono font-bold text-purple-900 text-base">{shipment.tracking_number}</p>
+                    </div>
+                    {auction?.id && (
+                      <Link
+                        to={`/${auction.id}/shipments/${shipment.id}/tracking`}
+                        className="inline-flex rounded-full border border-purple-200 bg-white px-3 py-2 text-sm font-semibold text-purple-700 hover:border-purple-300 hover:bg-purple-50"
+                      >
+                        View shipment tracking
+                      </Link>
+                    )}
+                  </div>
                   {shipment.shipped_at && (
                     <p className="text-xs text-purple-500 mt-1">Shipped on {formatDate(shipment.shipped_at)}</p>
                   )}

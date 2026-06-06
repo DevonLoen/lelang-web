@@ -9,8 +9,8 @@ import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import {
   Gavel, Clock, Tag, Package, Users, ImageOff,
-  Trophy, CreditCard, Truck, MapPin, CheckCircle2, Upload,
-  ChevronLeft, AlertCircle, CalendarDays, Banknote, Loader2,
+  Trophy, Truck, MapPin, CheckCircle2, Upload,
+  ChevronLeft, AlertCircle, CalendarDays, Loader2,
   X, ZoomIn, TrendingUp, Crown, Timer,
 } from 'lucide-react';
 
@@ -478,7 +478,7 @@ export default function AuctionDetailPage() {
             <span className="ml-auto text-xs text-slate-400 font-normal">{myBids.length} {myBids.length === 1 ? 'bid' : 'bids'}</span>
           </h3>
           <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-            {myBids.map((bid, i) => (
+            {myBids.map((bid) => (
               <div key={bid.id} className={`flex items-center justify-between py-3 ${bid.is_winner ? 'bg-green-50 -mx-4 px-4 rounded-xl' : ''}`}>
                 <div className="flex items-center gap-2">
                   {bid.is_winner && <Trophy className="h-4 w-4 text-amber-500 flex-shrink-0" />}
@@ -615,21 +615,52 @@ export default function AuctionDetailPage() {
                   </div>
                 )}
 
-                {/* Shipping address snapshot */}
-                {shipment?.buyer_address_snapshot && (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">Shipping To</p>
-                    <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 text-sm space-y-0.5">
-                      <p className="font-semibold text-slate-900">{shipment.buyer_address_snapshot.recipient_name}</p>
-                      <p className="text-slate-500">{shipment.buyer_address_snapshot.phone}</p>
-                      <p className="text-slate-600">{shipment.buyer_address_snapshot.address}</p>
-                      <p className="text-slate-600">
-                        {shipment.buyer_address_snapshot.city_name}, {shipment.buyer_address_snapshot.province_name}{' '}
-                        {shipment.buyer_address_snapshot.postal_code}
+                {/* Shipment addresses */}
+                <div className="grid gap-4 lg:grid-cols-2">
+                  {shipment?.seller_address_snapshot ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" /> Shipping From
                       </p>
+                      <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 text-sm space-y-0.5">
+                        <p className="font-semibold text-slate-900">{shipment.seller_address_snapshot.recipient_name}</p>
+                        <p className="text-slate-500">{shipment.seller_address_snapshot.phone}</p>
+                        <p className="text-slate-600">{shipment.seller_address_snapshot.address}</p>
+                        <p className="text-slate-600">
+                          {shipment.seller_address_snapshot.city_name}, {shipment.seller_address_snapshot.province_name}{' '}
+                          {shipment.seller_address_snapshot.postal_code}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  ) : (
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
+                      <p className="font-semibold text-slate-900">Shipping From</p>
+                      <p className="text-slate-500 mt-1">Seller sender address snapshot is not available yet.</p>
+                    </div>
+                  )}
+
+                  {shipment?.buyer_address_snapshot ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2 flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" /> Shipping To
+                      </p>
+                      <div className="bg-slate-50 rounded-xl border border-slate-100 p-4 text-sm space-y-0.5">
+                        <p className="font-semibold text-slate-900">{shipment.buyer_address_snapshot.recipient_name}</p>
+                        <p className="text-slate-500">{shipment.buyer_address_snapshot.phone}</p>
+                        <p className="text-slate-600">{shipment.buyer_address_snapshot.address}</p>
+                        <p className="text-slate-600">
+                          {shipment.buyer_address_snapshot.city_name}, {shipment.buyer_address_snapshot.province_name}{' '}
+                          {shipment.buyer_address_snapshot.postal_code}
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 text-sm">
+                      <p className="font-semibold text-slate-900">Shipping To</p>
+                      <p className="text-slate-500 mt-1">Buyer destination address is not set yet.</p>
+                    </div>
+                  )}
+                </div>
 
                 {/* Courier info */}
                 {shipment?.courier_code && (
@@ -651,7 +682,17 @@ export default function AuctionDetailPage() {
                 {shipment?.tracking_number && (
                   <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
                     <p className="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-1.5">Tracking Number</p>
-                    <p className="font-mono font-bold text-purple-900 text-base">{shipment.tracking_number}</p>
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="font-mono font-bold text-purple-900 text-base">{shipment.tracking_number}</p>
+                      {auction?.id && (
+                        <Link
+                          to={`/${auction.id}/shipments/${shipment.id}/tracking`}
+                          className="inline-flex rounded-full border border-purple-200 bg-white px-3 py-2 text-sm font-semibold text-purple-700 hover:border-purple-300 hover:bg-purple-50"
+                        >
+                          View shipment tracking
+                        </Link>
+                      )}
+                    </div>
                     {shipment.shipped_at && (
                       <p className="text-xs text-purple-500 mt-1">Shipped on {formatDate(shipment.shipped_at)}</p>
                     )}

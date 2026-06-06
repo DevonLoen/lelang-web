@@ -45,6 +45,7 @@ export default function RoleGate({ requiredRole, children }: Props) {
   // SELLER fields
   const [bankAccount, setBankAccount] = useState('');
 
+  const isSuperAdmin = user?.roles?.some((r) => r.role === 'SUPERADMIN') ?? false;
   const hasRole = user?.roles?.some((r) => r.role === requiredRole) ?? false;
   const hasBidderRole = user?.roles?.some((r) => r.role === 'BIDDER') ?? false;
   const needsBidderFirst = requiredRole === 'SELLER' && !hasBidderRole;
@@ -81,7 +82,7 @@ export default function RoleGate({ requiredRole, children }: Props) {
     );
   }
 
-  if (hasRole) return <>{children}</>;
+  if (hasRole || isSuperAdmin) return <>{children}</>;
 
   if (needsBidderFirst) {
     return (
