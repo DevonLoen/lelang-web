@@ -2,43 +2,20 @@ import axios from 'axios';
 import { Auth } from '../enums/auth-token';
 import Cookies from 'js-cookie';
 
-export const auctionClient = axios.create({
-  baseURL: import.meta.env.VITE_AUCTIONSERVICE_URL,
-  timeout: 3000,
+export const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000,
 });
 
-export const authClient = axios.create({
-  baseURL: import.meta.env.VITE_AUTHSERVICE_URL,
-  timeout: 3000,
-});
+const unwrap = (response: any): any => response.data;
 
-const unwrap = (response: any) => response.data;
+const attachToken = (config: any) => {
+  const token = Cookies.get(Auth.TOKEN_KEY);
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+};
 
-auctionClient.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get(Auth.TOKEN_KEY);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+const rejectError = (error: any) => Promise.reject(error);
 
-authClient.interceptors.request.use(
-  (config) => {
-    const token = Cookies.get(Auth.TOKEN_KEY);
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
-
-auctionClient.interceptors.response.use(unwrap);
-authClient.interceptors.response.use(unwrap);
+apiClient.interceptors.request.use(attachToken, rejectError);
+apiClient.interceptors.response.use(unwrap);

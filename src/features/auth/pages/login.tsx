@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useQueryClient } from '@tanstack/react-query';
 import Logo from "../../../assets/logo.png";
 import { FaPhone } from "react-icons/fa";
 import { ToastType } from "../../../enums/toast-type";
@@ -30,11 +31,11 @@ export default function LoginPage() {
     password: "",
   });
 
-  const [isLoading, setIsLoading] = useState(false); // ⬅️ Tambahkan state loading
-  const [isSubmitting, setIsSubmitting] = useState(false); // ⬅️ Khusus untuk submit
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { showToast } = useToast();
   const navigate = useNavigate();
+  const qc = useQueryClient();
 
   const validateField = async () => {
     const newErrors: LoginFieldErrors = {
@@ -64,13 +65,12 @@ export default function LoginPage() {
           phone: field.phone,
           password: field.password,
         };
-        await new AuthService().login(payload);
-        showToast("Login Successfully", ToastType.SUCCESS);
+        const result = await new AuthService().login(payload);
+        showToast(result.message || 'Login Successfully', ToastType.SUCCESS);
+        qc.invalidateQueries({ queryKey: ['own-profile'] });
         navigate(`/`);
       } catch (error: any) {
-        const finalMessage = `${error?.response?.data?.message || error?.message || "Unknown error"
-          }`;
-        showToast(finalMessage, ToastType.ERROR);
+        showToast(error.message || 'Login failed', ToastType.ERROR);
       } finally {
         setIsSubmitting(false);
       }
@@ -105,7 +105,7 @@ export default function LoginPage() {
 
           <div className="mb-3 relative">
             <InputField
-              label="Phone +62"
+              label="Phone"
               type="text"
               name="phone"
               id="phone"

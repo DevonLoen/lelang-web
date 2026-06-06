@@ -8,11 +8,8 @@ import { useNavigate } from "react-router";
 interface SendOtpFieldState {
   fullname: string;
   phone: string;
-  nik: string;
   password: string;
-  confirmPassword: string;
   gender: string;
-  bankAccountNumber: string;
   birth: string;
 }
 
@@ -27,11 +24,8 @@ export default function VerifyOtpPage() {
   const [field, setField] = useState<SendOtpFieldState>({
     fullname: "",
     phone: "",
-    nik: "",
     password: "",
-    confirmPassword: "",
     gender: "",
-    bankAccountNumber: "",
     birth: "",
   });
 
@@ -127,19 +121,21 @@ export default function VerifyOtpPage() {
     try {
       setIsSubmitting(true);
 
-      const payload = {
-        ...field,
+      const payload: SignupPayload = {
+        fullname: field.fullname,
+        phone: field.phone,
+        birth: field.birth,
+        gender: field.gender,
+        password: field.password,
         otp: code,
       };
 
-      await new AuthService().signup(payload);
+      const result = await new AuthService().signup(payload);
 
-      showToast("Sign Up Successfully", ToastType.SUCCESS);
+      showToast(result.message || 'Sign Up Successfully', ToastType.SUCCESS);
       navigate("/login");
     } catch (err: any) {
-      const finalMessage =
-        err?.response?.data?.message || err?.message || "Invalid OTP";
-      showToast(finalMessage, ToastType.ERROR);
+      showToast(err.message || 'Invalid OTP', ToastType.ERROR);
     } finally {
       setIsSubmitting(false);
     }
@@ -151,10 +147,10 @@ export default function VerifyOtpPage() {
       localStorage.setItem("otp_expire", expireTime.toString());
       setTimer(60);
 
-      await new AuthService().sendOtp({ phone: field.phone });
-      showToast("OTP Resent", ToastType.INFO);
+      const result = await new AuthService().sendOtp({ phone: field.phone });
+      showToast(result.message || 'OTP Resent', ToastType.INFO);
     } catch (err: any) {
-      showToast("Failed to resend OTP", ToastType.ERROR);
+      showToast(err.message || 'Failed to resend OTP', ToastType.ERROR);
     }
   };
 
