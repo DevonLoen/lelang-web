@@ -8,23 +8,39 @@ import { AuctionStatus } from '../services/auction.schema';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import {
-  Gavel, Clock, Tag, Package, Users, ImageOff,
-  Trophy, Truck, MapPin, CheckCircle2, Upload,
-  ChevronLeft, AlertCircle, CalendarDays, Loader2,
-  X, ZoomIn, TrendingUp, Crown, Timer,
+  Gavel,
+  Clock,
+  Tag,
+  Package,
+  Users,
+  ImageOff,
+  Trophy,
+  Truck,
+  MapPin,
+  CheckCircle2,
+  Upload,
+  ChevronLeft,
+  AlertCircle,
+  CalendarDays,
+  Loader2,
+  X,
+  ZoomIn,
+  TrendingUp,
+  Crown,
+  Timer,
 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  SCHEDULED:                   { label: 'Scheduled',             bg: 'bg-sky-100',    text: 'text-sky-800' },
-  ON_GOING:                    { label: 'Live Now',              bg: 'bg-green-100',  text: 'text-green-800' },
-  WAITING_FOR_PAYMENT:         { label: 'Awaiting Payment',      bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  WAITING_FOR_SELLER_DECISION: { label: 'Pending Decision',      bg: 'bg-orange-100', text: 'text-orange-800' },
-  WAITING_FOR_BUYER_ADDRESS:   { label: 'Waiting for Address',   bg: 'bg-indigo-100', text: 'text-indigo-800' },
-  WAITING_FOR_SHIPMENT:        { label: 'Preparing Shipment',    bg: 'bg-blue-100',   text: 'text-blue-800' },
-  SHIPPED:                     { label: 'Shipped',               bg: 'bg-purple-100', text: 'text-purple-800' },
-  DELIVERED:                   { label: 'Delivered',             bg: 'bg-teal-100',   text: 'text-teal-800' },
-  CANCELLED:                   { label: 'Cancelled',             bg: 'bg-red-100',    text: 'text-red-800' },
-  COMPLETED:                   { label: 'Completed',             bg: 'bg-slate-100',  text: 'text-slate-700' },
+  SCHEDULED: { label: 'Scheduled', bg: 'bg-sky-100', text: 'text-sky-800' },
+  ON_GOING: { label: 'Live Now', bg: 'bg-green-100', text: 'text-green-800' },
+  WAITING_FOR_PAYMENT: { label: 'Awaiting Payment', bg: 'bg-yellow-100', text: 'text-yellow-800' },
+  WAITING_FOR_SELLER_DECISION: { label: 'Pending Decision', bg: 'bg-orange-100', text: 'text-orange-800' },
+  WAITING_FOR_BUYER_ADDRESS: { label: 'Waiting for Address', bg: 'bg-indigo-100', text: 'text-indigo-800' },
+  WAITING_FOR_SHIPMENT: { label: 'Preparing Shipment', bg: 'bg-blue-100', text: 'text-blue-800' },
+  SHIPPED: { label: 'Shipped', bg: 'bg-purple-100', text: 'text-purple-800' },
+  DELIVERED: { label: 'Delivered', bg: 'bg-teal-100', text: 'text-teal-800' },
+  CANCELLED: { label: 'Cancelled', bg: 'bg-red-100', text: 'text-red-800' },
+  COMPLETED: { label: 'Completed', bg: 'bg-slate-100', text: 'text-slate-700' },
 };
 
 // ── Countdown hook ────────────────────────────────────────────────────────────
@@ -34,7 +50,10 @@ function useCountdown(targetIso: string | undefined) {
     if (!targetIso) return;
     const calc = () => {
       const diff = new Date(targetIso).getTime() - Date.now();
-      if (diff <= 0) { setTimeLeft({ d: 0, h: 0, m: 0, s: 0, expired: true }); return; }
+      if (diff <= 0) {
+        setTimeLeft({ d: 0, h: 0, m: 0, s: 0, expired: true });
+        return;
+      }
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
@@ -48,8 +67,18 @@ function useCountdown(targetIso: string | undefined) {
   return timeLeft;
 }
 
-function Section({ title, icon: Icon, accentBorder = 'border-slate-200', accentIcon = 'bg-slate-100 text-slate-600', children }: {
-  title: string; icon: any; accentBorder?: string; accentIcon?: string; children: React.ReactNode;
+function Section({
+  title,
+  icon: Icon,
+  accentBorder = 'border-slate-200',
+  accentIcon = 'bg-slate-100 text-slate-600',
+  children,
+}: {
+  title: string;
+  icon: any;
+  accentBorder?: string;
+  accentIcon?: string;
+  children: React.ReactNode;
 }) {
   return (
     <div className={`bg-white rounded-2xl border ${accentBorder} overflow-hidden shadow-sm`}>
@@ -69,14 +98,23 @@ const formatIDR = (n: number) =>
 
 const formatDate = (s: string) =>
   new Date(s).toLocaleString('id-ID', {
-    day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: 'long',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   });
 
 const POST_AUCTION = new Set([
-  'WAITING_FOR_SELLER_DECISION', 'WAITING_FOR_PAYMENT',
-  'WAITING_FOR_SHIPMENT', 'SHIPPED', 'DELIVERED', 'COMPLETED', 'CANCELLED',
+  'WAITING_FOR_SELLER_DECISION',
+  'WAITING_FOR_PAYMENT',
+  'WAITING_FOR_SHIPMENT',
+  'SHIPPED',
+  'DELIVERED',
+  'COMPLETED',
+  'CANCELLED',
 ]);
-const SHIPMENT_PHASE = new Set(['WAITING_FOR_SHIPMENT','WAITING_FOR_BUYER_ADDRESS', 'SHIPPED', 'DELIVERED', 'COMPLETED']);
+const SHIPMENT_PHASE = new Set(['WAITING_FOR_SHIPMENT', 'WAITING_FOR_BUYER_ADDRESS', 'SHIPPED', 'DELIVERED', 'COMPLETED']);
 
 export default function AuctionDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -102,27 +140,115 @@ export default function AuctionDetailPage() {
     retry: false,
   });
 
+  useEffect(() => {
+    if (!id || !auction || auction.status !== AuctionStatus.ON_GOING) return;
+
+    const wsUrl = `ws://localhost:8080/ws/auctions/${id}`;
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log(`Connected to live auction stream for Auction ID: ${id}`);
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const payload = JSON.parse(event.data);
+
+        const isItMe = profile && payload.user === profile.fullname;
+        const incomingUserId = isItMe ? profile.id : payload.user_id || -1;
+
+        queryClient.setQueryData(['auction', id], (oldData: any) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            winner: {
+              ...oldData.winner,
+              auction_bid: {
+                ...oldData.winner?.auction_bid,
+                amount: payload.amount,
+                user_id: incomingUserId,
+              },
+            },
+          };
+        });
+
+        if (isItMe) {
+          queryClient.setQueryData(['my-bids-for-auction', id], (oldData: any) => {
+            const newBidNode = {
+              id: Date.now(),
+              amount: payload.amount,
+              is_winner: true,
+              created_at: new Date().toISOString(),
+            };
+
+            if (!oldData || !oldData.nodes) {
+              return { nodes: [newBidNode] };
+            }
+
+            const updatedNodes = oldData.nodes.map((b: any) => ({ ...b, is_winner: false }));
+            return {
+              ...oldData,
+              nodes: [newBidNode, ...updatedNodes],
+            };
+          });
+        } else {
+          queryClient.setQueryData(['my-bids-for-auction', id], (oldData: any) => {
+            if (!oldData || !oldData.nodes) return oldData;
+            return {
+              ...oldData,
+              nodes: oldData.nodes.map((b: any) => ({ ...b, is_winner: false })),
+            };
+          });
+        }
+
+        queryClient.invalidateQueries({ queryKey: ['my-bids-for-auction', id] });
+
+        if (payload.user) {
+          showToast(`New bid placed by ${payload.user}: ${formatIDR(payload.amount)}`, ToastType.SUCCESS);
+        }
+      } catch (err) {
+        console.error('Failed to parse websocket message', err);
+      }
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket Error:', error);
+    };
+
+    ws.onclose = () => {
+      console.log('Disconnected from live auction stream');
+    };
+
+    return () => {
+      ws.close();
+    };
+  }, [id, auction?.status, queryClient]);
+  // ─────────────────────────────────────────────────────────────────────────────
+
   const isPostAuction = !!auction && POST_AUCTION.has(auction.status);
   const isShipmentPhase = !!auction && SHIPMENT_PHASE.has(auction.status);
-  const isLiveOrScheduled = !!auction && (auction.status === AuctionStatus.ON_GOING || auction.status === AuctionStatus.SCHEDULED);
+  const isLiveOrScheduled =
+    !!auction && (auction.status === AuctionStatus.ON_GOING || auction.status === AuctionStatus.SCHEDULED);
 
   // Countdown
-  const countdownTarget = auction?.status === AuctionStatus.SCHEDULED
-    ? auction.start_time
-    : auction?.status === AuctionStatus.ON_GOING
-    ? auction.end_time
-    : undefined;
+  const countdownTarget =
+    auction?.status === AuctionStatus.SCHEDULED
+      ? auction.start_time
+      : auction?.status === AuctionStatus.ON_GOING
+        ? auction.end_time
+        : undefined;
   const countdown = useCountdown(countdownTarget);
 
   // Fetch my own bids for this auction (to check if I'm currently winning or if I won)
   const { data: myBidsData } = useQuery({
     queryKey: ['my-bids-for-auction', id],
-    queryFn: () => ownService.listBids({ auction_id: id, limit: 50, sorts: [{ field: 'created_at', direction: 'desc' }] }),
+    queryFn: () =>
+      ownService.listBids({ auction_id: Number(id), limit: 50, sorts: [{ field: 'created_at', direction: 'desc' }] }),
     enabled: !!id && !!profile,
     retry: false,
   });
   const myBids = myBidsData?.nodes ?? [];
-  const myTopBid = myBids.find(b => b.is_winner === true) ?? myBids[0];
+  const myTopBid = myBids.find((b) => b.is_winner === true) ?? myBids[0];
   const isCurrentUserBuyer = myTopBid?.is_winner === true;
   const payment = myTopBid?.payment;
 
@@ -143,7 +269,9 @@ export default function AuctionDetailPage() {
   const { data: addressesData } = useQuery({
     queryKey: ['user-addresses'],
     queryFn: () => userAddressService.list(),
-    enabled: isCurrentUserBuyer && (auction?.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction?.status === AuctionStatus.WAITING_FOR_SHIPMENT),
+    enabled:
+      isCurrentUserBuyer &&
+      (auction?.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction?.status === AuctionStatus.WAITING_FOR_SHIPMENT),
   });
   const addresses = addressesData?.nodes ?? [];
 
@@ -190,7 +318,6 @@ export default function AuctionDetailPage() {
     placeBid(amount);
   };
 
-  // â”€â”€ Loading skeleton â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (isLoading) {
     return (
       <main className="max-w-5xl mx-auto px-4 py-10">
@@ -215,7 +342,10 @@ export default function AuctionDetailPage() {
       <main className="max-w-5xl mx-auto px-4 py-20 text-center">
         <AlertCircle className="h-14 w-14 text-slate-300 mx-auto" />
         <p className="text-slate-500 mt-4 text-lg">Auction not found.</p>
-        <Link to="/auctions" className="inline-block mt-6 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors">
+        <Link
+          to="/auctions"
+          className="inline-block mt-6 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+        >
           Back to Auctions
         </Link>
       </main>
@@ -230,7 +360,7 @@ export default function AuctionDetailPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 pb-16">
-      {/* â”€â”€ Top bar â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+      {/* ── Top bar ─────────────────────────────────────────── */}
       <div className="flex items-center gap-2 py-6">
         <button
           onClick={() => navigate(-1)}
@@ -262,13 +392,15 @@ export default function AuctionDetailPage() {
 
       {/* ── Live/Scheduled bidding status ──────────────────── */}
       {profile && isLiveOrScheduled && (
-        <div className={`mb-6 rounded-2xl px-5 py-3.5 flex items-center gap-3 border ${
-          iAmWinning
-            ? 'bg-green-50 border-green-200'
-            : myTopBid
-            ? 'bg-orange-50 border-orange-200'
-            : 'bg-indigo-50 border-indigo-100'
-        }`}>
+        <div
+          className={`mb-6 rounded-2xl px-5 py-3.5 flex items-center gap-3 border ${
+            iAmWinning
+              ? 'bg-green-50 border-green-200'
+              : myTopBid
+                ? 'bg-orange-50 border-orange-200'
+                : 'bg-indigo-50 border-indigo-100'
+          }`}
+        >
           {iAmWinning ? (
             <>
               <Crown className="h-5 w-5 text-green-600 flex-shrink-0" />
@@ -322,9 +454,7 @@ export default function AuctionDetailPage() {
                   key={i}
                   onClick={() => setSelectedImg(i)}
                   className={`h-16 w-16 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${
-                    selectedImg === i
-                      ? 'border-indigo-500 ring-2 ring-indigo-100'
-                      : 'border-transparent hover:border-slate-300'
+                    selectedImg === i ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-transparent hover:border-slate-300'
                   }`}
                 >
                   <img src={url} alt={`thumb-${i}`} className="w-full h-full object-cover" />
@@ -334,12 +464,14 @@ export default function AuctionDetailPage() {
           )}
         </div>
 
-        {/* â”€â”€ Info panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+        {/* ── Info panel ──────────────────────────────────── */}
         <div className="space-y-4">
           {/* Title & status */}
           <div>
             <div className="flex items-center gap-2 flex-wrap mb-2">
-              <span className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
+              <span
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}
+              >
                 {isLive && (
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -368,11 +500,13 @@ export default function AuctionDetailPage() {
 
           {/* Countdown */}
           {countdown && !countdown.expired && (
-            <div className={`rounded-2xl px-5 py-4 ${
-              isLive
-                ? 'bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-200'
-                : 'bg-gradient-to-br from-sky-600 to-blue-700 text-white shadow-lg shadow-sky-200'
-            }`}>
+            <div
+              className={`rounded-2xl px-5 py-4 ${
+                isLive
+                  ? 'bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-200'
+                  : 'bg-gradient-to-br from-sky-600 to-blue-700 text-white shadow-lg shadow-sky-200'
+              }`}
+            >
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80 flex items-center gap-2 mb-3">
                 <Timer className="h-4 w-4" /> {isLive ? 'Closes in' : 'Starts in'}
               </p>
@@ -395,7 +529,9 @@ export default function AuctionDetailPage() {
           {/* Auction stats */}
           <div className="bg-slate-50 rounded-2xl border border-slate-100 divide-y divide-slate-100">
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-slate-500 flex items-center gap-2"><Tag className="h-4 w-4 text-indigo-400" /> Starting Price</span>
+              <span className="text-sm text-slate-500 flex items-center gap-2">
+                <Tag className="h-4 w-4 text-indigo-400" /> Starting Price
+              </span>
               <strong className="text-slate-900 text-sm">{formatIDR(auction.starting_price)}</strong>
             </div>
             {highestBid != null && (
@@ -407,15 +543,21 @@ export default function AuctionDetailPage() {
               </div>
             )}
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-slate-500 flex items-center gap-2"><Package className="h-4 w-4 text-indigo-400" /> Platform Fee</span>
+              <span className="text-sm text-slate-500 flex items-center gap-2">
+                <Package className="h-4 w-4 text-indigo-400" /> Platform Fee
+              </span>
               <strong className="text-slate-900 text-sm">{formatIDR(auction.fee)}</strong>
             </div>
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-slate-500 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-indigo-400" /> Starts</span>
+              <span className="text-sm text-slate-500 flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-indigo-400" /> Starts
+              </span>
               <strong className="text-slate-900 text-sm">{formatDate(auction.start_time)}</strong>
             </div>
             <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-slate-500 flex items-center gap-2"><Clock className="h-4 w-4 text-orange-400" /> Ends</span>
+              <span className="text-sm text-slate-500 flex items-center gap-2">
+                <Clock className="h-4 w-4 text-orange-400" /> Ends
+              </span>
               <strong className="text-slate-900 text-sm">{formatDate(auction.end_time)}</strong>
             </div>
           </div>
@@ -462,7 +604,10 @@ export default function AuctionDetailPage() {
           {!profile && auction.status === AuctionStatus.ON_GOING && (
             <div className="rounded-2xl border border-dashed border-slate-200 p-5 text-center">
               <p className="text-sm text-slate-500 mb-3">Sign in to place a bid</p>
-              <Link to="/login" className="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+              <Link
+                to="/login"
+                className="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+              >
                 Sign In
               </Link>
             </div>
@@ -475,22 +620,32 @@ export default function AuctionDetailPage() {
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
           <h3 className="font-semibold text-slate-800 flex items-center gap-2 mb-4">
             <Gavel className="h-4 w-4 text-indigo-500" /> My Bids for This Auction
-            <span className="ml-auto text-xs text-slate-400 font-normal">{myBids.length} {myBids.length === 1 ? 'bid' : 'bids'}</span>
+            <span className="ml-auto text-xs text-slate-400 font-normal">
+              {myBids.length} {myBids.length === 1 ? 'bid' : 'bids'}
+            </span>
           </h3>
           <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
             {myBids.map((bid) => (
-              <div key={bid.id} className={`flex items-center justify-between py-3 ${bid.is_winner ? 'bg-green-50 -mx-4 px-4 rounded-xl' : ''}`}>
+              <div
+                key={bid.id}
+                className={`flex items-center justify-between py-3 ${bid.is_winner ? 'bg-green-50 -mx-4 px-4 rounded-xl' : ''}`}
+              >
                 <div className="flex items-center gap-2">
                   {bid.is_winner && <Trophy className="h-4 w-4 text-amber-500 flex-shrink-0" />}
                   <div>
                     <p className="text-sm font-medium text-slate-800">{formatIDR(bid.amount)}</p>
-                    <p className="text-xs text-slate-400">{new Date(bid.created_at).toLocaleString('id-ID', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}</p>
+                    <p className="text-xs text-slate-400">
+                      {new Date(bid.created_at).toLocaleString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </p>
                   </div>
                 </div>
                 {bid.is_winner && (
-                  <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
-                    Winning Bid
-                  </span>
+                  <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Winning Bid</span>
                 )}
               </div>
             ))}
@@ -538,7 +693,10 @@ export default function AuctionDetailPage() {
               {images.map((_, i) => (
                 <button
                   key={i}
-                  onClick={(e) => { e.stopPropagation(); setSelectedImg(i); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImg(i);
+                  }}
                   className={`h-2 rounded-full transition-all ${i === selectedImg ? 'bg-white w-6' : 'w-2 bg-white/40'}`}
                 />
               ))}
@@ -550,15 +708,12 @@ export default function AuctionDetailPage() {
       {/* ── Post-auction buyer sections ──────────────────────── */}
       {isCurrentUserBuyer && (
         <div className="mt-8 space-y-4">
-
           {/* Shipment */}
           {isShipmentPhase && (
-            <Section title="Shipment" icon={Truck}
-              accentBorder="border-purple-200" accentIcon="bg-purple-100 text-purple-600">
+            <Section title="Shipment" icon={Truck} accentBorder="border-purple-200" accentIcon="bg-purple-100 text-purple-600">
               <div className="space-y-5">
-
                 {/* Address selection */}
-                {(auction.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS) && (
+                {auction.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS && (
                   <div className="space-y-3">
                     <p className="text-sm font-semibold text-slate-700">Select your delivery address:</p>
                     {addresses.length === 0 ? (
@@ -593,11 +748,17 @@ export default function AuctionDetailPage() {
                                 <p className="text-sm font-semibold text-slate-800">
                                   {addr.label}
                                   {addr.is_default && (
-                                    <span className="ml-2 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full">Default</span>
+                                    <span className="ml-2 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full">
+                                      Default
+                                    </span>
                                   )}
                                 </p>
-                                <p className="text-xs text-slate-500 mt-0.5">{addr.recipient_name} · {addr.phone}</p>
-                                <p className="text-xs text-slate-500">{addr.address}, {addr.city_name}, {addr.province_name} {addr.postal_code}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">
+                                  {addr.recipient_name} · {addr.phone}
+                                </p>
+                                <p className="text-xs text-slate-500">
+                                  {addr.address}, {addr.city_name}, {addr.province_name} {addr.postal_code}
+                                </p>
                               </div>
                             </label>
                           ))}
@@ -667,7 +828,9 @@ export default function AuctionDetailPage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-slate-500">Courier</span>
-                      <span className="font-semibold text-slate-800">{shipment.courier_code} · {shipment.service_code}</span>
+                      <span className="font-semibold text-slate-800">
+                        {shipment.courier_code} · {shipment.service_code}
+                      </span>
                     </div>
                     {shipment.shipping_cost != null && (
                       <div className="flex items-center justify-between">
@@ -703,8 +866,13 @@ export default function AuctionDetailPage() {
                 {auction.status === AuctionStatus.SHIPPED && (
                   <div className="border-t border-slate-100 pt-4 space-y-3">
                     <p className="text-sm font-semibold text-slate-700">Confirm item received:</p>
-                    <input ref={proofRef} type="file" accept="image/*" className="hidden"
-                      onChange={(e) => setProofFile(e.target.files?.[0] ?? null)} />
+                    <input
+                      ref={proofRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => setProofFile(e.target.files?.[0] ?? null)}
+                    />
                     <button
                       type="button"
                       onClick={() => proofRef.current?.click()}

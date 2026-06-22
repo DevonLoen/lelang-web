@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import Logo from "../../../assets/logo.png";
-import { FaPhone } from "react-icons/fa";
-import { ToastType } from "../../../enums/toast-type";
-import { useToast } from "../../../contexts/toast-context";
-import { AuthService } from "../services/auth.service";
-import { InputField } from "../../../components/input-field";
-import { InputFieldPassword } from "../../../components/input-field-password";
-import { capitalizeWords } from "../../../utils/string";
-import { useNavigate } from "react-router";
+import Logo from '../../../assets/logo.png';
+import { FaPhone } from 'react-icons/fa';
+import { ToastType } from '../../../enums/toast-type';
+import { useToast } from '../../../contexts/toast-context';
+import { AuthService } from '../services/auth.service';
+import { InputField } from '../../../components/input-field';
+import { InputFieldPassword } from '../../../components/input-field-password';
+import { capitalizeWords } from '../../../utils/string';
+import { useNavigate } from 'react-router';
 
 interface LoginFieldState {
   phone: string;
@@ -22,13 +22,13 @@ interface LoginFieldErrors {
 
 export default function LoginPage() {
   const [field, setField] = useState<LoginFieldState>({
-    phone: "",
-    password: "",
+    phone: '',
+    password: '',
   });
 
   const [errors, setErrors] = useState<LoginFieldErrors>({
-    phone: "",
-    password: "",
+    phone: '',
+    password: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,17 +39,17 @@ export default function LoginPage() {
 
   const validateField = async () => {
     const newErrors: LoginFieldErrors = {
-      phone: "",
-      password: "",
+      phone: '',
+      password: '',
     };
     if (!field.phone.trim()) {
-      newErrors.phone = "Phone is required";
+      newErrors.phone = 'Phone is required';
     } else if (!/^\d+$/.test(field.phone)) {
-      newErrors.phone = "Phone must be a number";
+      newErrors.phone = 'Phone must be a number';
     }
 
     if (!field.password.trim()) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     }
 
     setErrors(newErrors);
@@ -81,7 +81,7 @@ export default function LoginPage() {
 
     setErrors((prev) => ({
       ...prev,
-      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : "",
+      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : '',
     }));
   };
 
@@ -97,8 +97,8 @@ export default function LoginPage() {
   };
 
   useEffect(() => {
-    localStorage.removeItem("signupPayload");
-    localStorage.removeItem("otp_expire");
+    localStorage.removeItem('signupPayload');
+    localStorage.removeItem('otp_expire');
   }, []);
 
   return (
@@ -148,10 +148,7 @@ export default function LoginPage() {
                 errorMessage={errors.password}
               />
               <div className="flex justify-end mt-2">
-                <a
-                  href="/forgot-password"
-                  className="text-sm text-amber-500 hover:text-amber-400 transition-colors"
-                >
+                <a href="/forgot-password" className="text-sm text-amber-500 hover:text-amber-400 transition-colors">
                   Forgot password?
                 </a>
               </div>
@@ -170,7 +167,7 @@ export default function LoginPage() {
                   <div className="h-2 w-2 rounded-full bg-white animate-bounce"></div>
                 </div>
               ) : (
-                "Sign In"
+                'Sign In'
               )}
             </button>
           </div>
@@ -192,9 +189,7 @@ export default function LoginPage() {
             <img src={Logo} alt="Auction Logo" className="h-20 w-20 drop-shadow-lg" />
             <h1 className="text-5xl font-bold text-white drop-shadow-lg">AUCTION</h1>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Enter the World of Bids
-          </h2>
+          <h2 className="text-3xl font-bold text-white mb-4">Enter the World of Bids</h2>
           <p className="text-amber-100 text-lg">
             Your dream item is just one bid away. Join thousands of users and start bidding today.
           </p>
