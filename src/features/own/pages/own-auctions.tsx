@@ -99,7 +99,7 @@ function CreateAuctionModal({ onClose }: { onClose: () => void }) {
                   <div className="px-3 py-2 text-sm text-slate-400">No verified products found</div>
                 ) : (
                   verifiedProducts.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
+                    <SelectItem key={p.id} value={String(p.id)}>
                       {p.name}
                     </SelectItem>
                   ))

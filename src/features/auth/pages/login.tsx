@@ -9,6 +9,7 @@ import { InputField } from '../../../components/input-field';
 import { InputFieldPassword } from '../../../components/input-field-password';
 import { capitalizeWords } from '../../../utils/string';
 import { useNavigate } from 'react-router';
+import { initFCM } from '@/utils/fcm';
 
 interface LoginFieldState {
   phone: string;
@@ -67,6 +68,9 @@ export default function LoginPage() {
         const result = await new AuthService().login(payload);
         showToast(result.message || 'Login Successfully', ToastType.SUCCESS);
         qc.invalidateQueries({ queryKey: ['own-profile'] });
+
+        // inisialisasi fcm
+        await initFCM();
         navigate(`/`);
       } catch (error: any) {
         showToast(error.message || 'Login failed', ToastType.ERROR);

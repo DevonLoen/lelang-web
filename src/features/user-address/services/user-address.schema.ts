@@ -8,10 +8,12 @@ export interface UserAddressCreateRequest {
   address: string;
   postal_code: string;
   biteship_area_id: string;
+  latitude?: number;
+  longitude?: number;
   is_default?: boolean;
 }
 
-export interface UserAddressUpdateRequest extends UserAddressCreateRequest {}
+export type UserAddressUpdateRequest = UserAddressCreateRequest;
 
 export interface UserAddressFetchRequest {
   page?: number;

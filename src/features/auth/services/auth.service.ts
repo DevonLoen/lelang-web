@@ -22,6 +22,10 @@ interface SendOtpPayload {
   phone?: string;
 }
 
+interface SaveFcmTokenPayload {
+  fcm_token: string;
+}
+
 export class AuthService {
   private formatPhone(phone: string): string {
     if (phone.startsWith('+62')) return phone;
@@ -56,6 +60,15 @@ export class AuthService {
       return res;
     } catch (error: any) {
       throw new Error(error.response?.data?.message || "Send OTP failed");
+    }
+  }
+
+  async saveFcmToken(data: SaveFcmTokenPayload) {
+    try {
+      const res = await apiClient.post('/auth/save-fcm-token', data);
+      return res;
+    } catch (error: any) {
+      throw new Error(error.response?.data?.message || "Save FCM Token failed");
     }
   }
 

@@ -56,7 +56,7 @@ export interface UserRoleResponse {
 
 export interface ProductStatusHistoryResponse {
   id: string;
-  product_id: string;
+  product_id: number;
   status: string;
   message?: string;
   created_at: string;
@@ -81,7 +81,7 @@ export interface ProductResponse {
 
 export interface AuctionResponse {
   id: string;
-  product_id: string;
+  product_id: number;
   product?: ProductResponse;
   starting_price: number;
   fee: number;
@@ -143,6 +143,8 @@ export interface ShipmentAddressSnapshot {
   province_name: string;
   postal_code: string;
   biteship_area_id: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface ShipmentCostEstimate {
@@ -224,6 +226,8 @@ export interface UserAddressResponse {
   address: string;
   postal_code: string;
   biteship_area_id: string;
+  latitude?: number;
+  longitude?: number;
   is_default: boolean;
   created_at: string;
   updated_at: string;
@@ -239,10 +243,12 @@ export interface UserAddressCreateRequest {
   address: string;
   postal_code: string;
   biteship_area_id: string;
+  latitude?: number;
+  longitude?: number;
   is_default?: boolean;
 }
 
-export interface UserAddressUpdateRequest extends UserAddressCreateRequest {}
+export type UserAddressUpdateRequest = UserAddressCreateRequest;
 
 export interface UserAddressFetchRequest {
   page?: number;

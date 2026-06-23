@@ -10,6 +10,24 @@ import type { BiteshipAreaResponse } from '../../auction/services/auction.schema
 import type { UserAddressCreateRequest } from '../services/user-address.schema';
 import { MapPin, Plus, Edit3, Trash2, Star, Search, X, CheckCircle2, ChevronLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
+import { LocationPicker, type LocationCoordinate } from '../components/location-picker';
+
+interface ReverseGeocodeResponse {
+  display_name?: string;
+  address?: {
+    house_number?: string;
+    road?: string;
+    neighbourhood?: string;
+    suburb?: string;
+    village?: string;
+    town?: string;
+    city?: string;
+    city_district?: string;
+    county?: string;
+    state?: string;
+    postcode?: string;
+  };
+}
 
 const emptyForm = (): UserAddressCreateRequest => ({
   label: '',
@@ -21,8 +39,54 @@ const emptyForm = (): UserAddressCreateRequest => ({
   address: '',
   postal_code: '',
   biteship_area_id: '',
+  latitude: undefined,
+  longitude: undefined,
   is_default: false,
 });
+
+const buildAddressLine = (result: ReverseGeocodeResponse) => {
+  const address = result.address;
+  if (!address) return result.display_name ?? '';
+
+  const street = [address.road, address.house_number].filter(Boolean).join(' ');
+  const parts = [
+    street,
+    address.neighbourhood,
+    address.suburb,
+    address.village,
+    address.town,
+    address.city_district,
+  ].filter(Boolean);
+
+  return parts.length > 0 ? parts.join(', ') : result.display_name ?? '';
+};
+
+const buildAreaSearch = (result: ReverseGeocodeResponse) => {
+  const address = result.address;
+  if (!address) return '';
+
+  return [
+    address.suburb,
+    address.village,
+    address.town,
+    address.city_district,
+    address.city,
+    address.county,
+    address.state,
+    address.postcode,
+  ]
+    .filter(Boolean)
+    .slice(0, 4)
+    .join(', ');
+};
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  return fallback;
+};
 
 export default function UserAddressesPage() {
   const { showToast } = useToast();
@@ -33,6 +97,8 @@ export default function UserAddressesPage() {
   const [form, setForm] = useState<UserAddressCreateRequest>(emptyForm());
   const [areaSearch, setAreaSearch] = useState('');
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [isLocationConfirmed, setIsLocationConfirmed] = useState(false);
+  const [isResolvingLocation, setIsResolvingLocation] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['user-addresses'],
@@ -53,7 +119,7 @@ export default function UserAddressesPage() {
       cancelForm();
       qc.invalidateQueries({ queryKey: ['user-addresses'] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to create address'), ToastType.ERROR),
   });
 
   const { mutate: updateAddress, isPending: isUpdating } = useMutation({
@@ -63,7 +129,7 @@ export default function UserAddressesPage() {
       cancelForm();
       qc.invalidateQueries({ queryKey: ['user-addresses'] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to update address'), ToastType.ERROR),
   });
 
   const { mutate: deleteAddress, isPending: isDeleting } = useMutation({
@@ -73,7 +139,7 @@ export default function UserAddressesPage() {
       setDeleteId(null);
       qc.invalidateQueries({ queryKey: ['user-addresses'] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to delete address'), ToastType.ERROR),
   });
 
   const startEdit = (addr: UserAddressResponse) => {
@@ -88,8 +154,11 @@ export default function UserAddressesPage() {
       address: addr.address,
       postal_code: addr.postal_code,
       biteship_area_id: addr.biteship_area_id,
+      latitude: addr.latitude,
+      longitude: addr.longitude,
       is_default: addr.is_default,
     });
+    setIsLocationConfirmed(addr.latitude !== undefined && addr.longitude !== undefined);
     setAreaSearch(`${addr.city_name}, ${addr.province_name}`);
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -107,11 +176,83 @@ export default function UserAddressesPage() {
     setAreaSearch(`${area.district}, ${area.city}, ${area.province}`);
   };
 
+  const reverseGeocodeLocation = async (coordinate: LocationCoordinate) => {
+    try {
+      const url = new URL('https://nominatim.openstreetmap.org/reverse');
+      url.searchParams.set('format', 'jsonv2');
+      url.searchParams.set('lat', String(coordinate.latitude));
+      url.searchParams.set('lon', String(coordinate.longitude));
+      url.searchParams.set('addressdetails', '1');
+
+      const res = await fetch(url.toString(), {
+        headers: { Accept: 'application/json' },
+      });
+      if (!res.ok) throw new Error('Failed to read location address');
+
+      const result = (await res.json()) as ReverseGeocodeResponse;
+      const addressLine = buildAddressLine(result);
+      const nextAreaSearch = buildAreaSearch(result);
+
+      setForm(prev => ({
+        ...prev,
+        address: addressLine || prev.address,
+        postal_code: result.address?.postcode || prev.postal_code,
+        biteship_area_id: '',
+        city_id: '',
+        city_name: '',
+        province_name: '',
+      }));
+      if (nextAreaSearch.length >= 3) setAreaSearch(nextAreaSearch);
+    } catch {
+      setForm(prev => ({
+        ...prev,
+        address: prev.address || `Pinned location (${coordinate.latitude.toFixed(7)}, ${coordinate.longitude.toFixed(7)})`,
+      }));
+      showToast('Coordinates confirmed, but address lookup failed. You can try another map point.', ToastType.ERROR);
+    }
+  };
+
+  const selectedCoordinate =
+    form.latitude !== undefined && form.longitude !== undefined
+      ? { latitude: form.latitude, longitude: form.longitude }
+      : null;
+  const isSaveDisabled = isCreating || isUpdating || !isLocationConfirmed;
+
+  const handleLocationChange = (coordinate: LocationCoordinate) => {
+    setIsLocationConfirmed(false);
+    setForm(prev => ({
+      ...prev,
+      address: '',
+      postal_code: '',
+      biteship_area_id: '',
+      city_id: '',
+      city_name: '',
+      province_name: '',
+      latitude: coordinate.latitude,
+      longitude: coordinate.longitude,
+    }));
+    setAreaSearch('');
+  };
+
+  const confirmLocation = async () => {
+    if (!selectedCoordinate) {
+      showToast('Please select your location on the map', ToastType.ERROR);
+      return;
+    }
+
+    setIsLocationConfirmed(true);
+    setIsResolvingLocation(true);
+    await reverseGeocodeLocation(selectedCoordinate);
+    setIsResolvingLocation(false);
+    showToast('Location confirmed. Please confirm the area result.', ToastType.SUCCESS);
+  };
+
   const cancelForm = () => {
     setShowForm(false);
     setEditId(null);
     setForm(emptyForm());
     setAreaSearch('');
+    setIsLocationConfirmed(false);
   };
 
   const handleSubmit = () => {
@@ -120,6 +261,9 @@ export default function UserAddressesPage() {
     if (!form.phone.trim()) return showToast('Phone is required', ToastType.ERROR);
     if (!form.address.trim()) return showToast('Address is required', ToastType.ERROR);
     if (!form.biteship_area_id) return showToast('Please select an area from the search results', ToastType.ERROR);
+    if (form.latitude === undefined || form.longitude === undefined || !isLocationConfirmed) {
+      return showToast('Please select and confirm your map location', ToastType.ERROR);
+    }
     if (editId) updateAddress();
     else createAddress();
   };
@@ -137,7 +281,7 @@ export default function UserAddressesPage() {
         </div>
         {!showForm && (
           <button
-            onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm()); setAreaSearch(''); }}
+            onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm()); setAreaSearch(''); setIsLocationConfirmed(false); }}
             className="flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition-colors">
             <Plus className="h-4 w-4" /> Add Address
           </button>
@@ -186,6 +330,14 @@ export default function UserAddressesPage() {
               </div>
             </div>
 
+            <LocationPicker
+              value={selectedCoordinate}
+              confirmed={isLocationConfirmed}
+              onChange={handleLocationChange}
+              onConfirm={confirmLocation}
+              onLocationError={(message) => showToast(message, ToastType.ERROR)}
+            />
+
             {/* Area search */}
             <div className="relative">
               <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Area / District *</label>
@@ -225,12 +377,29 @@ export default function UserAddressesPage() {
             </div>
 
             <div>
-              <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Full Address *</label>
+              <div className="flex items-center justify-between gap-3 mb-1.5">
+                <label className="text-xs font-semibold text-slate-600 block">Selected Address *</label>
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-slate-500">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Select on map
+                </span>
+              </div>
               <Input
                 value={form.address}
-                onChange={(e) => setForm(p => ({ ...p, address: e.target.value }))}
-                placeholder="Street, number, RT/RW, village..."
+                readOnly
+                placeholder={isResolvingLocation ? 'Reading address from map location...' : 'Confirm map location to fill address'}
+                className="pl-3 bg-slate-50 cursor-default"
+                aria-readonly="true"
               />
+              {isResolvingLocation && (
+                <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Looking up address details...
+                </p>
+              )}
+              {!isResolvingLocation && !form.address && (
+                <p className="text-xs text-slate-500 mt-1">Use the search bar, tap the map, or drag the pin, then confirm the map location.</p>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
@@ -251,10 +420,10 @@ export default function UserAddressesPage() {
               </button>
               <button
                 onClick={handleSubmit}
-                disabled={isCreating || isUpdating}
+                disabled={isSaveDisabled}
                 className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
                 {isCreating || isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {isCreating || isUpdating ? 'Savingâ€¦' : 'Save Address'}
+                {isCreating || isUpdating ? 'Savingâ€¦' : isLocationConfirmed ? 'Save Address' : 'Confirm Location First'}
               </button>
             </div>
           </div>
@@ -285,6 +454,11 @@ export default function UserAddressesPage() {
                     {addr.is_default && (
                       <span className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold">
                         <Star className="h-3 w-3" /> Default
+                      </span>
+                    )}
+                    {addr.latitude !== undefined && addr.longitude !== undefined && (
+                      <span className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold">
+                        <MapPin className="h-3 w-3" /> GPS
                       </span>
                     )}
                   </div>

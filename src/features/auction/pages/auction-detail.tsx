@@ -3,8 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auctionService } from '../services/auction.service';
 import { ownService } from '../../own/services/own.service';
-import { userAddressService } from '../../user-address/services/user-address.service';
-import { AuctionStatus } from '../services/auction.schema';
+import { AuctionStatus, type AuctionBidResponse, type AuctionResponse, type PaginatedData } from '../services/auction.schema';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import {
@@ -28,7 +27,24 @@ import {
   TrendingUp,
   Crown,
   Timer,
+  type LucideIcon,
 } from 'lucide-react';
+
+interface LiveBidPayload {
+  amount: number;
+  user?: string;
+  user_id?: string;
+}
+
+type BidListData = PaginatedData<AuctionBidResponse> | { nodes: AuctionBidResponse[] };
+
+const getErrorMessage = (error: unknown, fallback: string) => {
+  if (error instanceof Error) return error.message;
+  if (typeof error === 'object' && error !== null && 'message' in error && typeof error.message === 'string') {
+    return error.message;
+  }
+  return fallback;
+};
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
   SCHEDULED: { label: 'Scheduled', bg: 'bg-sky-100', text: 'text-sky-800' },
@@ -75,7 +91,7 @@ function Section({
   children,
 }: {
   title: string;
-  icon: any;
+  icon: LucideIcon;
   accentBorder?: string;
   accentIcon?: string;
   children: React.ReactNode;
@@ -139,9 +155,12 @@ export default function AuctionDetailPage() {
     queryFn: () => ownService.getProfile(),
     retry: false,
   });
+  const auctionStatus = auction?.status;
+  const profileId = profile?.id;
+  const profileFullname = profile?.fullname;
 
   useEffect(() => {
-    if (!id || !auction || auction.status !== AuctionStatus.ON_GOING) return;
+    if (!id || auctionStatus !== AuctionStatus.ON_GOING) return;
 
     const wsUrl = `ws://localhost:8080/ws/auctions/${id}`;
     const ws = new WebSocket(wsUrl);
@@ -152,19 +171,19 @@ export default function AuctionDetailPage() {
 
     ws.onmessage = (event) => {
       try {
-        const payload = JSON.parse(event.data);
+        const payload = JSON.parse(event.data) as LiveBidPayload;
 
-        const isItMe = profile && payload.user === profile.fullname;
-        const incomingUserId = isItMe ? profile.id : payload.user_id || -1;
+        const isItMe = !!profileFullname && payload.user === profileFullname;
+        const incomingUserId = isItMe && profileId ? profileId : payload.user_id || '';
 
-        queryClient.setQueryData(['auction', id], (oldData: any) => {
-          if (!oldData) return oldData;
+        queryClient.setQueryData<AuctionResponse | undefined>(['auction', id], (oldData) => {
+          if (!oldData?.winner?.auction_bid) return oldData;
           return {
             ...oldData,
             winner: {
               ...oldData.winner,
               auction_bid: {
-                ...oldData.winner?.auction_bid,
+                ...oldData.winner.auction_bid,
                 amount: payload.amount,
                 user_id: incomingUserId,
               },
@@ -173,30 +192,33 @@ export default function AuctionDetailPage() {
         });
 
         if (isItMe) {
-          queryClient.setQueryData(['my-bids-for-auction', id], (oldData: any) => {
-            const newBidNode = {
-              id: Date.now(),
+          queryClient.setQueryData<BidListData | undefined>(['my-bids-for-auction', id], (oldData) => {
+            const newBidNode: AuctionBidResponse = {
+              id: String(Date.now()),
+              auction_id: Number(id),
+              user_id: incomingUserId,
               amount: payload.amount,
               is_winner: true,
               created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
             };
 
             if (!oldData || !oldData.nodes) {
               return { nodes: [newBidNode] };
             }
 
-            const updatedNodes = oldData.nodes.map((b: any) => ({ ...b, is_winner: false }));
+            const updatedNodes = oldData.nodes.map((b) => ({ ...b, is_winner: false }));
             return {
               ...oldData,
               nodes: [newBidNode, ...updatedNodes],
             };
           });
         } else {
-          queryClient.setQueryData(['my-bids-for-auction', id], (oldData: any) => {
+          queryClient.setQueryData<BidListData | undefined>(['my-bids-for-auction', id], (oldData) => {
             if (!oldData || !oldData.nodes) return oldData;
             return {
               ...oldData,
-              nodes: oldData.nodes.map((b: any) => ({ ...b, is_winner: false })),
+              nodes: oldData.nodes.map((b) => ({ ...b, is_winner: false })),
             };
           });
         }
@@ -222,7 +244,7 @@ export default function AuctionDetailPage() {
     return () => {
       ws.close();
     };
-  }, [id, auction?.status, queryClient]);
+  }, [auctionStatus, id, profileFullname, profileId, queryClient, showToast]);
   // ─────────────────────────────────────────────────────────────────────────────
 
   const isPostAuction = !!auction && POST_AUCTION.has(auction.status);
@@ -268,10 +290,8 @@ export default function AuctionDetailPage() {
   // Addresses
   const { data: addressesData } = useQuery({
     queryKey: ['user-addresses'],
-    queryFn: () => userAddressService.list(),
-    enabled:
-      isCurrentUserBuyer &&
-      (auction?.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction?.status === AuctionStatus.WAITING_FOR_SHIPMENT),
+    queryFn: () => ownService.listUserAddresses(),
+    enabled: isCurrentUserBuyer && (auction?.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction?.status === AuctionStatus.WAITING_FOR_SHIPMENT),
   });
   const addresses = addressesData?.nodes ?? [];
 
@@ -283,7 +303,7 @@ export default function AuctionDetailPage() {
       setBidAmount('');
       queryClient.invalidateQueries({ queryKey: ['auction', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to place bid'), ToastType.ERROR),
   });
 
   // Set shipping address
@@ -293,7 +313,7 @@ export default function AuctionDetailPage() {
       showToast('Shipping address saved!', ToastType.SUCCESS);
       queryClient.invalidateQueries({ queryKey: ['auction-shipments', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to update address'), ToastType.ERROR),
   });
 
   // Confirm receipt
@@ -309,7 +329,7 @@ export default function AuctionDetailPage() {
       queryClient.invalidateQueries({ queryKey: ['auction', id] });
       queryClient.invalidateQueries({ queryKey: ['auction-shipments', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to confirm receipt'), ToastType.ERROR),
   });
 
   const handleBid = () => {
