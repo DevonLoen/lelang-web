@@ -97,7 +97,7 @@ export interface AuctionResponse {
 
 export interface AuctionBidResponse {
   id: string;
-  auction_id: string;
+  auction_id: number;
   user_id: string;
   amount: number;
   is_winner?: boolean;
@@ -110,7 +110,7 @@ export interface AuctionBidResponse {
 
 export interface AuctionWinnerResponse {
   id: string;
-  auction_id: string;
+  auction_id: number;
   auction_bid_id: string;
   status: string;
   auction?: AuctionResponse;
@@ -121,7 +121,7 @@ export interface AuctionWinnerResponse {
 
 export interface PaymentResponse {
   id: string;
-  auction_id: string;
+  auction_id: number;
   user_id: string;
   amount: number;
   status: string;

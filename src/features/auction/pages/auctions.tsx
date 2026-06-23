@@ -57,7 +57,9 @@ export default function AuctionsPage() {
 
           <div className="rounded-2xl bg-white/90 border border-amber-100 px-4 py-3 shadow-sm min-w-[180px]">
             <p className="text-xs uppercase tracking-wide text-slate-500">Showing</p>
-            <p className="text-lg font-semibold text-slate-900">{total} result{total !== 1 ? 's' : ''}</p>
+            <p className="text-lg font-semibold text-slate-900">
+              {total} result{total !== 1 ? 's' : ''}
+            </p>
             <p className="text-xs text-slate-500 mt-0.5">Filter: {activeFilterLabel}</p>
           </div>
         </div>
@@ -68,7 +70,10 @@ export default function AuctionsPage() {
         {STATUS_OPTIONS.map((o) => (
           <button
             key={o.value}
-            onClick={() => { setStatus(o.value as AuctionStatusType | ''); setPage(1); }}
+            onClick={() => {
+              setStatus(o.value as AuctionStatusType | '');
+              setPage(1);
+            }}
             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
               status === o.value
                 ? 'bg-slate-900 text-white shadow-md'
@@ -114,7 +119,13 @@ export default function AuctionsPage() {
       {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-9 w-9 p-0 border-slate-200">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="h-9 w-9 p-0 border-slate-200"
+          >
             <ChevronLeft className="h-4 w-4" />
           </Button>
           {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
@@ -132,7 +143,13 @@ export default function AuctionsPage() {
               </button>
             );
           })}
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-9 w-9 p-0 border-slate-200">
+          <Button
+            variant="outline"
+            size="sm"
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="h-9 w-9 p-0 border-slate-200"
+          >
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

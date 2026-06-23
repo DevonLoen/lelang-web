@@ -25,7 +25,7 @@ export interface OwnProductFetchRequest {
 }
 
 export interface OwnAuctionCreateRequest {
-  product_id: string;
+  product_id: number;
   starting_price: number;
   start_time: string;
   end_time: string;
@@ -47,14 +47,14 @@ export interface OwnAuctionFetchRequest {
 export interface OwnBidFetchRequest {
   page?: number;
   limit?: number;
-  auction_id?: string;
+  auction_id?: number;
   sorts?: { field: string; direction: 'asc' | 'desc' }[];
 }
 
 export interface OwnPaymentFetchRequest {
   page?: number;
   limit?: number;
-  auction_id?: string;
+  auction_id?: number;
   status?: string;
   sorts?: { field: string; direction: 'asc' | 'desc' }[];
 }
@@ -75,7 +75,7 @@ export interface OwnRoleRequestCreateRequest {
 
 export interface RoleRequestResponse {
   id: string;
-  user_id: string;
+  user_id: number;
   role: string;
   status: string;
   message?: string;
@@ -89,8 +89,8 @@ export interface WithdrawalRequestCreateRequest {
 
 export interface WithdrawalRequestResponse {
   id: string;
-  user_id: string;
-  validator_user_id?: string;
+  user_id: number;
+  validator_user_id?: number;
   amount: number;
   status: string;
   created_at: string;

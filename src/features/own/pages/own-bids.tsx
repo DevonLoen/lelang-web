@@ -30,14 +30,15 @@ export default function OwnBidsPage() {
   const totalPages = Math.ceil(total / limit);
 
   // Filter bids based on winner status
-  const bids = filter === 'all' 
-    ? allBids 
-    : filter === 'won' 
-    ? allBids.filter(b => b.is_winner === true)
-    : allBids.filter(b => b.is_winner !== true);
+  const bids =
+    filter === 'all'
+      ? allBids
+      : filter === 'won'
+        ? allBids.filter((b) => b.is_winner === true)
+        : allBids.filter((b) => b.is_winner !== true);
 
-  const wonCount = allBids.filter(b => b.is_winner === true).length;
-  const notWonCount = allBids.filter(b => b.is_winner !== true).length;
+  const wonCount = allBids.filter((b) => b.is_winner === true).length;
+  const notWonCount = allBids.filter((b) => b.is_winner !== true).length;
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-10">
@@ -51,51 +52,33 @@ export default function OwnBidsPage() {
         <button
           onClick={() => setFilter('all')}
           className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            filter === 'all'
-              ? 'text-indigo-600'
-              : 'text-slate-500 hover:text-slate-700'
+            filter === 'all' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'
           }`}
         >
           All Bids
-          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-            {allBids.length}
-          </span>
-          {filter === 'all' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-          )}
+          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">{allBids.length}</span>
+          {filter === 'all' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
         </button>
         <button
           onClick={() => setFilter('won')}
           className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            filter === 'won'
-              ? 'text-indigo-600'
-              : 'text-slate-500 hover:text-slate-700'
+            filter === 'won' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'
           }`}
         >
           <Trophy className="h-3.5 w-3.5 inline mr-1" />
           Won
-          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">
-            {wonCount}
-          </span>
-          {filter === 'won' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-          )}
+          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">{wonCount}</span>
+          {filter === 'won' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
         </button>
         <button
           onClick={() => setFilter('not-won')}
           className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            filter === 'not-won'
-              ? 'text-indigo-600'
-              : 'text-slate-500 hover:text-slate-700'
+            filter === 'not-won' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'
           }`}
         >
           Not Won
-          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">
-            {notWonCount}
-          </span>
-          {filter === 'not-won' && (
-            <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />
-          )}
+          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">{notWonCount}</span>
+          {filter === 'not-won' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
         </button>
       </div>
 
@@ -117,7 +100,9 @@ export default function OwnBidsPage() {
           <p className="text-base font-medium">No bids placed yet</p>
           <p className="text-sm mt-1">Browse auctions and place your first bid!</p>
           <Link to="/auctions">
-            <button className="mt-4 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">Browse Auctions</button>
+            <button className="mt-4 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+              Browse Auctions
+            </button>
           </Link>
         </div>
       ) : (
@@ -130,11 +115,11 @@ export default function OwnBidsPage() {
             const cardBorder = paymentPending
               ? 'border-yellow-300 bg-yellow-50/60'
               : isWinner
-              ? 'border-green-300 bg-green-50/40'
-              : 'border-slate-100 hover:border-indigo-200';
+                ? 'border-green-300 bg-green-50/40'
+                : 'border-slate-100 hover:border-indigo-200';
             return (
               <Link key={bid.id} to={`/own/bids/${bid.id}`}>
-            <div className={`bg-white rounded-2xl border hover:shadow-md transition-all cursor-pointer group ${cardBorder}`}>
+                <div className={`bg-white rounded-2xl border hover:shadow-md transition-all cursor-pointer group ${cardBorder}`}>
                   <div className="p-4 flex items-center gap-4">
                     <div className="h-16 w-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
                       {product?.cover_image_link ? (
@@ -147,11 +132,12 @@ export default function OwnBidsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h3 className="font-semibold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
-                        {product?.name ?? `Auction #${bid.auction_id.slice(0, 8)}`}
+                        {product?.name ?? `Auction #${bid.auction_id}`}
                       </h3>
                       <div className="flex flex-wrap gap-3 mt-1.5">
                         <span className="flex items-center gap-1 text-xs text-slate-500">
-                          <Tag className="h-3.5 w-3.5 text-indigo-400" /> <strong className="text-indigo-600">{formatIDR(bid.amount)}</strong>
+                          <Tag className="h-3.5 w-3.5 text-indigo-400" />{' '}
+                          <strong className="text-indigo-600">{formatIDR(bid.amount)}</strong>
                         </span>
                         <span className="flex items-center gap-1 text-xs text-slate-400">
                           <Clock className="h-3.5 w-3.5" /> {formatDate(bid.created_at)}
@@ -186,19 +172,31 @@ export default function OwnBidsPage() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 mt-10">
-          <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
-            className="h-9 w-9 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors">
+          <button
+            disabled={page <= 1}
+            onClick={() => setPage((p) => p - 1)}
+            className="h-9 w-9 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
           {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
             const start = Math.max(1, Math.min(page - 2, totalPages - 4));
             const p = start + i;
             return (
-              <button key={p} onClick={() => setPage(p)} className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${ p === page ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100' }`}>{p}</button>
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+              >
+                {p}
+              </button>
             );
           })}
-          <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}
-            className="h-9 w-9 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors">
+          <button
+            disabled={page >= totalPages}
+            onClick={() => setPage((p) => p + 1)}
+            className="h-9 w-9 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
