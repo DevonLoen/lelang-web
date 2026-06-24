@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import Logo from "../../../assets/logo.png";
-import { useToast } from "../../../contexts/toast-context";
-import { ToastType } from "../../../enums/toast-type";
-import { AuthService, type SignupPayload } from "../services/auth.service";
-import { useNavigate } from "react-router";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Logo from '../../../assets/logo.png';
+import { useToast } from '../../../contexts/toast-context';
+import { ToastType } from '../../../enums/toast-type';
+import { AuthService, type SignupPayload } from '../services/auth.service';
+import { useNavigate } from 'react-router';
 
 interface SendOtpFieldState {
   fullname: string;
@@ -16,7 +16,7 @@ interface SendOtpFieldState {
 const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
 export default function VerifyOtpPage() {
-  const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState<string[]>(['', '', '', '', '', '']);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [timer, setTimer] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -24,35 +24,32 @@ export default function VerifyOtpPage() {
   const navigate = useNavigate();
 
   const [field, setField] = useState<SendOtpFieldState>({
-    fullname: "",
-    email: "",
-    password: "",
-    gender: "",
-    birth: "",
+    fullname: '',
+    email: '',
+    password: '',
+    gender: '',
+    birth: '',
   });
 
   const loadDataAndValidate = useCallback(() => {
-    const savedDataString = localStorage.getItem("signupPayload");
+    const savedDataString = localStorage.getItem('signupPayload');
 
     if (savedDataString) {
       try {
         const savedData = JSON.parse(savedDataString);
         setField(savedData);
       } catch {
-        showToast(
-          "Invalid registration data. Please sign up again.",
-          ToastType.ERROR
-        );
-        navigate("/signup");
+        showToast('Invalid registration data. Please sign up again.', ToastType.ERROR);
+        navigate('/signup');
       }
     } else {
-      showToast("Please complete the registration form first.", ToastType.INFO);
-      navigate("/signup");
+      showToast('Please complete the registration form first.', ToastType.INFO);
+      navigate('/signup');
     }
   }, [navigate, showToast]);
 
   useEffect(() => {
-    const savedExpire = localStorage.getItem("otp_expire");
+    const savedExpire = localStorage.getItem('otp_expire');
     if (savedExpire) {
       const expireTime = parseInt(savedExpire, 10);
       const now = Date.now();
@@ -89,21 +86,18 @@ export default function VerifyOtpPage() {
     }
   };
 
-  const handleKeyDown = (
-    index: number,
-    e: React.KeyboardEvent<HTMLInputElement>
-  ) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
       inputRefs.current[index - 1]?.focus();
     }
   };
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData("text").slice(0, 6);
+    const pastedData = e.clipboardData.getData('text').slice(0, 6);
     if (/^\d+$/.test(pastedData)) {
       const newOtp = [...otp];
-      pastedData.split("").forEach((char, i) => {
+      pastedData.split('').forEach((char, i) => {
         if (i < 6) newOtp[i] = char;
       });
       setOtp(newOtp);
@@ -113,10 +107,10 @@ export default function VerifyOtpPage() {
   };
 
   const handleVerifyOtp = async () => {
-    const code = otp.join("");
+    const code = otp.join('');
 
     if (code.length !== 6) {
-      showToast("OTP must be 6 digits", ToastType.ERROR);
+      showToast('OTP must be 6 digits', ToastType.ERROR);
       return;
     }
 
@@ -135,7 +129,7 @@ export default function VerifyOtpPage() {
       const result = await new AuthService().signup(payload);
 
       showToast(result.message || 'Sign up successful!', ToastType.SUCCESS);
-      navigate("/login");
+      navigate('/login');
     } catch (err: unknown) {
       showToast(getErrorMessage(err, 'Invalid OTP'), ToastType.ERROR);
     } finally {
@@ -146,7 +140,7 @@ export default function VerifyOtpPage() {
   const handleResendOtp = async () => {
     try {
       const expireTime = Date.now() + 60000;
-      localStorage.setItem("otp_expire", expireTime.toString());
+      localStorage.setItem('otp_expire', expireTime.toString());
       setTimer(60);
 
       const result = await new AuthService().sendOtp({ email: field.email });
@@ -160,8 +154,7 @@ export default function VerifyOtpPage() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <img src={Logo} alt="Auction Logo" className="h-12 w-12" />
-        <h1 className="text-2xl font-bold text-white">AUCTION</h1>
+        <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
       </div>
 
       {/* Left Panel - Form */}
@@ -171,8 +164,7 @@ export default function VerifyOtpPage() {
           <div className="mb-8 text-center lg:text-left">
             <h2 className="text-3xl font-bold text-white mb-2">Verify Your Email</h2>
             <p className="text-slate-400">
-              Enter the 6-digit code sent to{" "}
-              <span className="text-amber-500 font-medium">{field.email || "your email"}</span>
+              Enter the 6-digit code sent to <span className="text-amber-500 font-medium">{field.email || 'your email'}</span>
             </p>
           </div>
 
@@ -207,7 +199,7 @@ export default function VerifyOtpPage() {
                 <div className="h-2 w-2 rounded-full bg-white animate-bounce"></div>
               </div>
             ) : (
-              "Verify Code"
+              'Verify Code'
             )}
           </button>
 
@@ -218,12 +210,10 @@ export default function VerifyOtpPage() {
               disabled={timer > 0}
               onClick={handleResendOtp}
               className={`font-medium transition-colors ${
-                timer > 0
-                  ? "text-slate-500 cursor-not-allowed"
-                  : "text-amber-500 hover:text-amber-400"
+                timer > 0 ? 'text-slate-500 cursor-not-allowed' : 'text-amber-500 hover:text-amber-400'
               }`}
             >
-              {timer > 0 ? `Resend in ${timer}s` : "Resend OTP"}
+              {timer > 0 ? `Resend in ${timer}s` : 'Resend OTP'}
             </button>
           </p>
 
@@ -239,16 +229,11 @@ export default function VerifyOtpPage() {
       {/* Right Panel - Branding (hidden on mobile) */}
       <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
         <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <img src={Logo} alt="Auction Logo" className="h-20 w-20 drop-shadow-lg" />
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg">AUCTION</h1>
+          <div className="flex items-center justify-center gap-4">
+            <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Almost There!
-          </h2>
-          <p className="text-amber-100 text-lg">
-            Verify your email address to complete your registration and start bidding.
-          </p>
+          <h2 className="text-3xl font-bold text-white mb-4">Almost There!</h2>
+          <p className="text-amber-100 text-lg">Verify your email address to complete your registration and start bidding.</p>
         </div>
       </div>
     </div>

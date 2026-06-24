@@ -3,8 +3,16 @@ import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
 import { Link, useNavigate } from 'react-router';
 import {
-  CreditCard, ChevronLeft, ChevronRight, Clock, Banknote,
-  ImageOff, CheckCircle2, XCircle, Loader2, AlertCircle,
+  CreditCard,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Banknote,
+  ImageOff,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  AlertCircle,
 } from 'lucide-react';
 
 const formatIDR = (n: number) =>
@@ -16,22 +24,26 @@ const formatDate = (s: string) =>
 const PAYMENT_STATUS: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
   WAITING_FOR_PAYMENT: {
     label: 'Awaiting Payment',
-    bg: 'bg-yellow-100', text: 'text-yellow-800',
+    bg: 'bg-yellow-100',
+    text: 'text-yellow-800',
     icon: <Clock className="h-3.5 w-3.5" />,
   },
   PAID: {
     label: 'Paid',
-    bg: 'bg-green-100', text: 'text-green-800',
+    bg: 'bg-green-100',
+    text: 'text-green-800',
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
   },
   EXPIRED: {
     label: 'Expired',
-    bg: 'bg-red-100', text: 'text-red-700',
+    bg: 'bg-red-100',
+    text: 'text-red-700',
     icon: <XCircle className="h-3.5 w-3.5" />,
   },
   CANCELLED: {
     label: 'Cancelled',
-    bg: 'bg-slate-100', text: 'text-slate-600',
+    bg: 'bg-slate-100',
+    text: 'text-slate-600',
     icon: <XCircle className="h-3.5 w-3.5" />,
   },
 };
@@ -83,19 +95,22 @@ export default function OwnPaymentsPage() {
             {
               label: 'Total',
               value: total,
-              bg: 'bg-indigo-50', text: 'text-indigo-700',
+              bg: 'bg-indigo-50',
+              text: 'text-indigo-700',
             },
             {
               label: 'Awaiting',
-              value: payments.filter((p) => p.status === 'WAITING_FOR_PAYMENT').length +
+              value:
+                payments.filter((p) => p.status === 'WAITING_FOR_PAYMENT').length +
                 (data?.total_by_status?.WAITING_FOR_PAYMENT ?? 0),
-              bg: 'bg-yellow-50', text: 'text-yellow-700',
+              bg: 'bg-yellow-50',
+              text: 'text-yellow-700',
             },
             {
               label: 'Paid',
-              value: payments.filter((p) => p.status === 'PAID').length +
-                (data?.total_by_status?.PAID ?? 0),
-              bg: 'bg-green-50', text: 'text-green-700',
+              value: payments.filter((p) => p.status === 'PAID').length + (data?.total_by_status?.PAID ?? 0),
+              bg: 'bg-green-50',
+              text: 'text-green-700',
             },
           ].map((s) => (
             <div key={s.label} className={`${s.bg} rounded-2xl border border-transparent px-4 py-3 text-center`}>
@@ -138,7 +153,8 @@ export default function OwnPaymentsPage() {
             const product = payment.auction?.product;
             const cfg = PAYMENT_STATUS[payment.status] ?? {
               label: payment.status,
-              bg: 'bg-slate-100', text: 'text-slate-600',
+              bg: 'bg-slate-100',
+              text: 'text-slate-600',
               icon: <AlertCircle className="h-3.5 w-3.5" />,
             };
             const isActionable = payment.status === 'WAITING_FOR_PAYMENT' && payment.snap_token;
@@ -150,9 +166,7 @@ export default function OwnPaymentsPage() {
               <div
                 key={payment.id}
                 className={`bg-white rounded-2xl border transition-all ${
-                  isActionable
-                    ? 'border-yellow-300 shadow-sm shadow-yellow-100'
-                    : 'border-slate-100 hover:border-slate-200'
+                  isActionable ? 'border-yellow-300 shadow-sm shadow-yellow-100' : 'border-slate-100 hover:border-slate-200'
                 }`}
               >
                 <div className="p-4 flex items-center gap-4">
@@ -170,7 +184,7 @@ export default function OwnPaymentsPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-slate-900 truncate text-sm">
-                      {product?.name ?? `Auction #${payment.auction_id.slice(0, 8)}`}
+                      {product?.name ?? `Auction #${payment.auction_id}`}
                     </h3>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                       <span className="flex items-center gap-1 text-xs text-slate-500">
@@ -182,7 +196,9 @@ export default function OwnPaymentsPage() {
                       </span>
                     </div>
                     {payment.expired_at && payment.status === 'WAITING_FOR_PAYMENT' && (
-                      <p className={`text-xs mt-1 flex items-center gap-1 ${isExpiringSoon ? 'text-red-600 font-semibold' : 'text-slate-400'}`}>
+                      <p
+                        className={`text-xs mt-1 flex items-center gap-1 ${isExpiringSoon ? 'text-red-600 font-semibold' : 'text-slate-400'}`}
+                      >
                         <Clock className="h-3 w-3" />
                         Pay before {formatDate(payment.expired_at)}
                         {isExpiringSoon && ' — expiring soon!'}
@@ -192,7 +208,9 @@ export default function OwnPaymentsPage() {
 
                   {/* Status + action */}
                   <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                    <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}>
+                    <span
+                      className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}
+                    >
                       {cfg.icon} {cfg.label}
                     </span>
                     {isActionable && (

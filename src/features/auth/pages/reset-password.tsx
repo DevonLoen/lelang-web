@@ -1,5 +1,5 @@
-import Logo from "../../../assets/logo.png";
-import { useNavigate } from "react-router";
+import Logo from '../../../assets/logo.png';
+import { useNavigate } from 'react-router';
 
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
@@ -24,8 +24,7 @@ export default function ResetPasswordPage() {
       </div>
       <div className="hidden flex-1 flex-col items-center justify-center bg-animated-gradient shadow-lg px-6 text-center sm:flex">
         <div className="mb-4 flex items-center">
-          <img src={Logo} alt="Logo" className="h-40 w-40" />
-          <h1 className="text-6xl font-bold text-white">AUCTION</h1>
+          <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
         </div>
         <h2 className="mb-1 text-3xl font-bold text-white">Enter the World of Bids</h2>
         <p className="text-gray-400">Your dream item is just one bid away.</p>
