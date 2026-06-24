@@ -6,6 +6,7 @@ import { ownService } from '../../own/services/own.service';
 import { AuctionStatus, type AuctionBidResponse, type AuctionResponse, type PaginatedData } from '../services/auction.schema';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
+import { hasAuthToken } from '../../../utils/auth';
 import {
   Gavel,
   Clock,
@@ -143,6 +144,7 @@ export default function AuctionDetailPage() {
   const proofRef = useRef<HTMLInputElement>(null);
   const { showToast } = useToast();
   const queryClient = useQueryClient();
+  const isAuthenticated = hasAuthToken();
 
   const { data: auction, isLoading } = useQuery({
     queryKey: ['auction', id],
@@ -153,6 +155,7 @@ export default function AuctionDetailPage() {
   const { data: profile } = useQuery({
     queryKey: ['own-profile'],
     queryFn: () => ownService.getProfile(),
+    enabled: isAuthenticated,
     retry: false,
   });
   const auctionStatus = auction?.status;

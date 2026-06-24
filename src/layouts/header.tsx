@@ -1,20 +1,40 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, LogOut, Gavel, Package, Wallet, MapPin, Menu, X as XIcon, CreditCard, ChevronDown } from 'lucide-react';
+import { User, LogOut, Gavel, Package, Wallet, MapPin, Menu, X as XIcon, CreditCard, ChevronDown, Bell } from 'lucide-react';
 import Logo from '../assets/logo.png';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { AuthService } from '../features/auth/services/auth.service';
 import { useToast } from '../contexts/toast-context';
 import { ToastType } from '../enums/toast-type';
 import { useProfile } from '../features/own/hooks/use-profile';
+import { deleteFCMToken } from '@/utils/fcm';
+import { hasAuthToken } from '../utils/auth';
+import { useQuery } from '@tanstack/react-query';
+import { ownService } from '../features/own/services/own.service';
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const notifRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { showToast } = useToast();
   const { data: user } = useProfile();
+  const isAuthenticated = hasAuthToken();
+
+  const { data: unreadNotifications } = useQuery({
+    queryKey: ['own-notifications', 'header-unread'],
+    queryFn: () =>
+      ownService.listNotifications({
+        page: 1,
+        limit: 20,
+        is_read: false,
+        sorts: [{ field: 'created_at', direction: 'desc' }],
+      }),
+    enabled: isAuthenticated,
+    retry: false,
+  });
 
   const isSuperAdmin = user?.roles?.some((r) => r.role === 'SUPERADMIN') ?? false;
   const isSeller = user?.roles?.some((r) => r.role === 'SELLER') ?? false;
@@ -24,6 +44,9 @@ export default function Header() {
     const handler = (e: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(e.target as Node)) {
         setProfileOpen(false);
+      }
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
@@ -36,6 +59,7 @@ export default function Header() {
   }, [location.pathname]);
 
   const handleLogout = async () => {
+    await deleteFCMToken();
     await new AuthService().logout();
     showToast('Logged out successfully', ToastType.SUCCESS);
     navigate('/login');
@@ -78,7 +102,72 @@ export default function Header() {
 
         {/* Right side */}
         <div className="flex items-center gap-2">
+          {isAuthenticated ? (
+            <div className="relative" ref={notifRef}>
+              <button
+                type="button"
+                onClick={() => setNotifOpen((open) => !open)}
+                className={`relative rounded-lg p-2 transition-colors ${
+                  notifOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                }`}
+                aria-label="Notifications"
+              >
+                <Bell className="h-5 w-5" />
+                {(unreadNotifications?.total ?? 0) > 0 && (
+                  <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1.5 text-center text-[10px] font-bold leading-5 text-white">
+                    {Math.min(unreadNotifications?.total ?? 0, 99)}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                  <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                    <p className="text-sm font-semibold text-slate-900">Notifications</p>
+                    <Link
+                      to="/own/notifications"
+                      onClick={() => setNotifOpen(false)}
+                      className="text-xs font-semibold text-amber-700 hover:text-amber-800"
+                    >
+                      View all
+                    </Link>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto py-1">
+                    {(unreadNotifications?.nodes ?? []).length === 0 ? (
+                      <p className="px-4 py-6 text-center text-sm text-slate-500">No unread notifications</p>
+                    ) : (
+                      unreadNotifications!.nodes.slice(0, 5).map((notification) => (
+                        <Link
+                          key={notification.id}
+                          to="/own/notifications"
+                          onClick={() => setNotifOpen(false)}
+                          className="block border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-amber-50/60"
+                        >
+                          <div className="flex items-start gap-2">
+                            <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-semibold text-slate-900">{notification.title}</p>
+                              <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{notification.body}</p>
+                            </div>
+                          </div>
+                        </Link>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <Link
+              to="/login"
+              className="hidden rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 sm:inline-flex"
+            >
+              Sign In
+            </Link>
+          )}
+
           {/* Profile dropdown */}
+          {isAuthenticated && (
           <div className="relative" ref={profileRef}>
             <button
               onClick={() => setProfileOpen((o) => !o)}
@@ -102,7 +191,7 @@ export default function Header() {
                 {/* User info header */}
                 <div className="px-4 py-3 border-b border-slate-100">
                   <p className="text-sm font-semibold text-slate-900 truncate">{user?.fullname || 'User'}</p>
-                  <p className="text-xs text-slate-500 truncate">{user?.phone || ''}</p>
+                  <p className="text-xs text-slate-500 truncate">{user?.email || ''}</p>
                 </div>
 
                 <div className="py-1">
@@ -112,6 +201,13 @@ export default function Header() {
                     className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
                   >
                     <User className="h-4 w-4 text-slate-400" /> My Profile
+                  </Link>
+                  <Link
+                    to="/own/notifications"
+                    onClick={() => setProfileOpen(false)}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 transition-colors"
+                  >
+                    <Bell className="h-4 w-4 text-slate-400" /> Notifications
                   </Link>
                   {(isSuperAdmin || isSeller) && (
                     <>
@@ -176,6 +272,7 @@ export default function Header() {
               </div>
             )}
           </div>
+          )}
 
           {/* Mobile menu button */}
           <button

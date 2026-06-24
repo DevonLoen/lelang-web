@@ -5,12 +5,14 @@ import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Edit3, X, CheckCircle, BadgeCheck, Calendar, Gavel, Package, Loader2, ShieldCheck, Upload, ChevronRight } from 'lucide-react';
+import { User, Edit3, X, CheckCircle, BadgeCheck, Calendar, Gavel, Package, Loader2, ShieldCheck, Upload, ChevronRight, Mail } from 'lucide-react';
 
 const formatDate = (s?: string) => {
   if (!s) return '-';
   return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
 };
+
+const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
 export default function ProfilePage() {
   const { showToast } = useToast();
@@ -50,7 +52,7 @@ export default function ProfilePage() {
       setIsEditing(false);
       qc.invalidateQueries({ queryKey: ['own-profile'] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to update profile'), ToastType.ERROR),
   });
 
   const isBidder = user?.roles?.some((r) => r.role === 'BIDDER') ?? false;
@@ -89,7 +91,7 @@ export default function ProfilePage() {
       setRequestedRole(role);
       qc.invalidateQueries({ queryKey: ['own-profile'] });
     },
-    onError: (e: any) => showToast(e.message ?? 'Failed to submit request', ToastType.ERROR),
+    onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to submit request'), ToastType.ERROR),
   });
 
   const handleChange = (field: string, value: string) => setForm((prev) => ({ ...prev, [field]: value }));
@@ -156,6 +158,7 @@ export default function ProfilePage() {
             <div className="divide-y divide-slate-100">
               {[
                 { icon: User, label: 'Full Name', value: user.fullname },
+                { icon: Mail, label: 'Email', value: user.email },
                 { icon: Calendar, label: 'Date of Birth', value: formatDate(user.birth) },
                 { icon: User, label: 'Gender', value: user.gender || 'â€”' },
               ].map((item, i) => (

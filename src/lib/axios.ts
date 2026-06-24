@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import { Auth } from '../enums/auth-token';
 import Cookies from 'js-cookie';
 
@@ -7,22 +7,28 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
-const unwrap = (response: any): any => response.data;
+export const publicApiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  timeout: 10000,
+});
 
-const attachToken = (config: any) => {
+const unwrap = (response: AxiosResponse) => response.data;
+
+const attachToken = (config: InternalAxiosRequestConfig) => {
   const token = Cookies.get(Auth.TOKEN_KEY);
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 };
 
-const rejectError = (error: any) => Promise.reject(error);
+const rejectError = (error: unknown) => Promise.reject(error);
 
-const handleError = (error: any) => {
-  if (error.response) {
-    const message = error.response.data?.message || error.response.data?.error || error.message;
+const handleError = (error: unknown) => {
+  if (error instanceof AxiosError && error.response) {
+    const data = error.response.data as { message?: string; error?: string };
+    const message = data?.message || data?.error || error.message;
     return Promise.reject(new Error(message));
   }
-  if (error.request) {
+  if (error instanceof AxiosError && error.request) {
     return Promise.reject(new Error('Network error. Please check your connection.'));
   }
   return Promise.reject(error);
@@ -30,3 +36,4 @@ const handleError = (error: any) => {
 
 apiClient.interceptors.request.use(attachToken, rejectError);
 apiClient.interceptors.response.use(unwrap, handleError);
+publicApiClient.interceptors.response.use(unwrap, handleError);

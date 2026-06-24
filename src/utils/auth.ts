@@ -22,7 +22,12 @@ export const checkAuth = async (): Promise<boolean> => {
     }
 
     return true;
-  } catch (error) {
+  } catch {
     return false;
   }
+};
+
+export const hasAuthToken = (): boolean => {
+  const token = Cookies.get(Auth.TOKEN_KEY);
+  return !!token && token !== 'undefined' && token !== 'null';
 };

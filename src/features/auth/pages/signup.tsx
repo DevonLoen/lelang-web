@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Logo from "../../../assets/logo.png";
 import {
-  FaPhone,
+  FaEnvelope,
   FaIdCard,
   FaUser,
   FaCalendarAlt,
@@ -19,7 +19,7 @@ import { formatDateReq } from "../../../utils/date";
 
 interface SignupFieldState {
   fullname: string;
-  phone: string;
+  email: string;
   password: string;
   gender: string;
   birth: string;
@@ -27,16 +27,18 @@ interface SignupFieldState {
 
 interface SignupFieldErrors {
   fullname: string;
-  phone: string;
+  email: string;
   password: string;
   gender: string;
   birth: string;
 }
 
+const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
+
 export default function SignupPage() {
   const [field, setField] = useState<SignupFieldState>({
     fullname: "",
-    phone: "",
+    email: "",
     password: "",
     gender: "",
     birth: "",
@@ -44,7 +46,7 @@ export default function SignupPage() {
 
   const [errors, setErrors] = useState<SignupFieldErrors>({
     fullname: "",
-    phone: "",
+    email: "",
     password: "",
     gender: "",
     birth: "",
@@ -58,7 +60,7 @@ export default function SignupPage() {
   const validateField = async () => {
     const newErrors: SignupFieldErrors = {
       fullname: "",
-      phone: "",
+      email: "",
       password: "",
       gender: "",
       birth: "",
@@ -68,10 +70,10 @@ export default function SignupPage() {
       newErrors.fullname = "Full name is required";
     }
 
-    if (!field.phone.trim()) {
-      newErrors.phone = "Phone is required";
-    } else if (!/^\d+$/.test(field.phone)) {
-      newErrors.phone = "Phone must be a number";
+    if (!field.email.trim()) {
+      newErrors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.email)) {
+      newErrors.email = "Email is invalid";
     }
 
     if (!field.gender.trim()) {
@@ -93,7 +95,7 @@ export default function SignupPage() {
   const saveDataToLocalStorage = async () => {
     const payloadSignup = {
       fullname: field.fullname,
-      phone: field.phone,
+      email: field.email,
       birth: formatDateReq(field.birth),
       gender: field.gender,
       password: field.password,
@@ -107,18 +109,18 @@ export default function SignupPage() {
         setIsSubmitting(true);
 
         const payload = {
-          phone: field.phone,
+          email: field.email,
         };
 
         const result = await new AuthService().sendOtp(payload);
         showToast(
-          result.message || 'OTP has been sent to your phone number',
+          result.message || 'OTP has been sent to your email',
           ToastType.SUCCESS
         );
         await saveDataToLocalStorage();
         navigate("/verify-otp");
-      } catch (error: any) {
-        showToast(error.message || 'Failed to send OTP', ToastType.ERROR);
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Failed to send OTP'), ToastType.ERROR);
       } finally {
         setIsSubmitting(false);
       }
@@ -142,7 +144,7 @@ export default function SignupPage() {
       | React.ChangeEvent<HTMLSelectElement>
   ) => {
     const { name, value } = e.target;
-    setField((prev) => ({ ...prev, [name]: value as any }));
+    setField((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleDateTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -193,17 +195,16 @@ export default function SignupPage() {
             />
 
             <InputField
-              label="Phone Number"
-              type="text"
-              name="phone"
-              id="phone"
-              value={field.phone}
+              label="Email"
+              type="email"
+              name="email"
+              id="email"
+              value={field.email}
               onChange={handleChange}
               onBlur={handleBlur}
-              error={!!errors.phone}
-              errorMessage={errors.phone}
-              icon={<FaPhone className="h-4 w-4" />}
-              inputMode="numeric"
+              error={!!errors.email}
+              errorMessage={errors.email}
+              icon={<FaEnvelope className="h-4 w-4" />}
             />
 
             <DropdownField

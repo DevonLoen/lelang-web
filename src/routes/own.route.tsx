@@ -10,6 +10,7 @@ import OwnPaymentPage from '../features/own/pages/own-payment';
 import OwnPaymentsPage from '../features/own/pages/own-payments';
 import ProfilePage from '../features/own/pages/profile';
 import OwnWithdrawalPage from '../features/own/pages/own-withdrawal';
+import OwnNotificationsPage from '../features/own/pages/own-notifications';
 import RoleGate from '../features/own/components/role-gate';
 import UserAddressesPage from '../features/user-address/pages/user-addresses';
 
@@ -46,6 +47,7 @@ export const ownRoutes: RouteObject[] = [
         element: <RoleGate requiredRole="BIDDER"><OwnPaymentsPage /></RoleGate>,
       },
       { path: '/profile', element: <ProfilePage /> },
+      { path: '/own/notifications', element: <OwnNotificationsPage /> },
       { path: '/own/withdrawal', element: <OwnWithdrawalPage /> },
       { path: '/own/addresses', element: <UserAddressesPage /> },
       { path: '/auctions/:auctionId/payments/:paymentId/pay', element: <OwnPaymentPage /> },

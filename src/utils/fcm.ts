@@ -1,6 +1,7 @@
 import { AuthService } from "@/features/auth/services/auth.service";
 import { initializeApp } from "firebase/app";
 import {
+  deleteToken,
   getMessaging,
   getToken,
   isSupported,
@@ -21,6 +22,13 @@ const firebaseConfig = {
 const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY;
 const firebaseApp = initializeApp(firebaseConfig);
 let foregroundListenerRegistered = false;
+const FCM_TOKEN_STORAGE_KEY = "fcm_token";
+
+interface FcmNotificationDetail {
+  title: string;
+  body: string;
+  targetPath: string | null;
+}
 
 const requiredFirebaseConfig = [
   firebaseConfig.apiKey,
@@ -60,6 +68,26 @@ async function registerMessagingServiceWorker(): Promise<ServiceWorkerRegistrati
   );
 }
 
+function normalizeInternalPath(value?: string): string | null {
+  if (!value) return null;
+
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return null;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return value.startsWith("/") ? value : null;
+  }
+}
+
+function resolveAuctionTarget(data?: Record<string, string>): string | null {
+  const directPath = normalizeInternalPath(data?.path || data?.url || data?.link || data?.click_action);
+  if (directPath) return directPath;
+
+  const auctionId = data?.auction_id || data?.auctionId || data?.auctionID;
+  return auctionId ? `/auctions/${auctionId}` : null;
+}
+
 function registerForegroundListener(messaging: Messaging): void {
   if (foregroundListenerRegistered) return;
 
@@ -67,13 +95,13 @@ function registerForegroundListener(messaging: Messaging): void {
   onMessage(messaging, (payload) => {
     const title = payload.notification?.title ?? "Lelang";
     const body = payload.notification?.body ?? "Ada notifikasi baru.";
+    const detail: FcmNotificationDetail = {
+      title,
+      body,
+      targetPath: resolveAuctionTarget(payload.data),
+    };
 
-    if (Notification.permission === "granted") {
-      new Notification(title, {
-        body,
-        icon: "/logo.jpg",
-      });
-    }
+    window.dispatchEvent(new CustomEvent<FcmNotificationDetail>("fcm-message", { detail }));
   });
 }
 
@@ -94,6 +122,13 @@ export async function initFCM(): Promise<string | null> {
     if (!messaging) return null;
 
     const serviceWorkerRegistration = await registerMessagingServiceWorker();
+    const savedToken = localStorage.getItem(FCM_TOKEN_STORAGE_KEY);
+    if (savedToken) {
+      await new AuthService().saveFcmToken({ fcm_token: savedToken });
+      registerForegroundListener(messaging);
+      return savedToken;
+    }
+
     const token = await getToken(messaging, {
       vapidKey,
       serviceWorkerRegistration,
@@ -104,6 +139,7 @@ export async function initFCM(): Promise<string | null> {
       return null;
     }
 
+    localStorage.setItem(FCM_TOKEN_STORAGE_KEY, token);
     await new AuthService().saveFcmToken({ fcm_token: token });
     registerForegroundListener(messaging);
 
@@ -111,5 +147,18 @@ export async function initFCM(): Promise<string | null> {
   } catch (err) {
     console.error("Failed to initialize FCM:", err);
     return null;
+  }
+}
+
+export async function deleteFCMToken(): Promise<void> {
+  try {
+    const messaging = await getSupportedMessaging();
+    if (messaging) {
+      await deleteToken(messaging);
+    }
+  } catch (err) {
+    console.error("Failed to delete FCM token:", err);
+  } finally {
+    localStorage.removeItem(FCM_TOKEN_STORAGE_KEY);
   }
 }

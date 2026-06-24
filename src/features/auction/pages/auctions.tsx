@@ -4,41 +4,25 @@ import { auctionService } from '../services/auction.service';
 import AuctionCard from '../components/auction-card';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { AuctionStatus } from '../services/auction.schema';
-import type { AuctionStatus as AuctionStatusType } from '../services/auction.schema';
 import { ChevronLeft, ChevronRight, Gavel } from 'lucide-react';
 
-const STATUS_OPTIONS: { label: string; value: AuctionStatusType | '' }[] = [
-  { label: 'All', value: '' },
-  { label: 'Scheduled', value: AuctionStatus.SCHEDULED },
-  { label: 'On Going', value: AuctionStatus.ON_GOING },
-  { label: 'Waiting Payment', value: AuctionStatus.WAITING_FOR_PAYMENT },
-  { label: 'Waiting Shipment', value: AuctionStatus.WAITING_FOR_SHIPMENT },
-  { label: 'Shipped', value: AuctionStatus.SHIPPED },
-  { label: 'Delivered', value: AuctionStatus.DELIVERED },
-  { label: 'Completed', value: AuctionStatus.COMPLETED },
-];
-
 export default function AuctionsPage() {
-  const [status, setStatus] = useState<AuctionStatusType | ''>(AuctionStatus.ON_GOING);
   const [page, setPage] = useState(1);
-  const limit = 12;
+  const limit = 10;
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['auctions', status, page],
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['auctions', 'on-going', page],
     queryFn: () =>
-      auctionService.listAuctions({
+      auctionService.listOngoingAuctions({
         page,
         limit,
-        ...(status ? { status } : {}),
-        sorts: [{ field: 'created_at', direction: 'desc' }],
+        sorts: [{ field: 'end_time', direction: 'asc' }],
       }),
   });
 
   const auctions = data?.nodes ?? [];
   const total = data?.total ?? 0;
   const totalPages = Math.ceil(total / limit);
-  const activeFilterLabel = STATUS_OPTIONS.find((option) => option.value === status)?.label ?? 'All';
 
   return (
     <main className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-10">
@@ -50,9 +34,9 @@ export default function AuctionsPage() {
               <div className="h-10 w-10 rounded-2xl bg-amber-100 flex items-center justify-center ring-1 ring-amber-200">
                 <Gavel className="h-5 w-5 text-amber-700" />
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Live Auctions</h1>
+              <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-slate-900">Ongoing Auctions</h1>
             </div>
-            <p className="text-slate-600 md:ml-13">Browse curated lots and place your bids in real time.</p>
+            <p className="text-slate-600 md:ml-13">Browse live lots ordered by the auctions ending soonest.</p>
           </div>
 
           <div className="rounded-2xl bg-white/90 border border-amber-100 px-4 py-3 shadow-sm min-w-[180px]">
@@ -60,30 +44,10 @@ export default function AuctionsPage() {
             <p className="text-lg font-semibold text-slate-900">
               {total} result{total !== 1 ? 's' : ''}
             </p>
-            <p className="text-xs text-slate-500 mt-0.5">Filter: {activeFilterLabel}</p>
+            <p className="text-xs text-slate-500 mt-0.5">Sorted by nearest end time</p>
           </div>
         </div>
       </section>
-
-      {/* Filter pills */}
-      <div className="flex flex-wrap gap-2.5 mb-8">
-        {STATUS_OPTIONS.map((o) => (
-          <button
-            key={o.value}
-            onClick={() => {
-              setStatus(o.value as AuctionStatusType | '');
-              setPage(1);
-            }}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-              status === o.value
-                ? 'bg-slate-900 text-white shadow-md'
-                : 'bg-white text-slate-600 border border-slate-200 hover:border-amber-300 hover:text-amber-700 hover:bg-amber-50/60'
-            }`}
-          >
-            {o.label}
-          </button>
-        ))}
-      </div>
 
       {/* Grid */}
       {isLoading ? (
@@ -100,12 +64,20 @@ export default function AuctionsPage() {
             </div>
           ))}
         </div>
+      ) : isError ? (
+        <Card className="py-24 border-red-100">
+          <CardContent className="text-center text-red-500">
+            <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
+            <p className="text-base font-medium">Failed to load auctions</p>
+            <p className="text-sm mt-1">{error instanceof Error ? error.message : 'Please try again later'}</p>
+          </CardContent>
+        </Card>
       ) : auctions.length === 0 ? (
         <Card className="py-24 border-dashed">
           <CardContent className="text-center text-slate-500">
             <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
             <p className="text-base font-medium">No auctions found</p>
-            <p className="text-sm mt-1">Try a different filter</p>
+            <p className="text-sm mt-1">No live auctions are available right now</p>
           </CardContent>
         </Card>
       ) : (

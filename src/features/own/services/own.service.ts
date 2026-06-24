@@ -10,8 +10,11 @@ import type {
   OwnPaymentFetchRequest,
   OwnProfileUpdateRequest,
   OwnRoleRequestCreateRequest,
+  NotificationFetchRequest,
+  NotificationResponse,
   RoleRequestResponse,
   WithdrawalRequestCreateRequest,
+  WithdrawalRequestFetchRequest,
   WithdrawalRequestResponse,
 } from './own.schema';
 import type {
@@ -30,8 +33,14 @@ import type {
   UserAddressFetchRequest,
 } from '../../user-address/services/user-address.schema';
 
-const throwMsg = (e: any, fallback: string): never => {
-  throw new Error(e?.response?.data?.message || e?.message || fallback);
+type ApiResult<T> = {
+  data: T;
+  message?: string;
+};
+
+const throwMsg = (e: unknown, fallback: string): never => {
+  if (e instanceof Error) throw new Error(e.message || fallback);
+  throw new Error(fallback);
 };
 
 export const ownService = {
@@ -47,8 +56,8 @@ export const ownService = {
 
   updateProfile: async (payload: OwnProfileUpdateRequest): Promise<{ data: UserResponse; message: string }> => {
     try {
-      const res = await apiClient.put('/own/profiles', payload);
-      return { data: res.data.user, message: (res as any).message };
+      const res = await apiClient.put('/own/profiles', payload) as ApiResult<{ user: UserResponse }>;
+      return { data: res.data.user, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to update profile');
     }
@@ -80,8 +89,8 @@ export const ownService = {
 
   createProduct: async (payload: OwnProductCreateRequest): Promise<{ data: ProductResponse; message: string }> => {
     try {
-      const res = await apiClient.post('/own/products', payload);
-      return { data: res.data.product, message: (res as any).message };
+      const res = await apiClient.post('/own/products', payload) as ApiResult<{ product: ProductResponse }>;
+      return { data: res.data.product, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to create product');
     }
@@ -98,8 +107,8 @@ export const ownService = {
 
   updateProduct: async (productId: string, payload: OwnProductUpdateRequest): Promise<{ data: ProductResponse; message: string }> => {
     try {
-      const res = await apiClient.put(`/own/products/${productId}`, payload);
-      return { data: res.data.product, message: (res as any).message };
+      const res = await apiClient.put(`/own/products/${productId}`, payload) as ApiResult<{ product: ProductResponse }>;
+      return { data: res.data.product, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to update product');
     }
@@ -107,8 +116,8 @@ export const ownService = {
 
   requestProductReview: async (productId: string): Promise<{ data: ProductResponse; message: string }> => {
     try {
-      const res = await apiClient.patch(`/own/products/${productId}/request`);
-      return { data: res.data.product, message: (res as any).message };
+      const res = await apiClient.patch(`/own/products/${productId}/request`) as ApiResult<{ product: ProductResponse }>;
+      return { data: res.data.product, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to request review');
     }
@@ -135,8 +144,8 @@ export const ownService = {
 
   createAuction: async (payload: OwnAuctionCreateRequest): Promise<{ data: AuctionResponse; message: string }> => {
     try {
-      const res = await apiClient.post('/own/auctions', payload);
-      return { data: res.data.auction, message: (res as any).message };
+      const res = await apiClient.post('/own/auctions', payload) as ApiResult<{ auction: AuctionResponse }>;
+      return { data: res.data.auction, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to create auction');
     }
@@ -153,8 +162,8 @@ export const ownService = {
 
   updateAuction: async (auctionId: string, payload: OwnAuctionUpdateRequest): Promise<{ data: AuctionResponse; message: string }> => {
     try {
-      const res = await apiClient.put(`/own/auctions/${auctionId}`, payload);
-      return { data: res.data.auction, message: (res as any).message };
+      const res = await apiClient.put(`/own/auctions/${auctionId}`, payload) as ApiResult<{ auction: AuctionResponse }>;
+      return { data: res.data.auction, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to update auction');
     }
@@ -162,8 +171,8 @@ export const ownService = {
 
   relistAuction: async (auctionId: string): Promise<{ data: AuctionResponse; message: string }> => {
     try {
-      const res = await apiClient.patch(`/own/auctions/${auctionId}/relist`);
-      return { data: res.data.auction, message: (res as any).message };
+      const res = await apiClient.patch(`/own/auctions/${auctionId}/relist`) as ApiResult<{ auction: AuctionResponse }>;
+      return { data: res.data.auction, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to relist auction');
     }
@@ -171,8 +180,8 @@ export const ownService = {
 
   secondChanceAuction: async (auctionId: string): Promise<{ data: AuctionResponse; message: string }> => {
     try {
-      const res = await apiClient.patch(`/own/auctions/${auctionId}/second-chance`);
-      return { data: res.data.auction, message: (res as any).message };
+      const res = await apiClient.patch(`/own/auctions/${auctionId}/second-chance`) as ApiResult<{ auction: AuctionResponse }>;
+      return { data: res.data.auction, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to offer second chance');
     }
@@ -264,8 +273,8 @@ export const ownService = {
   // ─── Role Requests ─────────────────────────────────────────────
   createRoleRequest: async (payload: OwnRoleRequestCreateRequest): Promise<{ data: RoleRequestResponse; message: string }> => {
     try {
-      const res: any = await apiClient.post('/own/role-requests', payload);
-      return { data: res.data.role_request, message: (res as any).message };
+      const res = await apiClient.post('/own/role-requests', payload) as ApiResult<{ role_request: RoleRequestResponse }>;
+      return { data: res.data.role_request, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to submit role request');
     }
@@ -274,10 +283,46 @@ export const ownService = {
   // ─── Withdrawal ────────────────────────────────────────────────
   createWithdrawalRequest: async (payload: WithdrawalRequestCreateRequest): Promise<{ data: WithdrawalRequestResponse; message: string }> => {
     try {
-      const res: any = await apiClient.post('/own/withdrawal-requests', payload);
-      return { data: res.data.withdrawal_request, message: (res as any).message };
+      const res = await apiClient.post('/own/withdrawal-requests', payload) as ApiResult<{ withdrawal_request: WithdrawalRequestResponse }>;
+      return { data: res.data.withdrawal_request, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to submit withdrawal request');
+    }
+  },
+
+  listWithdrawalRequests: async (params: WithdrawalRequestFetchRequest): Promise<PaginatedData<WithdrawalRequestResponse>> => {
+    try {
+      const res = await apiClient.post('/own/withdrawal-requests/filter', params);
+      return res.data;
+    } catch (e) {
+      return throwMsg(e, 'Failed to load withdrawal requests');
+    }
+  },
+
+  listNotifications: async (params: NotificationFetchRequest): Promise<PaginatedData<NotificationResponse>> => {
+    try {
+      const res = await apiClient.post('/own/notifications/filter', params);
+      return res.data;
+    } catch (e) {
+      return throwMsg(e, 'Failed to load notifications');
+    }
+  },
+
+  getNotification: async (notificationId: string): Promise<NotificationResponse> => {
+    try {
+      const res = await apiClient.get(`/own/notifications/${notificationId}`);
+      return res.data.notification;
+    } catch (e) {
+      return throwMsg(e, 'Failed to load notification');
+    }
+  },
+
+  markNotificationRead: async (notificationId: string): Promise<NotificationResponse> => {
+    try {
+      const res = await apiClient.patch(`/own/notifications/${notificationId}/read`);
+      return res.data.notification;
+    } catch (e) {
+      return throwMsg(e, 'Failed to mark notification as read');
     }
   },
 };

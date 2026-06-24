@@ -1,4 +1,4 @@
-import { apiClient } from '../../../lib/axios';
+import { apiClient, publicApiClient } from '../../../lib/axios';
 import type {
   AuctionResponse,
   AuctionBidResponse,
@@ -11,8 +11,9 @@ import type {
   PaginatedData,
 } from './auction.schema';
 
-const throwMsg = (e: any, fallback: string): never => {
-  throw new Error(e?.response?.data?.error?.message || e?.message || fallback);
+const throwMsg = (e: unknown, fallback: string): never => {
+  if (e instanceof Error) throw new Error(e.message || fallback);
+  throw new Error(fallback);
 };
 
 export const auctionService = {
@@ -25,9 +26,18 @@ export const auctionService = {
     }
   },
 
+  listOngoingAuctions: async (params: AuctionFetchRequest): Promise<PaginatedData<AuctionResponse>> => {
+    try {
+      const res = await publicApiClient.post('/auctions/on-going/filter', params);
+      return res.data;
+    } catch (e) {
+      return throwMsg(e, 'Failed to load ongoing auctions');
+    }
+  },
+
   getAuction: async (auctionId: string): Promise<AuctionResponse> => {
     try {
-      const res = await apiClient.get(`/auctions/${auctionId}`);
+      const res = await publicApiClient.get(`/auctions/${auctionId}`);
       return res.data.auction;
     } catch (e) {
       return throwMsg(e, 'Failed to load auction');

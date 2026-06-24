@@ -5,13 +5,13 @@ import { apiClient } from "../../../lib/axios";
 const AUTH_TOKEN_KEY = Auth.TOKEN_KEY;
 
 interface LoginPayload {
-  phone?: string;
+  email?: string;
   password?: string;
 }
 
 export interface SignupPayload {
   fullname: string;
-  phone: string;
+  email: string;
   birth: string;
   gender?: string;
   password: string;
@@ -19,56 +19,55 @@ export interface SignupPayload {
 }
 
 interface SendOtpPayload {
-  phone?: string;
+  email?: string;
 }
 
 interface SaveFcmTokenPayload {
   fcm_token: string;
 }
 
-export class AuthService {
-  private formatPhone(phone: string): string {
-    if (phone.startsWith('+62')) return phone;
-    return `+62${phone}`;
-  }
+interface ApiResult<T = unknown> {
+  data: T;
+  message?: string;
+}
 
-  async login(data: LoginPayload) {
+const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
+
+export class AuthService {
+  async login(data: LoginPayload): Promise<ApiResult<{ token: string }>> {
     try {
-      const payload = { ...data, ...(data.phone && { phone: this.formatPhone(data.phone) }) };
-      const res = await apiClient.post('/auth/login', payload);
+      const res = await apiClient.post('/auth/login', data) as ApiResult<{ token: string }>;
       Cookies.set(AUTH_TOKEN_KEY, res.data.token);
       return res;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Login failed");
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Login failed"));
     }
   }
 
-  async signup(data: SignupPayload) {
+  async signup(data: SignupPayload): Promise<ApiResult> {
     try {
-      const payload = { ...data, phone: this.formatPhone(data.phone) };
-      const res = await apiClient.post('/auth/register', payload);
+      const res = await apiClient.post('/auth/register', data) as ApiResult;
       return res;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Sign Up failed");
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Sign Up failed"));
     }
   }
 
-  async sendOtp(data: SendOtpPayload) {
+  async sendOtp(data: SendOtpPayload): Promise<ApiResult> {
     try {
-      const payload = { ...data, ...(data.phone && { phone: this.formatPhone(data.phone) }) };
-      const res = await apiClient.post('/auth/request-otp', payload);
+      const res = await apiClient.post('/auth/request-otp', data) as ApiResult;
       return res;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Send OTP failed");
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Send OTP failed"));
     }
   }
 
-  async saveFcmToken(data: SaveFcmTokenPayload) {
+  async saveFcmToken(data: SaveFcmTokenPayload): Promise<ApiResult> {
     try {
-      const res = await apiClient.post('/auth/save-fcm-token', data);
+      const res = await apiClient.post('/auth/save-fcm-token', data) as ApiResult;
       return res;
-    } catch (error: any) {
-      throw new Error(error.response?.data?.message || "Save FCM Token failed");
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Save FCM Token failed"));
     }
   }
 

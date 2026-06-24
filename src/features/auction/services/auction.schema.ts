@@ -31,7 +31,7 @@ export type ProductCondition = (typeof ProductCondition)[keyof typeof ProductCon
 export interface UserResponse {
   id: string;
   fullname: string;
-  phone: string;
+  email: string;
   birth: string;
   gender: string;
   nik?: string;

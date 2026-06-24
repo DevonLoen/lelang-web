@@ -1,11 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
+import { hasAuthToken } from '../../../utils/auth';
 
 export function useProfile() {
   return useQuery({
     queryKey: ['own-profile'],
     queryFn: () => ownService.getProfile(),
     staleTime: 1000 * 60 * 5, // 5 minutes
+    enabled: hasAuthToken(),
+    retry: false,
   });
 }
 

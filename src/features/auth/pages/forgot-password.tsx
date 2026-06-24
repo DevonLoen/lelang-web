@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
               <h3 className="font-semibold text-white">Contact Support</h3>
             </div>
             <p className="text-slate-400 text-sm leading-relaxed">
-              Password reset via phone is currently not available. Please contact our support team for assistance with recovering your account.
+              Password reset is currently not available in the app. Please contact our support team for assistance with recovering your account.
             </p>
           </div>
 

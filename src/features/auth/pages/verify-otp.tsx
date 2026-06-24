@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Logo from "../../../assets/logo.png";
 import { useToast } from "../../../contexts/toast-context";
 import { ToastType } from "../../../enums/toast-type";
@@ -7,11 +7,13 @@ import { useNavigate } from "react-router";
 
 interface SendOtpFieldState {
   fullname: string;
-  phone: string;
+  email: string;
   password: string;
   gender: string;
   birth: string;
 }
+
+const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
 export default function VerifyOtpPage() {
   const [otp, setOtp] = useState<string[]>(["", "", "", "", "", ""]);
@@ -23,13 +25,13 @@ export default function VerifyOtpPage() {
 
   const [field, setField] = useState<SendOtpFieldState>({
     fullname: "",
-    phone: "",
+    email: "",
     password: "",
     gender: "",
     birth: "",
   });
 
-  const loadDataAndValidate = () => {
+  const loadDataAndValidate = useCallback(() => {
     const savedDataString = localStorage.getItem("signupPayload");
 
     if (savedDataString) {
@@ -47,7 +49,7 @@ export default function VerifyOtpPage() {
       showToast("Please complete the registration form first.", ToastType.INFO);
       navigate("/signup");
     }
-  };
+  }, [navigate, showToast]);
 
   useEffect(() => {
     const savedExpire = localStorage.getItem("otp_expire");
@@ -59,7 +61,7 @@ export default function VerifyOtpPage() {
       }
     }
     loadDataAndValidate();
-  }, []);
+  }, [loadDataAndValidate]);
 
   useEffect(() => {
     if (timer > 0) {
@@ -123,7 +125,7 @@ export default function VerifyOtpPage() {
 
       const payload: SignupPayload = {
         fullname: field.fullname,
-        phone: field.phone,
+        email: field.email,
         birth: field.birth,
         gender: field.gender,
         password: field.password,
@@ -134,8 +136,8 @@ export default function VerifyOtpPage() {
 
       showToast(result.message || 'Sign up successful!', ToastType.SUCCESS);
       navigate("/login");
-    } catch (err: any) {
-      showToast(err.message || 'Invalid OTP', ToastType.ERROR);
+    } catch (err: unknown) {
+      showToast(getErrorMessage(err, 'Invalid OTP'), ToastType.ERROR);
     } finally {
       setIsSubmitting(false);
     }
@@ -147,10 +149,10 @@ export default function VerifyOtpPage() {
       localStorage.setItem("otp_expire", expireTime.toString());
       setTimer(60);
 
-      const result = await new AuthService().sendOtp({ phone: field.phone });
+      const result = await new AuthService().sendOtp({ email: field.email });
       showToast(result.message || 'OTP has been resent', ToastType.INFO);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to resend OTP', ToastType.ERROR);
+    } catch (err: unknown) {
+      showToast(getErrorMessage(err, 'Failed to resend OTP'), ToastType.ERROR);
     }
   };
 
@@ -167,10 +169,10 @@ export default function VerifyOtpPage() {
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="mb-8 text-center lg:text-left">
-            <h2 className="text-3xl font-bold text-white mb-2">Verify Your Phone</h2>
+            <h2 className="text-3xl font-bold text-white mb-2">Verify Your Email</h2>
             <p className="text-slate-400">
               Enter the 6-digit code sent to{" "}
-              <span className="text-amber-500 font-medium">{field.phone || "your phone"}</span>
+              <span className="text-amber-500 font-medium">{field.email || "your email"}</span>
             </p>
           </div>
 
@@ -245,7 +247,7 @@ export default function VerifyOtpPage() {
             Almost There!
           </h2>
           <p className="text-amber-100 text-lg">
-            Verify your phone number to complete your registration and start bidding.
+            Verify your email address to complete your registration and start bidding.
           </p>
         </div>
       </div>

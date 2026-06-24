@@ -1,26 +1,21 @@
 import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-// ✅ Enum untuk type toast
-export enum ToastType {
-  SUCCESS = "success",
-  ERROR = "error",
-  WARNING = "warning",
-  INFO = "info",
-}
+import { ToastType } from "../enums/toast-type";
 
 interface ToastProps {
   message: string;
   show: boolean;
   onClose: () => void;
+  onClick?: () => void;
   type?: ToastType;
-  duration?: number; // ms
+  duration?: number;
 }
 
 export default function Toast({
   message,
   show,
   onClose,
+  onClick,
   type = ToastType.INFO,
   duration = 3000,
 }: ToastProps) {
@@ -50,7 +45,21 @@ export default function Toast({
           className="fixed bottom-6 inset-x-0 mx-auto z-50 w-fit max-w-[90%]"
         >
           <div
-            className={`rounded-lg px-4 py-2 text-white shadow-lg text-center break-words ${typeStyles[type]}`}
+            role={onClick ? "button" : "status"}
+            tabIndex={onClick ? 0 : undefined}
+            onClick={() => {
+              onClick?.();
+              if (onClick) onClose();
+            }}
+            onKeyDown={(event) => {
+              if (!onClick || (event.key !== "Enter" && event.key !== " ")) return;
+              event.preventDefault();
+              onClick();
+              onClose();
+            }}
+            className={`rounded-lg px-4 py-2 text-white shadow-lg text-center break-words ${
+              onClick ? "cursor-pointer focus:outline-none focus:ring-2 focus:ring-white/70" : ""
+            } ${typeStyles[type]}`}
           >
             {message}
           </div>

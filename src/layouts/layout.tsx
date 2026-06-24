@@ -9,6 +9,9 @@ export default function MainLayout() {
 
   useEffect(() => {
     const check = async () => {
+      const isPublicAuctionPath = location.pathname === "/" || location.pathname === "/auctions" || /^\/auctions\/[^/]+$/.test(location.pathname);
+      if (isPublicAuctionPath) return;
+
       const isAuth = await checkAuth();
 
       if (!isAuth) {

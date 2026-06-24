@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import Logo from '../../../assets/logo.png';
-import { FaPhone } from 'react-icons/fa';
+import { FaEnvelope } from 'react-icons/fa';
 import { ToastType } from '../../../enums/toast-type';
 import { useToast } from '../../../contexts/toast-context';
 import { AuthService } from '../services/auth.service';
@@ -12,23 +12,25 @@ import { useNavigate } from 'react-router';
 import { initFCM } from '@/utils/fcm';
 
 interface LoginFieldState {
-  phone: string;
+  email: string;
   password: string;
 }
 
 interface LoginFieldErrors {
-  phone: string;
+  email: string;
   password: string;
 }
 
+const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
+
 export default function LoginPage() {
   const [field, setField] = useState<LoginFieldState>({
-    phone: '',
+    email: '',
     password: '',
   });
 
   const [errors, setErrors] = useState<LoginFieldErrors>({
-    phone: '',
+    email: '',
     password: '',
   });
 
@@ -40,13 +42,13 @@ export default function LoginPage() {
 
   const validateField = async () => {
     const newErrors: LoginFieldErrors = {
-      phone: '',
+      email: '',
       password: '',
     };
-    if (!field.phone.trim()) {
-      newErrors.phone = 'Phone is required';
-    } else if (!/^\d+$/.test(field.phone)) {
-      newErrors.phone = 'Phone must be a number';
+    if (!field.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.email)) {
+      newErrors.email = 'Email is invalid';
     }
 
     if (!field.password.trim()) {
@@ -62,7 +64,7 @@ export default function LoginPage() {
       try {
         setIsSubmitting(true);
         const payload = {
-          phone: field.phone,
+          email: field.email,
           password: field.password,
         };
         const result = await new AuthService().login(payload);
@@ -72,8 +74,8 @@ export default function LoginPage() {
         // inisialisasi fcm
         await initFCM();
         navigate(`/`);
-      } catch (error: any) {
-        showToast(error.message || 'Login failed', ToastType.ERROR);
+      } catch (error: unknown) {
+        showToast(getErrorMessage(error, 'Login failed'), ToastType.ERROR);
       } finally {
         setIsSubmitting(false);
       }
@@ -91,7 +93,7 @@ export default function LoginPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setField((prev) => ({ ...prev, [name]: value as any }));
+    setField((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -126,17 +128,16 @@ export default function LoginPage() {
           <div className="space-y-5">
             <div className="relative">
               <InputField
-                label="Phone Number"
-                type="text"
-                name="phone"
-                id="phone"
-                value={field.phone}
+                label="Email"
+                type="email"
+                name="email"
+                id="email"
+                value={field.email}
                 onChange={handleChange}
                 onBlur={handleBlur}
-                error={!!errors.phone}
-                errorMessage={errors.phone}
-                icon={<FaPhone className="h-4 w-4" />}
-                inputMode="numeric"
+                error={!!errors.email}
+                errorMessage={errors.email}
+                icon={<FaEnvelope className="h-4 w-4" />}
               />
             </div>
 

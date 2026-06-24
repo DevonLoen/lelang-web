@@ -1,13 +1,15 @@
 import { Link } from 'react-router';
 import type { AuctionResponse } from '../services/auction.schema';
 import { AuctionStatus } from '../services/auction.schema';
-import { Clock, Tag, ImageOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Clock, Tag, ImageOff, CalendarDays, Timer, Receipt } from 'lucide-react';
 
 const statusConfig: Record<AuctionStatus, { bg: string; dot: string; label: string }> = {
   SCHEDULED:            { bg: 'bg-sky-100 text-sky-800',      dot: 'bg-sky-400',    label: 'Scheduled' },
   ON_GOING:             { bg: 'bg-green-100 text-green-800',   dot: 'bg-green-500',  label: 'Live' },
   WAITING_FOR_SELLER_DECISION: { bg: 'bg-amber-100 text-amber-800',  dot: 'bg-amber-400',  label: 'Pending Decision' },
   WAITING_FOR_PAYMENT:  { bg: 'bg-yellow-100 text-yellow-800', dot: 'bg-yellow-400', label: 'Awaiting Payment' },
+  WAITING_FOR_BUYER_ADDRESS: { bg: 'bg-indigo-100 text-indigo-800', dot: 'bg-indigo-400', label: 'Awaiting Address' },
   WAITING_FOR_SHIPMENT: { bg: 'bg-orange-100 text-orange-800', dot: 'bg-orange-400', label: 'Awaiting Shipment' },
   SHIPPED:              { bg: 'bg-purple-100 text-purple-800', dot: 'bg-purple-400', label: 'Shipped' },
   DELIVERED:            { bg: 'bg-teal-100 text-teal-800',     dot: 'bg-teal-400',   label: 'Delivered' },
@@ -21,6 +23,30 @@ const formatIDR = (n: number) =>
 const formatDate = (s: string) =>
   new Date(s).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
+function useCountdown(targetIso: string) {
+  const [label, setLabel] = useState('');
+
+  useEffect(() => {
+    const tick = () => {
+      const diff = new Date(targetIso).getTime() - Date.now();
+      if (diff <= 0) {
+        setLabel('Ended');
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const minutes = Math.floor((diff % 3600000) / 60000);
+      const seconds = Math.floor((diff % 60000) / 1000);
+      setLabel(days > 0 ? `${days}d ${hours}h ${minutes}m` : `${hours}h ${minutes}m ${seconds}s`);
+    };
+    tick();
+    const interval = window.setInterval(tick, 1000);
+    return () => window.clearInterval(interval);
+  }, [targetIso]);
+
+  return label;
+}
+
 interface AuctionCardProps {
   auction: AuctionResponse;
   linkTo?: string;
@@ -31,6 +57,7 @@ export default function AuctionCard({ auction, linkTo }: AuctionCardProps) {
   const href = linkTo ?? `/auctions/${auction.id}`;
   const cfg = statusConfig[auction.status] ?? { bg: 'bg-gray-100 text-gray-700', dot: 'bg-gray-400', label: auction.status };
   const isLive = auction.status === AuctionStatus.ON_GOING;
+  const countdown = useCountdown(auction.end_time);
 
   return (
     <Link to={href} className="block group">
@@ -84,9 +111,27 @@ export default function AuctionCard({ auction, linkTo }: AuctionCardProps) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-xs text-slate-500 flex items-center gap-1">
+                <Receipt className="h-3 w-3" /> Fee
+              </span>
+              <span className="text-xs text-slate-700 font-semibold">{formatIDR(auction.fee ?? 0)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500 flex items-center gap-1">
+                <CalendarDays className="h-3 w-3" /> Starts
+              </span>
+              <span className="text-xs text-slate-700 font-medium">{formatDate(auction.start_time)}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-xs text-slate-500 flex items-center gap-1">
                 <Clock className="h-3 w-3" /> Ends
               </span>
               <span className="text-xs text-slate-700 font-medium">{formatDate(auction.end_time)}</span>
+            </div>
+            <div className="flex items-center justify-between rounded-xl bg-green-50 px-3 py-2">
+              <span className="text-xs text-green-700 flex items-center gap-1 font-medium">
+                <Timer className="h-3 w-3" /> Time left
+              </span>
+              <span className="text-xs text-green-800 font-bold tabular-nums">{countdown}</span>
             </div>
           </div>
         </div>

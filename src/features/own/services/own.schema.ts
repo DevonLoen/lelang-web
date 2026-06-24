@@ -87,12 +87,40 @@ export interface WithdrawalRequestCreateRequest {
   amount: number;
 }
 
+export type WithdrawalRequestStatus = 'REQUESTED' | 'COMPLETED';
+
+export interface WithdrawalRequestFetchRequest {
+  page?: number;
+  limit?: number;
+  status?: WithdrawalRequestStatus;
+  sorts?: { field: string; direction: 'asc' | 'desc' }[];
+}
+
 export interface WithdrawalRequestResponse {
   id: string;
   user_id: number;
   validator_user_id?: number;
   amount: number;
   status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface NotificationFetchRequest {
+  page?: number;
+  limit?: number;
+  is_read?: boolean;
+  sorts?: { field: string; direction: 'asc' | 'desc' }[];
+}
+
+export interface NotificationResponse {
+  id: string;
+  user_id: number;
+  title: string;
+  body: string;
+  type: string;
+  reference_id?: string;
+  is_read: boolean;
   created_at: string;
   updated_at: string;
 }
