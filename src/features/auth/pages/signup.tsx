@@ -1,21 +1,16 @@
-import { useState } from "react";
-import Logo from "../../../assets/logo.png";
-import {
-  FaEnvelope,
-  FaIdCard,
-  FaUser,
-  FaCalendarAlt,
-} from "react-icons/fa";
-import { ToastType } from "../../../enums/toast-type";
-import { useToast } from "../../../contexts/toast-context";
-import { AuthService } from "../services/auth.service";
-import { InputField } from "../../../components/input-field";
-import { InputFieldPassword } from "../../../components/input-field-password";
-import { capitalizeWords } from "../../../utils/string";
-import DropdownField from "../../../components/dropdown";
-import { DatePicker } from "../../../components/date-picker";
-import { useNavigate } from "react-router";
-import { formatDateReq } from "../../../utils/date";
+import { useState } from 'react';
+import Logo from '../../../assets/logo.png';
+import { FaEnvelope, FaIdCard, FaUser, FaCalendarAlt } from 'react-icons/fa';
+import { ToastType } from '../../../enums/toast-type';
+import { useToast } from '../../../contexts/toast-context';
+import { AuthService } from '../services/auth.service';
+import { InputField } from '../../../components/input-field';
+import { InputFieldPassword } from '../../../components/input-field-password';
+import { capitalizeWords } from '../../../utils/string';
+import DropdownField from '../../../components/dropdown';
+import { DatePicker } from '../../../components/date-picker';
+import { useNavigate } from 'react-router';
+import { formatDateReq } from '../../../utils/date';
 
 interface SignupFieldState {
   fullname: string;
@@ -37,19 +32,19 @@ const getErrorMessage = (error: unknown, fallback: string) => (error instanceof 
 
 export default function SignupPage() {
   const [field, setField] = useState<SignupFieldState>({
-    fullname: "",
-    email: "",
-    password: "",
-    gender: "",
-    birth: "",
+    fullname: '',
+    email: '',
+    password: '',
+    gender: '',
+    birth: '',
   });
 
   const [errors, setErrors] = useState<SignupFieldErrors>({
-    fullname: "",
-    email: "",
-    password: "",
-    gender: "",
-    birth: "",
+    fullname: '',
+    email: '',
+    password: '',
+    gender: '',
+    birth: '',
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,33 +54,33 @@ export default function SignupPage() {
 
   const validateField = async () => {
     const newErrors: SignupFieldErrors = {
-      fullname: "",
-      email: "",
-      password: "",
-      gender: "",
-      birth: "",
+      fullname: '',
+      email: '',
+      password: '',
+      gender: '',
+      birth: '',
     };
 
     if (!field.fullname.trim()) {
-      newErrors.fullname = "Full name is required";
+      newErrors.fullname = 'Full name is required';
     }
 
     if (!field.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = 'Email is required';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.email)) {
-      newErrors.email = "Email is invalid";
+      newErrors.email = 'Email is invalid';
     }
 
     if (!field.gender.trim()) {
-      newErrors.gender = "Gender is required";
+      newErrors.gender = 'Gender is required';
     }
 
     if (!field.birth.trim()) {
-      newErrors.birth = "Birth date is required";
+      newErrors.birth = 'Birth date is required';
     }
 
     if (!field.password.trim()) {
-      newErrors.password = "Password is required";
+      newErrors.password = 'Password is required';
     }
 
     setErrors(newErrors);
@@ -100,7 +95,7 @@ export default function SignupPage() {
       gender: field.gender,
       password: field.password,
     };
-    localStorage.setItem("signupPayload", JSON.stringify(payloadSignup));
+    localStorage.setItem('signupPayload', JSON.stringify(payloadSignup));
   };
 
   const handleSignup = async () => {
@@ -113,12 +108,9 @@ export default function SignupPage() {
         };
 
         const result = await new AuthService().sendOtp(payload);
-        showToast(
-          result.message || 'OTP has been sent to your email',
-          ToastType.SUCCESS
-        );
+        showToast(result.message || 'OTP has been sent to your email', ToastType.SUCCESS);
         await saveDataToLocalStorage();
-        navigate("/verify-otp");
+        navigate('/verify-otp');
       } catch (error: unknown) {
         showToast(getErrorMessage(error, 'Failed to send OTP'), ToastType.ERROR);
       } finally {
@@ -127,22 +119,16 @@ export default function SignupPage() {
     }
   };
 
-  const handleBlur = (
-    e: React.FocusEvent<HTMLInputElement> | React.FocusEvent<HTMLSelectElement>
-  ) => {
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement> | React.FocusEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
 
     setErrors((prev) => ({
       ...prev,
-      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : "",
+      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : '',
     }));
   };
 
-  const handleChange = (
-    e:
-      | React.ChangeEvent<HTMLInputElement>
-      | React.ChangeEvent<HTMLSelectElement>
-  ) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
     setField((prev) => ({ ...prev, [name]: value }));
   };
@@ -158,16 +144,15 @@ export default function SignupPage() {
   };
 
   const genderOptions = [
-    { value: "FEMALE", label: "Female" },
-    { value: "MALE", label: "Male" },
+    { value: 'FEMALE', label: 'Female' },
+    { value: 'MALE', label: 'Male' },
   ];
 
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-center gap-3 py-6 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <img src={Logo} alt="Auction Logo" className="h-10 w-10" />
-        <h1 className="text-xl font-bold text-white">AUCTION</h1>
+        <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
       </div>
 
       {/* Left Panel - Form */}
@@ -244,15 +229,15 @@ export default function SignupPage() {
             />
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              By selecting <span className="font-medium text-slate-300">Sign Up</span>,
-              you agree to our{" "}
+              By selecting <span className="font-medium text-slate-300">Sign Up</span>, you agree to our{' '}
               <a href="/user-agreement" className="text-amber-500 hover:text-amber-400">
                 User Agreement
-              </a>{" "}
-              and acknowledge reading our{" "}
+              </a>{' '}
+              and acknowledge reading our{' '}
               <a href="/privacy-notice" className="text-amber-500 hover:text-amber-400">
                 Privacy Notice
-              </a>.
+              </a>
+              .
             </p>
 
             {/* Signup Button */}
@@ -268,14 +253,14 @@ export default function SignupPage() {
                   <div className="h-2 w-2 rounded-full bg-white animate-bounce"></div>
                 </div>
               ) : (
-                "Create Account"
+                'Create Account'
               )}
             </button>
           </div>
 
           {/* Login Link */}
           <p className="mt-6 text-center text-slate-400">
-            Already have an account?{" "}
+            Already have an account?{' '}
             <a href="/login" className="text-amber-500 hover:text-amber-400 font-medium transition-colors">
               Sign in
             </a>
@@ -286,16 +271,11 @@ export default function SignupPage() {
       {/* Right Panel - Branding (hidden on mobile) */}
       <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
         <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <img src={Logo} alt="Auction Logo" className="h-20 w-20 drop-shadow-lg" />
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg">AUCTION</h1>
+          <div className="flex items-center justify-center gap-4 ">
+            <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">
-            Start Your Bidding Journey
-          </h2>
-          <p className="text-amber-100 text-lg">
-            Create an account and discover unique items from sellers around the world.
-          </p>
+          <h2 className="text-3xl font-bold text-white mb-4">Start Your Bidding Journey</h2>
+          <p className="text-amber-100 text-lg">Create an account and discover unique items from sellers around the world.</p>
         </div>
       </div>
     </div>

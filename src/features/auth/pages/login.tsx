@@ -111,8 +111,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
       {/* Mobile Header - Logo section visible on small screens */}
       <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <img src={Logo} alt="Auction Logo" className="h-12 w-12" />
-        <h1 className="text-2xl font-bold text-white">AUCTION</h1>
+        <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
       </div>
 
       {/* Left Panel - Form */}
@@ -190,9 +189,8 @@ export default function LoginPage() {
       {/* Right Panel - Branding (hidden on mobile) */}
       <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
         <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <img src={Logo} alt="Auction Logo" className="h-20 w-20 drop-shadow-lg" />
-            <h1 className="text-5xl font-bold text-white drop-shadow-lg">AUCTION</h1>
+          <div className="flex items-center justify-center gap-4 ">
+            <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">Enter the World of Bids</h2>
           <p className="text-amber-100 text-lg">
