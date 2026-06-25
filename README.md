@@ -1,4 +1,4 @@
-# Bidify Web
+# Bidify Web Apps
 
 Frontend web app for the Bidify auction platform, built with React, TypeScript, Vite, Tailwind CSS, and TanStack Query.
 
