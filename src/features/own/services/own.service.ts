@@ -44,7 +44,7 @@ const throwMsg = (e: unknown, fallback: string): never => {
 };
 
 export const ownService = {
-  // ─── Profile ───────────────────────────────────────────────────
+  //  Profile 
   getProfile: async (): Promise<UserResponse> => {
     try {
       const res = await apiClient.get('/own/profiles');
@@ -63,7 +63,7 @@ export const ownService = {
     }
   },
 
-  // ─── File Upload ───────────────────────────────────────────────
+  //  File Upload 
   uploadFile: async (file: File): Promise<string> => {
     try {
       const form = new FormData();
@@ -77,7 +77,7 @@ export const ownService = {
     }
   },
 
-  // ─── Products ──────────────────────────────────────────────────
+  //  Products 
   listProducts: async (params: OwnProductFetchRequest): Promise<PaginatedData<ProductResponse>> => {
     try {
       const res = await apiClient.post('/own/products/filter', params);
@@ -96,7 +96,7 @@ export const ownService = {
     }
   },
 
-  getProduct: async (productId: string): Promise<ProductResponse> => {
+  getProduct: async (productId: string | number): Promise<ProductResponse> => {
     try {
       const res = await apiClient.get(`/own/products/${productId}`);
       return res.data.product;
@@ -105,7 +105,7 @@ export const ownService = {
     }
   },
 
-  updateProduct: async (productId: string, payload: OwnProductUpdateRequest): Promise<{ data: ProductResponse; message: string }> => {
+  updateProduct: async (productId: string | number, payload: OwnProductUpdateRequest): Promise<{ data: ProductResponse; message: string }> => {
     try {
       const res = await apiClient.put(`/own/products/${productId}`, payload) as ApiResult<{ product: ProductResponse }>;
       return { data: res.data.product, message: res.message ?? '' };
@@ -114,7 +114,7 @@ export const ownService = {
     }
   },
 
-  requestProductReview: async (productId: string): Promise<{ data: ProductResponse; message: string }> => {
+  requestProductReview: async (productId: string | number): Promise<{ data: ProductResponse; message: string }> => {
     try {
       const res = await apiClient.patch(`/own/products/${productId}/request`) as ApiResult<{ product: ProductResponse }>;
       return { data: res.data.product, message: res.message ?? '' };
@@ -123,7 +123,7 @@ export const ownService = {
     }
   },
 
-  getProductHistories: async (productId: string): Promise<ProductStatusHistoryResponse[]> => {
+  getProductHistories: async (productId: string | number): Promise<ProductStatusHistoryResponse[]> => {
     try {
       const res = await apiClient.post(`/own/products/${productId}/histories`);
       return res.data.histories;
@@ -132,7 +132,7 @@ export const ownService = {
     }
   },
 
-  // ─── Auctions ──────────────────────────────────────────────────
+  //  Auctions 
   listAuctions: async (params: OwnAuctionFetchRequest): Promise<PaginatedData<AuctionResponse>> => {
     try {
       const res = await apiClient.post('/own/auctions/filter', params);
@@ -151,7 +151,7 @@ export const ownService = {
     }
   },
 
-  getAuction: async (auctionId: string): Promise<AuctionResponse> => {
+  getAuction: async (auctionId: string | number): Promise<AuctionResponse> => {
     try {
       const res = await apiClient.get(`/own/auctions/${auctionId}`);
       return res.data.auction;
@@ -160,7 +160,7 @@ export const ownService = {
     }
   },
 
-  updateAuction: async (auctionId: string, payload: OwnAuctionUpdateRequest): Promise<{ data: AuctionResponse; message: string }> => {
+  updateAuction: async (auctionId: string | number, payload: OwnAuctionUpdateRequest): Promise<{ data: AuctionResponse; message: string }> => {
     try {
       const res = await apiClient.put(`/own/auctions/${auctionId}`, payload) as ApiResult<{ auction: AuctionResponse }>;
       return { data: res.data.auction, message: res.message ?? '' };
@@ -169,7 +169,7 @@ export const ownService = {
     }
   },
 
-  relistAuction: async (auctionId: string): Promise<{ data: AuctionResponse; message: string }> => {
+  relistAuction: async (auctionId: string | number): Promise<{ data: AuctionResponse; message: string }> => {
     try {
       const res = await apiClient.patch(`/own/auctions/${auctionId}/relist`) as ApiResult<{ auction: AuctionResponse }>;
       return { data: res.data.auction, message: res.message ?? '' };
@@ -178,7 +178,7 @@ export const ownService = {
     }
   },
 
-  secondChanceAuction: async (auctionId: string): Promise<{ data: AuctionResponse; message: string }> => {
+  secondChanceAuction: async (auctionId: string | number): Promise<{ data: AuctionResponse; message: string }> => {
     try {
       const res = await apiClient.patch(`/own/auctions/${auctionId}/second-chance`) as ApiResult<{ auction: AuctionResponse }>;
       return { data: res.data.auction, message: res.message ?? '' };
@@ -187,7 +187,7 @@ export const ownService = {
     }
   },
 
-  // ─── Bids ──────────────────────────────────────────────────────
+  //  Bids 
   listBids: async (params: OwnBidFetchRequest): Promise<PaginatedData<AuctionBidResponse>> => {
     try {
       const res = await apiClient.post('/own/bids/filter', params);
@@ -197,7 +197,7 @@ export const ownService = {
     }
   },
 
-  getBid: async (bidId: string): Promise<AuctionBidResponse> => {
+  getBid: async (bidId: string | number): Promise<AuctionBidResponse> => {
     try {
       const res = await apiClient.get(`/own/bids/${bidId}`);
       return res.data.bid;
@@ -206,7 +206,7 @@ export const ownService = {
     }
   },
 
-  // ─── Payments ──────────────────────────────────────────────────
+  //  Payments 
   listPayments: async (params: OwnPaymentFetchRequest): Promise<PaginatedData<PaymentResponse>> => {
     try {
       const res = await apiClient.post('/own/payments/filter', params);
@@ -216,7 +216,7 @@ export const ownService = {
     }
   },
 
-  getPayment: async (paymentId: string): Promise<PaymentResponse> => {
+  getPayment: async (paymentId: string | number): Promise<PaymentResponse> => {
     try {
       const res = await apiClient.get(`/own/payments/${paymentId}`);
       return res.data.payment;
@@ -225,7 +225,7 @@ export const ownService = {
     }
   },
 
-  // ─── User Addresses (owner) ─────────────────────────────────────
+  //  User Addresses (owner) 
   listUserAddresses: async (params: UserAddressFetchRequest = {}): Promise<PaginatedData<UserAddressResponse>> => {
     try {
       const res = await apiClient.post('/own/user-addresses/filter', params);
@@ -235,7 +235,7 @@ export const ownService = {
     }
   },
 
-  getUserAddress: async (userAddressId: string): Promise<UserAddressResponse> => {
+  getUserAddress: async (userAddressId: string | number): Promise<UserAddressResponse> => {
     try {
       const res = await apiClient.get(`/own/user-addresses/${userAddressId}`);
       return res.data.user_address;
@@ -253,7 +253,7 @@ export const ownService = {
     }
   },
 
-  updateUserAddress: async (userAddressId: string, payload: UserAddressUpdateRequest): Promise<UserAddressResponse> => {
+  updateUserAddress: async (userAddressId: string | number, payload: UserAddressUpdateRequest): Promise<UserAddressResponse> => {
     try {
       const res = await apiClient.put(`/own/user-addresses/${userAddressId}`, payload);
       return res.data.user_address;
@@ -262,7 +262,7 @@ export const ownService = {
     }
   },
 
-  deleteUserAddress: async (userAddressId: string): Promise<void> => {
+  deleteUserAddress: async (userAddressId: string | number): Promise<void> => {
     try {
       await apiClient.delete(`/own/user-addresses/${userAddressId}`);
     } catch (e) {
@@ -270,7 +270,7 @@ export const ownService = {
     }
   },
 
-  // ─── Role Requests ─────────────────────────────────────────────
+  //  Role Requests 
   createRoleRequest: async (payload: OwnRoleRequestCreateRequest): Promise<{ data: RoleRequestResponse; message: string }> => {
     try {
       const res = await apiClient.post('/own/role-requests', payload) as ApiResult<{ role_request: RoleRequestResponse }>;
@@ -280,7 +280,7 @@ export const ownService = {
     }
   },
 
-  // ─── Withdrawal ────────────────────────────────────────────────
+  //  Withdrawal 
   createWithdrawalRequest: async (payload: WithdrawalRequestCreateRequest): Promise<{ data: WithdrawalRequestResponse; message: string }> => {
     try {
       const res = await apiClient.post('/own/withdrawal-requests', payload) as ApiResult<{ withdrawal_request: WithdrawalRequestResponse }>;
@@ -308,7 +308,7 @@ export const ownService = {
     }
   },
 
-  getNotification: async (notificationId: string): Promise<NotificationResponse> => {
+  getNotification: async (notificationId: string | number): Promise<NotificationResponse> => {
     try {
       const res = await apiClient.get(`/own/notifications/${notificationId}`);
       return res.data.notification;
@@ -317,7 +317,7 @@ export const ownService = {
     }
   },
 
-  markNotificationRead: async (notificationId: string): Promise<NotificationResponse> => {
+  markNotificationRead: async (notificationId: string | number): Promise<NotificationResponse> => {
     try {
       const res = await apiClient.patch(`/own/notifications/${notificationId}/read`);
       return res.data.notification;

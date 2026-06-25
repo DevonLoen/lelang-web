@@ -22,7 +22,7 @@ export default function MainLayout() {
   }, [navigate, location.pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#f4f6fa]">
       <Header />
       <main className="pt-16">
         <Outlet />

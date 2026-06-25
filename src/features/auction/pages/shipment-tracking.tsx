@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { auctionService } from '../services/auction.service';
+import type { ShipmentTrackingResponse } from '../services/auction.schema';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import {
@@ -14,10 +15,8 @@ import {
   AlertCircle,
 } from 'lucide-react';
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
 const formatDate = (value: string) =>
-  new Date(value).toLocaleString('id-ID', {
+  new Date(value).toLocaleString('en-US', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -29,17 +28,18 @@ export default function ShipmentTrackingPage() {
   const { auctionId, shipmentId } = useParams<{ auctionId: string; shipmentId: string }>();
   const { showToast } = useToast();
 
-  const isValidPath = Boolean(auctionId && shipmentId && UUID_PATTERN.test(auctionId) && UUID_PATTERN.test(shipmentId));
+  const isValidPath = Boolean(auctionId && shipmentId);
 
-  const { data: tracking, isLoading, error } = useQuery({
+  const { data: tracking, isLoading, error } = useQuery<ShipmentTrackingResponse>({
     queryKey: ['shipment-tracking', auctionId, shipmentId],
     queryFn: () => auctionService.getTracking(auctionId!, shipmentId!),
     enabled: isValidPath,
     retry: false,
-    onError: (e: any) => {
-      showToast(e?.message || 'Failed to load shipment tracking.', ToastType.ERROR);
-    },
   });
+
+  useEffect(() => {
+    if (error) showToast(error.message || 'Failed to load shipment tracking.', ToastType.ERROR);
+  }, [error, showToast]);
 
   const history = useMemo(
     () => [...(tracking?.history ?? [])].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime()),
@@ -56,7 +56,7 @@ export default function ShipmentTrackingPage() {
               <h1 className="text-xl font-semibold text-red-900">Invalid tracking link</h1>
             </div>
             <p className="mt-3 text-sm text-red-700">The tracking URL is malformed. Please verify the shipment link and try again.</p>
-            <Link to="/" className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-purple-700 hover:text-purple-900">
+            <Link to="/" className="inline-flex items-center gap-2 mt-4 text-sm font-semibold text-slate-700 hover:text-slate-900">
               <ArrowLeft className="h-4 w-4" /> Back to auctions
             </Link>
           </div>
@@ -70,7 +70,7 @@ export default function ShipmentTrackingPage() {
     <div className="grid gap-4 lg:grid-cols-3">
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <Truck className="h-5 w-5 text-violet-600" />
+          <Truck className="h-5 w-5 text-slate-600" />
           <div>
             <p className="text-sm font-semibold text-slate-900">Courier</p>
             <p className="text-sm text-slate-500">{tracking.courier.company || 'Unknown'}</p>
@@ -138,7 +138,7 @@ export default function ShipmentTrackingPage() {
         {isLoading && (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center text-slate-500 shadow-sm">
             <div className="inline-flex items-center gap-2 text-sm font-semibold text-slate-600">
-              <Clock className="h-4 w-4 animate-spin" /> Loading tracking information…
+              <Clock className="h-4 w-4 animate-spin" /> Loading tracking information
             </div>
           </div>
         )}
@@ -187,7 +187,7 @@ export default function ShipmentTrackingPage() {
                   href={tracking.link}
                   target="_blank"
                   rel="noreferrer"
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-purple-700 hover:text-purple-900"
+                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-900"
                 >
                   <LinkIcon className="h-4 w-4" /> Open courier tracking page
                 </a>

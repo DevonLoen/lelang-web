@@ -93,8 +93,8 @@ function registerForegroundListener(messaging: Messaging): void {
 
   foregroundListenerRegistered = true;
   onMessage(messaging, (payload) => {
-    const title = payload.notification?.title ?? "Lelang";
-    const body = payload.notification?.body ?? "Ada notifikasi baru.";
+    const title = payload.notification?.title ?? "Bidify";
+    const body = payload.notification?.body ?? "You have a new notification.";
     const detail: FcmNotificationDetail = {
       title,
       body,

@@ -12,7 +12,7 @@ const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
 
 const formatDate = (value: string) =>
-  new Date(value).toLocaleString('id-ID', {
+  new Date(value).toLocaleString('en-US', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -93,45 +93,45 @@ export default function OwnWithdrawalPage() {
   if (isLoading) {
     return (
       <main className="flex min-h-[60vh] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </main>
     );
   }
 
   return (
-    <main className="mx-auto max-w-6xl px-4 py-10">
+    <main className="bidify-page">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-900">Withdrawal</h1>
-        <p className="mt-1 text-sm text-slate-500">Transfer your auction earnings and monitor request status.</p>
+        <h1 className="bidify-title">Withdrawal</h1>
+        <p className="bidify-subtitle">Transfer auction earnings and monitor request status.</p>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
         <section className="space-y-6">
-          <div className="rounded-2xl bg-gradient-to-br from-indigo-600 to-indigo-700 p-6 text-white shadow-lg">
+          <div className="rounded-lg bg-[#272783] p-6 text-white shadow-lg">
             <div className="mb-3 flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/20">
                 <Wallet className="h-5 w-5 text-white" />
               </div>
-              <p className="text-sm font-medium text-indigo-100">Available Balance</p>
+              <p className="text-sm font-medium text-slate-200">Available Balance</p>
             </div>
             <p className="text-4xl font-bold tracking-tight">{formatCurrency(balance)}</p>
             {user?.bank_account_number ? (
-              <div className="mt-3 flex items-center gap-1.5 text-xs text-indigo-200">
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-300">
                 <BadgeCheck className="h-3.5 w-3.5" />
                 Bank account: {user.bank_account_number}
               </div>
             ) : (
-              <div className="mt-3 flex items-center gap-1.5 text-xs text-indigo-200">
+              <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-300">
                 <AlertCircle className="h-3.5 w-3.5" />
                 No bank account registered
               </div>
             )}
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white">
+          <div className="bidify-panel overflow-hidden">
             <div className="flex items-center gap-3 border-b border-slate-100 px-5 py-4">
-              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-indigo-50">
-                <ArrowDownToLine className="h-4 w-4 text-indigo-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-slate-50">
+                <ArrowDownToLine className="h-4 w-4 text-slate-700" />
               </div>
               <span className="font-semibold text-slate-800">Request Withdrawal</span>
             </div>
@@ -172,7 +172,7 @@ export default function OwnWithdrawalPage() {
                           reset();
                           setAmount(String(val));
                         }}
-                        className="rounded-full border border-indigo-200 px-3 py-1.5 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50"
+                    className="rounded border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 transition-colors hover:bg-slate-50"
                       >
                         {frac === 1 ? 'Max' : `${frac * 100}%`}
                       </button>
@@ -182,7 +182,7 @@ export default function OwnWithdrawalPage() {
               )}
 
               {isSuccess ? (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
                   <CheckCircle className="h-4 w-4 flex-shrink-0" />
                   Request submitted and history refreshed.
                 </div>
@@ -190,7 +190,7 @@ export default function OwnWithdrawalPage() {
                 <button
                   disabled={isPending || !amount || isOverBalance || balance === 0}
                   onClick={handleSubmit}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3 font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-60"
+                  className="bidify-primary w-full py-3"
                 >
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowDownToLine className="h-4 w-4" />}
                   {isPending ? 'Submitting...' : 'Withdraw'}
@@ -200,7 +200,7 @@ export default function OwnWithdrawalPage() {
           </div>
         </section>
 
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <section className="bidify-panel">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
             <div>
               <h2 className="font-semibold text-slate-900">Withdrawal History</h2>
@@ -215,7 +215,7 @@ export default function OwnWithdrawalPage() {
                     setStatus(option.value);
                     setPage(1);
                   }}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${
+                  className={`rounded px-3 py-1.5 text-xs font-semibold transition-colors ${
                     status === option.value ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600 hover:bg-slate-50'
                   }`}
                 >
@@ -227,7 +227,7 @@ export default function OwnWithdrawalPage() {
 
           {isHistoryLoading ? (
             <div className="flex min-h-80 items-center justify-center">
-              <Loader2 className="h-7 w-7 animate-spin text-indigo-500" />
+              <Loader2 className="h-7 w-7 animate-spin text-slate-500" />
             </div>
           ) : isHistoryError ? (
             <div className="flex min-h-80 flex-col items-center justify-center px-6 text-center text-red-500">
@@ -250,7 +250,7 @@ export default function OwnWithdrawalPage() {
                       <p className="font-semibold text-slate-900">{formatCurrency(request.amount)}</p>
                       <span
                         className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                          request.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                          request.status === 'COMPLETED' ? 'bg-slate-100 text-slate-700' : 'bg-amber-100 text-amber-700'
                         }`}
                       >
                         {request.status}

@@ -10,14 +10,14 @@ import { ShieldAlert, Gavel, Package, Loader2, Upload } from 'lucide-react';
 
 const ROLE_CONFIG = {
   BIDDER: {
-    icon: <Gavel className="h-14 w-14 text-indigo-300" />,
+    icon: <Gavel className="h-14 w-14 text-slate-300" />,
     title: 'Bidder Access Required',
     description: 'You need the Bidder role to place bids and track your bid history.',
     features: ['Place bids on live auctions', 'Track all your bids in one place', 'Get notified when you win'],
     buttonLabel: 'Request Bidder Role',
   },
   SELLER: {
-    icon: <Package className="h-14 w-14 text-indigo-300" />,
+    icon: <Package className="h-14 w-14 text-slate-300" />,
     title: 'Seller Access Required',
     description: 'You need the Seller role to list products and schedule auctions.',
     features: ['List your products for review', 'Schedule and manage auctions', 'Receive payments from winning bids'],
@@ -44,6 +44,8 @@ export default function RoleGate({ requiredRole, children }: Props) {
 
   // SELLER fields
   const [bankAccount, setBankAccount] = useState('');
+  const [bankAccountName, setBankAccountName] = useState('');
+  const [bankName, setBankName] = useState('');
 
   const isSuperAdmin = user?.roles?.some((r) => r.role === 'SUPERADMIN') ?? false;
   const hasRole = user?.roles?.some((r) => r.role === requiredRole) ?? false;
@@ -64,20 +66,27 @@ export default function RoleGate({ requiredRole, children }: Props) {
       } else {
         if (!hasBidderRole) throw new Error('You must have the Bidder role before requesting Seller access');
         if (!bankAccount.trim()) throw new Error('Bank account number is required');
-        return ownService.createRoleRequest({ role: 'SELLER', bank_account_number: bankAccount });
+        if (!bankAccountName.trim()) throw new Error('Bank account name is required');
+        if (!bankName.trim()) throw new Error('Bank name is required');
+        return ownService.createRoleRequest({
+          role: 'SELLER',
+          bank_account_number: bankAccount,
+          bank_account_name: bankAccountName,
+          bank_name: bankName,
+        });
       }
     },
     onSuccess: (res) => {
       showToast(res.message || 'Role request submitted!', ToastType.SUCCESS);
       qc.invalidateQueries({ queryKey: ['own-profile'] });
     },
-    onError: (e: any) => showToast(e.message ?? 'Failed to submit request', ToastType.ERROR),
+    onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Failed to submit request', ToastType.ERROR),
   });
 
   if (isLoading) {
     return (
       <main className="flex items-center justify-center min-h-[60vh]">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
+        <Loader2 className="h-8 w-8 animate-spin text-slate-400" />
       </main>
     );
   }
@@ -88,13 +97,13 @@ export default function RoleGate({ requiredRole, children }: Props) {
     return (
       <main className="max-w-md mx-auto px-4 py-20 text-center">
         <div className="flex flex-col items-center gap-5">
-          <div className="h-28 w-28 rounded-full bg-indigo-50 flex items-center justify-center">
-            <Gavel className="h-14 w-14 text-indigo-300" />
+          <div className="h-28 w-28 rounded-full bg-slate-50 flex items-center justify-center">
+            <Gavel className="h-14 w-14 text-slate-300" />
           </div>
           <div>
             <div className="flex items-center justify-center gap-2 mb-2">
-              <ShieldAlert className="h-4 w-4 text-orange-400" />
-              <span className="text-xs font-semibold text-orange-500 uppercase tracking-wide">Bidder Role Required First</span>
+              <ShieldAlert className="h-4 w-4 text-amber-600" />
+              <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Bidder Role Required First</span>
             </div>
             <h1 className="text-2xl font-bold text-gray-900">Become a Bidder First</h1>
             <p className="text-gray-500 mt-2 text-sm leading-relaxed">
@@ -104,7 +113,7 @@ export default function RoleGate({ requiredRole, children }: Props) {
           <ul className="w-full text-left space-y-2 bg-gray-50 rounded-xl p-4">
             {ROLE_CONFIG.BIDDER.features.map((f) => (
               <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 flex-shrink-0" />
+                <span className="h-1.5 w-1.5 rounded-full bg-slate-500 flex-shrink-0" />
                 {f}
               </li>
             ))}
@@ -122,14 +131,14 @@ export default function RoleGate({ requiredRole, children }: Props) {
   return (
     <main className="max-w-md mx-auto px-4 py-20 text-center">
       <div className="flex flex-col items-center gap-5">
-        <div className="h-28 w-28 rounded-full bg-indigo-50 flex items-center justify-center">
+        <div className="h-28 w-28 rounded-full bg-slate-50 flex items-center justify-center">
           {cfg.icon}
         </div>
 
         <div>
           <div className="flex items-center justify-center gap-2 mb-2">
-            <ShieldAlert className="h-4 w-4 text-orange-400" />
-            <span className="text-xs font-semibold text-orange-500 uppercase tracking-wide">Access Restricted</span>
+            <ShieldAlert className="h-4 w-4 text-amber-600" />
+            <span className="text-xs font-semibold text-amber-700 uppercase tracking-wide">Access Restricted</span>
           </div>
           <h1 className="text-2xl font-bold text-gray-900">{cfg.title}</h1>
           <p className="text-gray-500 mt-2 text-sm leading-relaxed">{cfg.description}</p>
@@ -138,15 +147,15 @@ export default function RoleGate({ requiredRole, children }: Props) {
         <ul className="w-full text-left space-y-2 bg-gray-50 rounded-xl p-4">
           {cfg.features.map((f) => (
             <li key={f} className="flex items-center gap-2 text-sm text-gray-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 flex-shrink-0" />
+              <span className="h-1.5 w-1.5 rounded-full bg-slate-500 flex-shrink-0" />
               {f}
             </li>
           ))}
         </ul>
 
         {isSuccess ? (
-          <div className="w-full bg-green-50 border border-green-200 rounded-xl px-4 py-3 text-sm text-green-700 font-medium">
-            ✓ Request submitted — awaiting admin approval
+          <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 font-medium">
+             Request submitted  awaiting admin approval
           </div>
         ) : (
           <div className="w-full space-y-3 text-left">
@@ -167,10 +176,10 @@ export default function RoleGate({ requiredRole, children }: Props) {
                   <button
                     type="button"
                     onClick={() => identityRef.current?.click()}
-                    className="w-full flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                    className="w-full flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-500 hover:border-slate-400 hover:text-slate-500 transition-colors"
                   >
                     <Upload className="h-4 w-4 flex-shrink-0" />
-                    {identityFile ? identityFile.name : 'Upload KTP / identity card'}
+                    {identityFile ? identityFile.name : 'Upload identity card'}
                   </button>
                 </div>
                 <div>
@@ -179,29 +188,47 @@ export default function RoleGate({ requiredRole, children }: Props) {
                   <button
                     type="button"
                     onClick={() => selfieRef.current?.click()}
-                    className="w-full flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-500 hover:border-indigo-400 hover:text-indigo-500 transition-colors"
+                    className="w-full flex items-center gap-2 border border-dashed border-gray-300 rounded-lg px-3 py-2.5 text-sm text-gray-500 hover:border-slate-400 hover:text-slate-500 transition-colors"
                   >
                     <Upload className="h-4 w-4 flex-shrink-0" />
-                    {selfieFile ? selfieFile.name : 'Upload selfie holding your KTP'}
+                    {selfieFile ? selfieFile.name : 'Upload selfie holding your identity card'}
                   </button>
                 </div>
               </>
             )}
             {requiredRole === 'SELLER' && (
-              <div>
-                <label className="text-xs font-medium text-gray-600 mb-1 block">Bank Account Number *</label>
-                <Input
-                  placeholder="Enter your bank account number"
-                  value={bankAccount}
-                  onChange={(e) => setBankAccount(e.target.value)}
-                  inputMode="numeric"
-                />
-              </div>
+              <>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Bank Account Number *</label>
+                  <Input
+                    placeholder="Enter your bank account number"
+                    value={bankAccount}
+                    onChange={(e) => setBankAccount(e.target.value)}
+                    inputMode="numeric"
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Bank Account Name *</label>
+                  <Input
+                    placeholder="Enter your account holder name"
+                    value={bankAccountName}
+                    onChange={(e) => setBankAccountName(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-gray-600 mb-1 block">Bank Name *</label>
+                  <Input
+                    placeholder="Enter your bank name"
+                    value={bankName}
+                    onChange={(e) => setBankName(e.target.value)}
+                  />
+                </div>
+              </>
             )}
             <Button
               disabled={isPending}
               onClick={() => requestRole()}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+              className="w-full bg-slate-900 hover:bg-slate-800 text-white"
             >
               {isPending ? (
                 <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Submitting...</>
@@ -213,7 +240,7 @@ export default function RoleGate({ requiredRole, children }: Props) {
         )}
 
         <p className="text-xs text-gray-400">
-          Requests are typically reviewed within 1–2 business days.
+          Requests are typically reviewed within 12 business days.
         </p>
       </div>
     </main>

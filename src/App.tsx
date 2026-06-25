@@ -40,7 +40,7 @@ function AppContent() {
         targetPath?: string | null;
       }>).detail ?? {};
 
-      showToast(`${title || 'Lelang'}: ${body || 'Ada notifikasi baru.'}`, ToastType.INFO, {
+      showToast(`${title || 'Bidify'}: ${body || 'You have a new notification.'}`, ToastType.INFO, {
         duration: 7000,
         onClick: targetPath ? () => router.navigate(targetPath) : undefined,
       });

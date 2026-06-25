@@ -6,11 +6,13 @@ import {
   ProductCondition,
 } from './product.schema';
 import type { PaginatedResponse } from '../../../api/utils';
+import type { ProductResponse } from '../../auction/services/auction.schema';
 
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
-const throwMsg = (e: any, fallback: string): never => {
-  throw new Error(e?.response?.data?.message || e?.message || fallback);
+const throwMsg = (e: unknown, fallback: string): never => {
+  if (e instanceof Error) throw new Error(e.message || fallback);
+  throw new Error(fallback);
 };
 
 async function uploadFile(file: File): Promise<string> {
@@ -27,6 +29,19 @@ function toImageUrl(path: string | undefined | null): string {
   if (path.startsWith('http')) return path;
   return `${BASE_URL}/storage/public/${path}`;
 }
+
+const mapProduct = (p: ProductResponse): Product => ({
+  id: p.id,
+  userId: p.user_id,
+  name: p.name,
+  description: p.description,
+  condition: p.condition as ProductCondition,
+  coverImageUrl: toImageUrl(p.cover_image_link),
+  imageUrls: (p.image_links ?? []).map(toImageUrl),
+  status: p.status as ProductStatus,
+  createdAt: p.created_at ? new Date(p.created_at) : undefined,
+  updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
+});
 
 export const productService = {
   createProductRequest: async (productData: ProductFormData): Promise<Product> => {
@@ -54,19 +69,7 @@ export const productService = {
         image_paths: imagePaths,
       });
 
-      const p = res.data.product;
-      return {
-        id: p.id,
-        userId: p.user_id,
-        name: p.name,
-        description: p.description,
-        condition: p.condition as ProductCondition,
-        coverImageUrl: toImageUrl(p.cover_image_link),
-        imageUrls: (p.image_links ?? []).map(toImageUrl),
-        status: p.status as ProductStatus,
-        createdAt: p.created_at ? new Date(p.created_at) : undefined,
-        updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
-      };
+      return mapProduct(res.data.product as ProductResponse);
     } catch (e) {
       return throwMsg(e, 'Failed to create product');
     }
@@ -99,18 +102,7 @@ export const productService = {
           totalPage,
           totalData: total,
         },
-        data: (nodes as any[]).map((p: any) => ({
-          id: p.id,
-          userId: p.user_id,
-          name: p.name,
-          description: p.description,
-          condition: p.condition as ProductCondition,
-          coverImageUrl: toImageUrl(p.cover_image_link),
-          imageUrls: (p.image_links ?? []).map(toImageUrl),
-          status: p.status as ProductStatus,
-          createdAt: p.created_at ? new Date(p.created_at) : undefined,
-          updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
-        })),
+        data: (nodes as ProductResponse[]).map(mapProduct),
       };
     } catch (e) {
       return throwMsg(e, 'Failed to load products');
@@ -120,19 +112,7 @@ export const productService = {
   getProductById: async (id: string | number): Promise<Product> => {
     try {
       const res = await apiClient.get(`/products/${id}`);
-      const p = res.data.product;
-      return {
-        id: p.id,
-        userId: p.user_id,
-        name: p.name,
-        description: p.description,
-        condition: p.condition as ProductCondition,
-        coverImageUrl: toImageUrl(p.cover_image_link),
-        imageUrls: (p.image_links ?? []).map(toImageUrl),
-        status: p.status as ProductStatus,
-        createdAt: p.created_at ? new Date(p.created_at) : undefined,
-        updatedAt: p.updated_at ? new Date(p.updated_at) : undefined,
-      };
+      return mapProduct(res.data.product as ProductResponse);
     } catch (e) {
       return throwMsg(e, 'Failed to load product');
     }

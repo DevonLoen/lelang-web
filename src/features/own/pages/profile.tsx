@@ -1,4 +1,4 @@
-﻿import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
 import { useToast } from '../../../contexts/toast-context';
@@ -9,7 +9,7 @@ import { User, Edit3, X, CheckCircle, BadgeCheck, Calendar, Gavel, Package, Load
 
 const formatDate = (s?: string) => {
   if (!s) return '-';
-  return new Date(s).toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+  return new Date(s).toLocaleDateString('en-US', { day: '2-digit', month: 'long', year: 'numeric' });
 };
 
 const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
@@ -68,6 +68,8 @@ export default function ProfilePage() {
   const bidderSelfieRef = useRef<HTMLInputElement>(null);
   // SELLER fields
   const [sellerBankAccount, setSellerBankAccount] = useState('');
+  const [sellerBankAccountName, setSellerBankAccountName] = useState('');
+  const [sellerBankName, setSellerBankName] = useState('');
 
   const { mutate: requestRole, isPending: isRequestingRole } = useMutation({
     mutationFn: async (role: string) => {
@@ -83,7 +85,14 @@ export default function ProfilePage() {
       } else {
         if (!isBidder) throw new Error('You must have the Bidder role before requesting Seller access');
         if (!sellerBankAccount.trim()) throw new Error('Bank account number is required');
-        return ownService.createRoleRequest({ role: 'SELLER', bank_account_number: sellerBankAccount });
+        if (!sellerBankAccountName.trim()) throw new Error('Bank account name is required');
+        if (!sellerBankName.trim()) throw new Error('Bank name is required');
+        return ownService.createRoleRequest({
+          role: 'SELLER',
+          bank_account_number: sellerBankAccount,
+          bank_account_name: sellerBankAccountName,
+          bank_name: sellerBankName,
+        });
       }
     },
     onSuccess: (res, role) => {
@@ -112,23 +121,21 @@ export default function ProfilePage() {
   const showRoleCard = !isSuperAdmin && (!isBidder || !isSeller);
 
   return (
-    <main className="max-w-2xl mx-auto px-4 py-12 space-y-5">
-
-      {/* â”€â”€ Avatar & name â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
+    <main className="bidify-page-narrow space-y-5">
       <div className="flex flex-col items-center gap-3 pb-2">
-        <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-indigo-100 to-purple-100 flex items-center justify-center ring-4 ring-white shadow-md">
-          <User className="h-10 w-10 text-indigo-500" />
+        <div className="h-20 w-20 rounded-3xl bg-gradient-to-br from-slate-100 to-slate-200 flex items-center justify-center ring-4 ring-white shadow-md">
+          <User className="h-10 w-10 text-slate-500" />
         </div>
         <div className="text-center">
           <h1 className="text-2xl font-bold text-slate-900">{user.fullname}</h1>
           <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
             {user.is_verified && (
-              <span className="flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2.5 py-0.5 rounded-full">
+              <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 px-2.5 py-0.5 rounded-full">
                 <BadgeCheck className="h-3.5 w-3.5" /> Verified
               </span>
             )}
             {user.roles?.map((r) => (
-              <span key={r.id} className="text-xs font-semibold bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded-full">
+              <span key={r.id} className="text-xs font-semibold bg-slate-100 text-slate-800 px-2.5 py-0.5 rounded-full">
                 {r.role}
               </span>
             ))}
@@ -136,18 +143,17 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* â”€â”€ Profile info â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
-      <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+      <div className="bidify-panel overflow-hidden">
         <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-              <User className="h-4 w-4 text-indigo-600" />
+            <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center">
+              <User className="h-4 w-4 text-slate-700" />
             </div>
             <span className="font-semibold text-slate-800">Profile Information</span>
           </div>
           {!isEditing && (
             <button onClick={() => setIsEditing(true)}
-              className="flex items-center gap-1.5 text-sm font-medium text-indigo-600 hover:text-indigo-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-indigo-50">
+              className="flex items-center gap-1.5 text-sm font-medium text-slate-700 hover:text-slate-800 transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-50">
               <Edit3 className="h-4 w-4" /> Edit
             </button>
           )}
@@ -160,10 +166,10 @@ export default function ProfilePage() {
                 { icon: User, label: 'Full Name', value: user.fullname },
                 { icon: Mail, label: 'Email', value: user.email },
                 { icon: Calendar, label: 'Date of Birth', value: formatDate(user.birth) },
-                { icon: User, label: 'Gender', value: user.gender || 'â€”' },
+                { icon: User, label: 'Gender', value: user.gender || '-' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4 py-3">
-                  <item.icon className="h-4 w-4 text-indigo-400 flex-shrink-0" />
+                  <item.icon className="h-4 w-4 text-slate-400 flex-shrink-0" />
                   <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
                     <span className="text-sm text-slate-500">{item.label}</span>
                     <span className="text-sm font-semibold text-slate-900">{item.value}</span>
@@ -197,9 +203,9 @@ export default function ProfilePage() {
                   <X className="h-4 w-4" /> Cancel
                 </button>
                 <button disabled={isPending} onClick={() => update()}
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                  {isPending ? 'Savingâ€¦' : 'Save Changes'}
+                  {isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
             </div>
@@ -207,12 +213,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-      {/* â”€â”€ Role requests â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */}
       {showRoleCard && (
-        <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="bidify-panel overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
-            <div className="h-8 w-8 rounded-xl bg-purple-50 flex items-center justify-center">
-              <ShieldCheck className="h-4 w-4 text-purple-600" />
+            <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center">
+              <ShieldCheck className="h-4 w-4 text-slate-600" />
             </div>
             <span className="font-semibold text-slate-800">Role Access</span>
           </div>
@@ -220,10 +225,10 @@ export default function ProfilePage() {
 
             {/* Bidder role */}
             {!isBidder && (
-              <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 p-5 space-y-3">
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-5 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-indigo-100 flex items-center justify-center flex-shrink-0">
-                    <Gavel className="h-5 w-5 text-indigo-600" />
+                  <div className="h-10 w-10 rounded-2xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                    <Gavel className="h-5 w-5 text-slate-700" />
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">Become a Bidder</p>
@@ -231,8 +236,8 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 {requestedRole === 'BIDDER' ? (
-                  <p className="text-xs text-emerald-600 font-medium text-center py-2 bg-emerald-50 rounded-xl border border-emerald-200">
-                    âœ“ Request sent â€” awaiting approval
+                  <p className="text-xs text-slate-700 font-medium text-center py-2 bg-slate-50 rounded-xl border border-slate-200">
+                    Request sent - awaiting approval
                   </p>
                 ) : (
                   <div className="space-y-2.5">
@@ -247,10 +252,10 @@ export default function ProfilePage() {
                         onChange={(e) => setBidderIdentityFile(e.target.files?.[0] ?? null)} />
                       <button type="button" onClick={() => bidderIdentityRef.current?.click()}
                         className={`w-full flex items-center gap-2 border border-dashed rounded-xl px-3 py-2.5 text-xs transition-colors ${
-                          bidderIdentityFile ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-300 text-slate-500 hover:border-indigo-400 hover:text-indigo-500'
+                          bidderIdentityFile ? 'border-slate-300 bg-slate-50 text-slate-800' : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-500'
                         }`}>
                         <Upload className="h-3.5 w-3.5 flex-shrink-0" />
-                        {bidderIdentityFile ? bidderIdentityFile.name : 'Upload KTP photo'}
+                        {bidderIdentityFile ? bidderIdentityFile.name : 'Upload identity card photo'}
                       </button>
                     </div>
                     <div>
@@ -259,14 +264,14 @@ export default function ProfilePage() {
                         onChange={(e) => setBidderSelfieFile(e.target.files?.[0] ?? null)} />
                       <button type="button" onClick={() => bidderSelfieRef.current?.click()}
                         className={`w-full flex items-center gap-2 border border-dashed rounded-xl px-3 py-2.5 text-xs transition-colors ${
-                          bidderSelfieFile ? 'border-indigo-300 bg-indigo-50 text-indigo-700' : 'border-slate-300 text-slate-500 hover:border-indigo-400 hover:text-indigo-500'
+                          bidderSelfieFile ? 'border-slate-300 bg-slate-50 text-slate-800' : 'border-slate-300 text-slate-500 hover:border-slate-400 hover:text-slate-500'
                         }`}>
                         <Upload className="h-3.5 w-3.5 flex-shrink-0" />
-                        {bidderSelfieFile ? bidderSelfieFile.name : 'Upload selfie holding KTP'}
+                        {bidderSelfieFile ? bidderSelfieFile.name : 'Upload selfie holding your identity card'}
                       </button>
                     </div>
                     <button onClick={() => requestRole('BIDDER')} disabled={isRequestingRole}
-                      className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
                       {isRequestingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
                       Request Bidder Role
                     </button>
@@ -277,10 +282,10 @@ export default function ProfilePage() {
 
             {/* Seller role */}
             {isBidder && !isSeller && (
-              <div className="rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/40 p-5 space-y-3">
+              <div className="rounded-2xl border border-dashed border-slate-200 bg-slate-50/40 p-5 space-y-3">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-emerald-100 flex items-center justify-center flex-shrink-0">
-                    <Package className="h-5 w-5 text-emerald-600" />
+                  <div className="h-10 w-10 rounded-2xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                    <Package className="h-5 w-5 text-slate-700" />
                   </div>
                   <div>
                     <p className="font-semibold text-slate-800 text-sm">Become a Seller</p>
@@ -288,8 +293,8 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 {requestedRole === 'SELLER' ? (
-                  <p className="text-xs text-emerald-600 font-medium text-center py-2 bg-emerald-50 rounded-xl border border-emerald-200">
-                    âœ“ Request sent â€” awaiting approval
+                  <p className="text-xs text-slate-700 font-medium text-center py-2 bg-slate-50 rounded-xl border border-slate-200">
+                    Request sent - awaiting approval
                   </p>
                 ) : (
                   <div className="space-y-2.5">
@@ -298,8 +303,18 @@ export default function ProfilePage() {
                       <Input placeholder="Enter your bank account number" value={sellerBankAccount}
                         onChange={(e) => setSellerBankAccount(e.target.value)} inputMode="numeric" className="text-sm h-9" />
                     </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 mb-1 block">Bank Account Name *</label>
+                      <Input placeholder="Enter your account holder name" value={sellerBankAccountName}
+                        onChange={(e) => setSellerBankAccountName(e.target.value)} className="text-sm h-9" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-slate-600 mb-1 block">Bank Name *</label>
+                      <Input placeholder="Enter your bank name" value={sellerBankName}
+                        onChange={(e) => setSellerBankName(e.target.value)} className="text-sm h-9" />
+                    </div>
                     <button onClick={() => requestRole('SELLER')} disabled={isRequestingRole}
-                      className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
+                      className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl text-sm transition-colors flex items-center justify-center gap-2">
                       {isRequestingRole ? <Loader2 className="h-4 w-4 animate-spin" /> : <ChevronRight className="h-4 w-4" />}
                       Request Seller Role
                     </button>

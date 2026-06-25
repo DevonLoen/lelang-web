@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ownService } from '../../own/services/own.service';
 import { biteshipService } from '../../biteship/services/biteship.service';
@@ -93,10 +93,10 @@ export default function UserAddressesPage() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const [showForm, setShowForm] = useState(false);
-  const [editId, setEditId] = useState<string | null>(null);
+  const [editId, setEditId] = useState<number | null>(null);
   const [form, setForm] = useState<UserAddressCreateRequest>(emptyForm());
   const [areaSearch, setAreaSearch] = useState('');
-  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isLocationConfirmed, setIsLocationConfirmed] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
 
@@ -133,7 +133,7 @@ export default function UserAddressesPage() {
   });
 
   const { mutate: deleteAddress, isPending: isDeleting } = useMutation({
-    mutationFn: (addrId: string) => ownService.deleteUserAddress(addrId),
+    mutationFn: (addrId: number) => ownService.deleteUserAddress(addrId),
     onSuccess: () => {
       showToast('Address deleted!', ToastType.SUCCESS);
       setDeleteId(null);
@@ -269,20 +269,20 @@ export default function UserAddressesPage() {
   };
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
+    <main className="bidify-page-narrow">
       <button onClick={() => navigate('/profile')} className="flex items-center gap-1.5 text-sm text-slate-500 hover:text-slate-900 transition-colors mb-6">
         <ChevronLeft className="h-4 w-4" /> Profile
       </button>
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">My Addresses</h1>
-          <p className="text-sm text-gray-500 mt-1">Manage your shipping addresses</p>
+          <h1 className="bidify-title">My Addresses</h1>
+          <p className="bidify-subtitle">Manage map-confirmed shipping addresses.</p>
         </div>
         {!showForm && (
           <button
             onClick={() => { setShowForm(true); setEditId(null); setForm(emptyForm()); setAreaSearch(''); setIsLocationConfirmed(false); }}
-            className="flex items-center gap-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-4 py-2.5 rounded-xl transition-colors">
+            className="bidify-primary">
             <Plus className="h-4 w-4" /> Add Address
           </button>
         )}
@@ -290,11 +290,11 @@ export default function UserAddressesPage() {
 
       {/* Form */}
       {showForm && (
-        <div className="mb-6 bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <div className="bidify-panel mb-6 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-indigo-50 flex items-center justify-center">
-                <MapPin className="h-4 w-4 text-indigo-600" />
+              <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center">
+                <MapPin className="h-4 w-4 text-slate-700" />
               </div>
               <span className="font-semibold text-slate-800">{editId ? 'Edit Address' : 'New Address'}</span>
             </div>
@@ -369,7 +369,7 @@ export default function UserAddressesPage() {
                 </div>
               )}
               {form.biteship_area_id && (
-                <p className="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                <p className="text-xs text-slate-700 mt-1 flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3" />
                   {form.city_name}, {form.province_name} {form.postal_code}
                 </p>
@@ -415,15 +415,15 @@ export default function UserAddressesPage() {
 
             <div className="flex gap-3 pt-1">
               <button onClick={cancelForm}
-                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors flex items-center justify-center gap-1.5">
+                className="bidify-secondary flex-1">
                 <X className="h-4 w-4" /> Cancel
               </button>
               <button
                 onClick={handleSubmit}
                 disabled={isSaveDisabled}
-                className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
+                className="bidify-primary flex-1">
                 {isCreating || isUpdating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {isCreating || isUpdating ? 'Savingâ€¦' : isLocationConfirmed ? 'Save Address' : 'Confirm Location First'}
+                {isCreating || isUpdating ? 'Saving...' : isLocationConfirmed ? 'Save Address' : 'Confirm Location First'}
               </button>
             </div>
           </div>
@@ -436,7 +436,7 @@ export default function UserAddressesPage() {
           {[1, 2].map(i => <div key={i} className="h-24 bg-slate-100 rounded-2xl" />)}
         </div>
       ) : addresses.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-slate-200">
+          <div className="bidify-card text-center py-16">
           <MapPin className="h-10 w-10 text-slate-300 mx-auto mb-3" />
           <p className="text-slate-600 font-medium">No addresses yet</p>
           <p className="text-sm text-slate-400 mt-1">Add your first shipping address to get started.</p>
@@ -445,19 +445,19 @@ export default function UserAddressesPage() {
         <div className="space-y-3">
           {addresses.map((addr) => (
             <div key={addr.id} className={`bg-white rounded-2xl border overflow-hidden transition-colors ${
-              addr.is_default ? 'border-indigo-300 shadow-sm shadow-indigo-50' : 'border-slate-200'
+              addr.is_default ? 'border-slate-300 shadow-sm shadow-indigo-50' : 'border-slate-200'
             }`}>
               <div className="flex items-start gap-4 p-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-slate-900">{addr.label}</span>
                     {addr.is_default && (
-                      <span className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-semibold">
+                      <span className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-800 font-semibold">
                         <Star className="h-3 w-3" /> Default
                       </span>
                     )}
                     {addr.latitude !== undefined && addr.longitude !== undefined && (
-                      <span className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-semibold">
+                      <span className="flex items-center gap-0.5 text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 font-semibold">
                         <MapPin className="h-3 w-3" /> GPS
                       </span>
                     )}

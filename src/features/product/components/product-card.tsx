@@ -1,4 +1,5 @@
 import { Link } from 'react-router';
+import { ImageOff } from 'lucide-react';
 import type { ProductCondition, ProductStatus } from '../services/product.schema';
 
 export interface IProductCard {
@@ -15,12 +16,12 @@ export interface ProductCardProps {
 }
 
 const statusStyles: Record<ProductStatus, string> = {
-  DRAFT: 'bg-gray-100 text-gray-800',
-  REQUEST: 'bg-sky-100 text-sky-800',
-  VERIFIED: 'bg-indigo-100 text-indigo-800',
-  ON_BIDS: 'bg-orange-100 text-orange-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  COMPLETED: 'bg-green-100 text-green-800',
+  DRAFT: 'bg-slate-100 text-slate-700',
+  REQUEST: 'bg-slate-50 text-slate-700',
+  VERIFIED: 'bg-slate-50 text-slate-800',
+  ON_BIDS: 'bg-amber-50 text-amber-800',
+  REJECTED: 'bg-red-50 text-red-700',
+  COMPLETED: 'bg-slate-50 text-slate-800',
 };
 
 function ProductCard({ product }: ProductCardProps) {
@@ -32,23 +33,30 @@ function ProductCard({ product }: ProductCardProps) {
     minimumFractionDigits: 0,
   }).format(price);
   return (
-    <Link to={`/my-product/${product.id}`}>
-      <div className="group bg-white rounded-xl shadow-lg overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
-        <div className="relative">
-          <img src={imageUrl} alt={title} className="w-full h-48 object-cover" />
+    <Link to={`/my-product/${product.id}`} className="block">
+      <div className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-lg hover:shadow-slate-950/10">
+        <div className="relative h-48 bg-slate-100">
+          {imageUrl ? (
+            <img src={imageUrl} alt={title} className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" />
+          ) : (
+            <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-slate-400">
+              <ImageOff className="h-9 w-9" />
+              <span className="text-xs font-medium">No image</span>
+            </div>
+          )}
           <div
-            className={`absolute top-2 right-2 text-xs font-semibold px-2.5 py-1 rounded-full capitalize ${
+            className={`absolute right-2.5 top-2.5 rounded-md px-2.5 py-1 text-[10px] font-bold capitalize shadow-sm ring-1 ring-white/70 ${
               statusStyles[status] || 'bg-gray-100 text-gray-800'
             }`}
           >
             <span>{status}</span>
           </div>
         </div>
-        <div className="p-5">
-          <span className="text-xs font-semibold text-indigo-600 uppercase">{category}</span>
-          <h3 className="text-lg font-bold text-gray-800 mt-1 truncate group-hover:text-indigo-600 transition-colors">{title}</h3>
-          <p className="text-sm text-gray-500 mt-2">Starting Price:</p>
-          <p className="text-xl font-bold text-gray-900">{formattedPrice}</p>
+        <div className="p-4">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-700">{category}</span>
+          <h3 className="mt-1 truncate text-base font-semibold text-slate-950 transition-colors group-hover:text-slate-800">{title}</h3>
+          <p className="mt-4 text-[10px] font-bold uppercase tracking-wider text-slate-500">Starting Price</p>
+          <p className="text-xl font-extrabold text-slate-800">{formattedPrice}</p>
         </div>
       </div>
     </Link>

@@ -41,33 +41,32 @@ export const InputField: React.FC<InputFieldProps> = ({
         inputMode={inputMode}
         onChange={onChange}
         readOnly={readOnly}
-        // --- PERUBAHAN DI SINI ---
-        className={`peer w-full bg-transparent pl-4 pt-5 pb-2 text-gray-200 
-        placeholder-transparent focus:outline-none truncate 
-        ${icon ? "pr-10" : "pr-4"} {/* Memberi ruang untuk ikon */}
+        className={`peer h-14 w-full rounded-lg bg-white/[0.06] pl-4 pt-5 pb-2 text-white 
+        placeholder-transparent shadow-sm outline-none ring-1 ring-white/10 transition-all truncate
+        ${icon ? "pr-11" : "pr-4"}
         ${
           error
-            ? "border-b border-red-500 focus:border-red-500"
-            : "border-b border-gray-500 focus:border-white"
+            ? "ring-red-400 focus:ring-red-400"
+            : "focus:bg-white/[0.08] focus:ring-amber-400/80"
         }`}
       />
       {error && (
-        <div className="rounded px-2 py-1 text-sm text-red-500">
+        <div className="mt-1.5 rounded px-1 text-sm text-red-300">
           {errorMessage}
         </div>
       )}
 
       <label
         htmlFor={name}
-        className={`absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
-          peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-          peer-focus:top-0 peer-focus:text-sm peer-focus:text-white
-          truncate ${icon ? "right-10" : "right-4"}`}
+        className={`absolute left-4 top-1.5 text-xs font-medium text-slate-400 transition-all duration-200 
+          peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
+          peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-amber-200
+          truncate ${icon ? "right-11" : "right-4"}`}
       >
         {label}
       </label>
       {icon && (
-        <span className="absolute right-3 top-7 -translate-y-1/2 text-gray-400 pointer-events-none">
+        <span className="absolute right-3 top-7 -translate-y-1/2 text-slate-400 pointer-events-none peer-focus:text-amber-200">
           {icon}
         </span>
       )}

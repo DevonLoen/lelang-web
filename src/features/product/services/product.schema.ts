@@ -37,7 +37,7 @@ export const ProductFormSchema = z.object({
   name: z.string().min(1),
   description: z.string().nullable().optional(),
   condition: z.enum(ProductCondition),
-  weight_gram: z.coerce.number().int().positive(),
+  weight_gram: z.number().int().positive(),
   coverImageUrl: z.any(),
   imageUrls: z.array(z.any()),
 });

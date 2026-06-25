@@ -14,9 +14,8 @@ export const useCreateProduct = (onSuccessCallback: () => void) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       onSuccessCallback();
     },
-    onError: (error: any) => {
-      const message =
-        error?.response?.data?.message || error?.message || "Creation failed";
+    onError: (error: unknown) => {
+      const message = error instanceof Error ? error.message : "Creation failed";
       showToast(message, ToastType.ERROR);
     },
   });

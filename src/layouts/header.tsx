@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { User, LogOut, Gavel, Package, Wallet, MapPin, Menu, X as XIcon, CreditCard, ChevronDown, Bell } from 'lucide-react';
-import Logo from '../assets/logo.png';
+import LogoMark from '../assets/bidify-mark.svg';
 import { Link, useNavigate, useLocation } from 'react-router';
 import { AuthService } from '../features/auth/services/auth.service';
 import { useToast } from '../contexts/toast-context';
@@ -53,7 +53,6 @@ export default function Header() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  // Close mobile menu on route change
   useEffect(() => {
     setMenuOpen(false);
   }, [location.pathname]);
@@ -66,38 +65,44 @@ export default function Header() {
   };
 
   const navLinks = [
-    { to: '/auctions', label: 'Browse Auctions' },
-    ...(isSuperAdmin || isSeller ? [{ to: '/own/auctions', label: 'My Auctions' }] : []),
-    ...(isSuperAdmin || isBidder ? [{ to: '/own/bids', label: 'My Bids' }] : []),
-    ...(isSuperAdmin || isSeller ? [{ to: '/own/products', label: 'My Products' }] : []),
+    { to: '/auctions', label: 'Live Auctions', icon: Gavel },
+    ...(isSuperAdmin || isSeller ? [{ to: '/own/auctions', label: 'My Auctions', icon: Gavel }] : []),
+    ...(isSuperAdmin || isBidder ? [{ to: '/own/bids', label: 'My Bids', icon: Wallet }] : []),
+    ...(isSuperAdmin || isSeller ? [{ to: '/own/products', label: 'My Products', icon: Package }] : []),
   ];
 
-  const isActiveLink = (path: string) => location.pathname === path;
+  const isActiveLink = (path: string) => location.pathname === path || location.pathname.startsWith(`${path}/`);
 
   return (
-    <header className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50">
+    <header className="fixed top-0 left-0 right-0 h-16 border-b border-white/10 bg-[#172235]/95 text-white shadow-sm shadow-slate-950/10 backdrop-blur z-50">
       <div className="h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
-        {/* Logo */}
-        <Link to="/auctions" className="flex items-center gap-2.5 flex-shrink-0">
-          <img src={Logo} alt="Auction Logo" className="h-24 w-auto drop-shadow-lg" />
+        <Link to="/auctions" className="group flex items-center gap-3 flex-shrink-0" aria-label="Bidify home">
+          <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-white shadow-sm ring-1 ring-white/60 transition-transform group-hover:scale-[1.03]">
+            <img src={LogoMark} alt="" className="h-7 w-7" />
+          </span>
+          <span className="font-extrabold text-white text-xl tracking-tight hidden sm:block">Bidify</span>
         </Link>
 
-        {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1">
-          {navLinks.map((link) => (
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
             <Link
               key={link.to}
               to={link.to}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                isActiveLink(link.to) ? 'bg-amber-50 text-amber-600' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              className={`inline-flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
+                isActiveLink(link.to)
+                  ? 'bg-white/[0.14] text-white shadow-inner shadow-white/5'
+                  : 'text-slate-200 hover:text-white hover:bg-white/10'
               }`}
             >
+              <Icon className="h-4 w-4" />
               {link.label}
             </Link>
-          ))}
+            );
+          })}
         </nav>
 
-        {/* Right side */}
         <div className="flex items-center gap-2">
           {isAuthenticated ? (
             <div className="relative" ref={notifRef}>
@@ -105,26 +110,26 @@ export default function Header() {
                 type="button"
                 onClick={() => setNotifOpen((open) => !open)}
                 className={`relative rounded-lg p-2 transition-colors ${
-                  notifOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                  notifOpen ? 'bg-white/10 text-white' : 'text-slate-200 hover:bg-white/10 hover:text-white'
                 }`}
                 aria-label="Notifications"
               >
                 <Bell className="h-5 w-5" />
                 {(unreadNotifications?.total ?? 0) > 0 && (
-                  <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-red-500 px-1.5 text-center text-[10px] font-bold leading-5 text-white">
+                  <span className="absolute -right-1 -top-1 min-w-5 rounded-full bg-amber-500 px-1.5 text-center text-[10px] font-bold leading-5 text-slate-950">
                     {Math.min(unreadNotifications?.total ?? 0, 99)}
                   </span>
                 )}
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                <div className="absolute right-0 top-full z-50 mt-3 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-950/10">
                   <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-900">Notifications</p>
                     <Link
                       to="/own/notifications"
                       onClick={() => setNotifOpen(false)}
-                      className="text-xs font-semibold text-amber-700 hover:text-amber-800"
+                      className="text-xs font-semibold text-slate-700 hover:text-slate-950"
                     >
                       View all
                     </Link>
@@ -136,12 +141,12 @@ export default function Header() {
                       unreadNotifications!.nodes.slice(0, 5).map((notification) => (
                         <Link
                           key={notification.id}
-                          to="/own/notifications"
+                          to={`/own/notifications/${notification.id}`}
                           onClick={() => setNotifOpen(false)}
-                          className="block border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-amber-50/60"
+                          className="block border-b border-slate-100 px-4 py-3 last:border-b-0 hover:bg-slate-50"
                         >
                           <div className="flex items-start gap-2">
-                            <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-amber-500" />
+                            <span className="mt-1 h-2 w-2 flex-shrink-0 rounded-full bg-slate-400" />
                             <div className="min-w-0">
                               <p className="truncate text-sm font-semibold text-slate-900">{notification.title}</p>
                               <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{notification.body}</p>
@@ -157,31 +162,33 @@ export default function Header() {
           ) : (
             <Link
               to="/login"
-              className="hidden rounded-lg bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-slate-800 sm:inline-flex"
+              className="hidden rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100 sm:inline-flex"
             >
               Sign In
             </Link>
           )}
 
-          {/* Profile dropdown */}
           {isAuthenticated && (
             <div className="relative" ref={profileRef}>
               <button
                 onClick={() => setProfileOpen((o) => !o)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  profileOpen ? 'bg-slate-100 text-slate-900' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                  profileOpen
+                    ? 'bg-white/10 text-white'
+                    : 'text-slate-200 hover:text-white hover:bg-white/10'
                 }`}
               >
-                <div className="w-7 h-7 rounded-full bg-amber-100 flex items-center justify-center">
-                  <User className="h-4 w-4 text-amber-600" />
+                <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center ring-1 ring-white/10">
+                  <User className="h-4 w-4 text-slate-100" />
                 </div>
-                <span className="hidden sm:block max-w-[100px] truncate">{user?.fullname?.split(' ')[0] || 'Profile'}</span>
+                <span className="hidden sm:block max-w-[100px] truncate">
+                  {user?.fullname?.split(' ')[0] || 'Profile'}
+                </span>
                 <ChevronDown className={`h-4 w-4 transition-transform ${profileOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {profileOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-slate-200 py-2 z-50">
-                  {/* User info header */}
+                <div className="absolute right-0 top-full mt-3 w-60 bg-white text-slate-900 rounded-lg shadow-xl shadow-slate-950/10 border border-slate-200 py-2 z-50">
                   <div className="px-4 py-3 border-b border-slate-100">
                     <p className="text-sm font-semibold text-slate-900 truncate">{user?.fullname || 'User'}</p>
                     <p className="text-xs text-slate-500 truncate">{user?.email || ''}</p>
@@ -267,9 +274,8 @@ export default function Header() {
             </div>
           )}
 
-          {/* Mobile menu button */}
           <button
-            className="md:hidden p-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+            className="md:hidden p-2 rounded-lg text-slate-200 hover:text-white hover:bg-white/10 transition-colors"
             onClick={() => setMenuOpen((o) => !o)}
             aria-label="Toggle menu"
           >
@@ -278,18 +284,22 @@ export default function Header() {
         </div>
       </div>
 
-      {/* Mobile Nav Overlay */}
       {menuOpen && (
         <>
-          <div className="fixed inset-0 bg-black/20 md:hidden z-40" onClick={() => setMenuOpen(false)} />
-          <div className="absolute top-16 left-0 right-0 bg-white border-b border-slate-200 md:hidden z-50 shadow-lg">
+          <div
+            className="fixed inset-0 bg-black/20 md:hidden z-40"
+            onClick={() => setMenuOpen(false)}
+          />
+          <div className="absolute top-16 left-0 right-0 bg-[#172235] border-b border-white/10 md:hidden z-50 shadow-lg">
             <nav className="py-2">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
                   to={link.to}
                   className={`block px-4 py-3 text-sm font-medium transition-colors ${
-                    isActiveLink(link.to) ? 'bg-amber-50 text-amber-600' : 'text-slate-700 hover:bg-slate-50'
+                    isActiveLink(link.to)
+                      ? 'bg-white/10 text-white'
+                      : 'text-slate-200 hover:bg-white/10'
                   }`}
                 >
                   {link.label}

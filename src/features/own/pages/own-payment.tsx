@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
+import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import { CreditCard, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 declare global {
@@ -25,7 +26,7 @@ const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const formatDate = (s: string) =>
-  new Date(s).toLocaleString('id-ID', {
+  new Date(s).toLocaleString('en-US', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -72,13 +73,12 @@ export default function OwnPaymentPage() {
     script.setAttribute('data-client-key', clientKey);
 
     script.onload = () => {
-      console.log('✅ Midtrans Snap loaded successfully');
       setSnapReady(true);
       setSnapError(false);
     };
 
     script.onerror = () => {
-      console.error('❌ Failed to load Midtrans Snap script');
+      console.error(' Failed to load Midtrans Snap script');
       setSnapError(true);
       setSnapReady(false);
     };
@@ -97,22 +97,19 @@ export default function OwnPaymentPage() {
   // Auto-embed when snap is ready and payment token exists
   useEffect(() => {
     if (snapReady && payment?.snap_token && !snapEmbedded.current && window.snap) {
-      console.log('🎯 Embedding Midtrans payment form...');
       snapEmbedded.current = true;
       setPaymentState('embedded');
 
       window.snap.embed(payment.snap_token, {
         embedId: 'snap-container',
-        onSuccess: (result) => {
-          console.log('✅ Payment success:', result);
+        onSuccess: () => {
           setPaymentState('success');
         },
-        onPending: (result) => {
-          console.log('⏳ Payment pending:', result);
+        onPending: () => {
           setPaymentState('pending');
         },
         onError: (result) => {
-          console.error('❌ Payment error:', result);
+          console.error(' Payment error:', result);
           setPaymentState('error');
         },
       });
@@ -155,8 +152,8 @@ export default function OwnPaymentPage() {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="text-center">
-          <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mx-auto" />
-          <p className="text-slate-500 mt-4 text-sm">Loading payment details…</p>
+          <Loader2 className="h-10 w-10 animate-spin text-slate-400 mx-auto" />
+          <p className="text-slate-500 mt-4 text-sm">Loading payment details...</p>
         </div>
       </main>
     );
@@ -186,8 +183,8 @@ export default function OwnPaymentPage() {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="h-20 w-20 rounded-3xl bg-green-100 flex items-center justify-center mx-auto mb-5">
-            <CheckCircle2 className="h-10 w-10 text-green-600" />
+          <div className="h-20 w-20 rounded-3xl bg-slate-100 flex items-center justify-center mx-auto mb-5">
+            <CheckCircle2 className="h-10 w-10 text-slate-700" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900">Payment Successful!</h2>
           <p className="text-slate-500 mt-2 text-sm">
@@ -195,7 +192,7 @@ export default function OwnPaymentPage() {
           </p>
           <button
             onClick={() => navigate(`/auctions/${auctionId}`)}
-            className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+            className="mt-6 w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-colors"
           >
             View Auction
           </button>
@@ -208,8 +205,8 @@ export default function OwnPaymentPage() {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
-          <div className="h-20 w-20 rounded-3xl bg-yellow-100 flex items-center justify-center mx-auto mb-5">
-            <CreditCard className="h-10 w-10 text-yellow-600" />
+          <div className="h-20 w-20 rounded-3xl bg-amber-50 flex items-center justify-center mx-auto mb-5">
+            <CreditCard className="h-10 w-10 text-amber-700" />
           </div>
           <h2 className="text-2xl font-bold text-slate-900">Payment Pending</h2>
           <p className="text-slate-500 mt-2 text-sm">
@@ -217,7 +214,7 @@ export default function OwnPaymentPage() {
           </p>
           <button
             onClick={() => navigate(`/auctions/${auctionId}`)}
-            className="mt-6 w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+            className="mt-6 w-full py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-colors"
           >
             Back to Auction
           </button>
@@ -244,7 +241,7 @@ export default function OwnPaymentPage() {
             </button>
             <button
               onClick={() => setPaymentState('idle')}
-              className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+              className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-colors"
             >
               Retry
             </button>
@@ -269,12 +266,12 @@ export default function OwnPaymentPage() {
         {/* Left: Payment Info */}
         <div className="md:col-span-2 space-y-4">
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-            <div className="bg-gradient-to-r from-indigo-600 to-violet-600 px-5 py-4 text-white">
+            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-5 py-4 text-white">
               <div className="flex items-center gap-2.5 mb-1">
                 <CreditCard className="h-5 w-5" />
                 <h2 className="font-bold text-lg">Payment Details</h2>
               </div>
-              <p className="text-indigo-100 text-xs">Secure payment by Midtrans</p>
+              <p className="text-slate-200 text-xs">Secure payment by Midtrans</p>
             </div>
 
             {/* Product info */}
@@ -300,18 +297,18 @@ export default function OwnPaymentPage() {
 
             {/* Payment summary */}
             <div className="px-5 py-4 space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-slate-500">Total Amount</span>
-                <span className="font-bold text-slate-900 text-xl">{formatIDR(payment.amount)}</span>
+                <span className="font-bold text-slate-900 text-xl sm:text-right">{formatIDR(payment.amount)}</span>
               </div>
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-slate-500">Status</span>
                 <span
                   className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                     payment.status === 'WAITING_FOR_PAYMENT'
-                      ? 'bg-yellow-100 text-yellow-700'
+                      ? 'bg-amber-50 text-amber-800'
                       : payment.status === 'PAID'
-                        ? 'bg-green-100 text-green-700'
+                        ? 'bg-slate-100 text-slate-700'
                         : 'bg-slate-100 text-slate-700'
                   }`}
                 >
@@ -333,14 +330,16 @@ export default function OwnPaymentPage() {
           </div>
 
           {/* Instructions */}
-          <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
-            <p className="text-sm text-blue-900 font-medium mb-2">💡 Payment Instructions</p>
-            <ul className="text-xs text-blue-800 space-y-1">
-              <li>• Choose your payment method on the right</li>
-              <li>• Complete payment within the time limit</li>
-              <li>• Payment confirmation is automatic</li>
+          <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4">
+            <p className="text-sm text-slate-900 font-medium mb-2"> Payment Instructions</p>
+            <ul className="text-xs text-slate-700 space-y-1">
+              <li> Choose your payment method on the right</li>
+              <li> Complete payment within the time limit</li>
+              <li> Payment confirmation is automatic</li>
             </ul>
           </div>
+
+          <AuctionRegulationCard context="buyer" payment={payment} auction={payment.auction} />
         </div>
 
         {/* Right: Midtrans Embed */}
@@ -348,7 +347,7 @@ export default function OwnPaymentPage() {
           <div className="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
             {!snapReady && !snapError && (
               <div className="flex flex-col items-center justify-center py-20 px-6">
-                <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mb-4" />
+                <Loader2 className="h-10 w-10 animate-spin text-slate-400 mb-4" />
                 <p className="text-slate-500 text-sm">Loading payment gateway...</p>
               </div>
             )}
@@ -362,7 +361,7 @@ export default function OwnPaymentPage() {
                 <p className="text-slate-500 text-sm mb-4">Please check your connection and retry</p>
                 <button
                   onClick={retrySnapInit}
-                  className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition-colors"
+                  className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-colors"
                 >
                   Retry
                 </button>
@@ -373,7 +372,7 @@ export default function OwnPaymentPage() {
 
             {!payment.snap_token && !isLoading && (
               <div className="flex flex-col items-center justify-center py-20 px-6">
-                <Loader2 className="h-10 w-10 animate-spin text-indigo-400 mb-4" />
+                <Loader2 className="h-10 w-10 animate-spin text-slate-400 mb-4" />
                 <p className="text-slate-500 text-sm">Preparing payment token...</p>
               </div>
             )}

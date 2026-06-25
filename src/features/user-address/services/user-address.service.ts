@@ -1,20 +1,13 @@
 import { apiClient } from '../../../lib/axios';
-import type {
-  UserAddressCreateRequest,
-  UserAddressUpdateRequest,
-  UserAddressFetchRequest,
-} from './user-address.schema';
-import type {
-  UserAddressResponse,
-  PaginatedData,
-} from '../../auction/services/auction.schema';
+import type { UserAddressResponse } from '../../auction/services/auction.schema';
 
-const throwMsg = (e: any, fallback: string): never => {
-  throw new Error(e?.response?.data?.message || e?.message || fallback);
+const throwMsg = (e: unknown, fallback: string): never => {
+  if (e instanceof Error) throw new Error(e.message || fallback);
+  throw new Error(fallback);
 };
 
 export const userAddressService = {
-  get: async (userAddressId: string): Promise<UserAddressResponse> => {
+  get: async (userAddressId: string | number): Promise<UserAddressResponse> => {
     try {
       const res = await apiClient.get(`/user-addresses/${userAddressId}`);
       return res.data.user_address;

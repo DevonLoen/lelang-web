@@ -6,15 +6,15 @@ type ButtonProps = React.ComponentProps<'button'> & {
 };
 
 function Button({ children, className = '', ...props }: ButtonProps) {
-    const baseStyles = 'h-12 rounded font-bold text-white transition py-2 px-4';
-    const variantStyles = 'bg-indigo-600 hover:bg-indigo-700';
+    const baseStyles = 'inline-flex h-11 items-center justify-center rounded-lg px-4 py-2 text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60';
+    const variantStyles = 'bg-slate-900 text-white shadow-sm hover:bg-slate-800 active:scale-[0.98]';
 
     return (
         <button
             className={`${baseStyles} ${variantStyles} ${className}`}
             {...props}
         >
-            <div className="flex justify-center items-center w-full">
+            <div className="flex justify-center items-center gap-2 w-full">
                 {children}
             </div>
         </button>

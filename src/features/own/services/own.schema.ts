@@ -11,6 +11,7 @@ export interface OwnProductUpdateRequest {
   name: string;
   description?: string;
   condition: 'NEW' | 'PRELOVED';
+  weight_gram: number;
   image_paths: string[];
   cover_image_path?: string;
 }
@@ -69,12 +70,14 @@ export interface OwnRoleRequestCreateRequest {
   role: 'BIDDER' | 'SELLER';
   nik?: string;
   bank_account_number?: string;
+  bank_account_name?: string;
+  bank_name?: string;
   identity_image_path?: string;
   selfie_identity_image_path?: string;
 }
 
 export interface RoleRequestResponse {
-  id: string;
+  id: number;
   user_id: number;
   role: string;
   status: string;
@@ -97,7 +100,7 @@ export interface WithdrawalRequestFetchRequest {
 }
 
 export interface WithdrawalRequestResponse {
-  id: string;
+  id: number;
   user_id: number;
   validator_user_id?: number;
   amount: number;
@@ -114,12 +117,12 @@ export interface NotificationFetchRequest {
 }
 
 export interface NotificationResponse {
-  id: string;
+  id: number;
   user_id: number;
   title: string;
   body: string;
   type: string;
-  reference_id?: string;
+  reference_id?: number;
   is_read: boolean;
   created_at: string;
   updated_at: string;

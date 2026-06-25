@@ -8,7 +8,7 @@ const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const formatDate = (s: string) =>
-  new Date(s).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  new Date(s).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 export default function OwnBidsPage() {
   const [page, setPage] = useState(1);
@@ -41,51 +41,43 @@ export default function OwnBidsPage() {
   const notWonCount = allBids.filter((b) => b.is_winner !== true).length;
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-10">
+    <main className="bidify-page-narrow">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-slate-900">My Bids</h1>
-        <p className="text-slate-500 mt-1">Track all your placed bids.</p>
+        <h1 className="bidify-title">My Bids</h1>
+        <p className="bidify-subtitle">Track active bids, winning bids, and payment follow-ups.</p>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-slate-200">
+      <div className="mb-6 rounded bg-slate-200 p-1">
+        <div className="grid grid-cols-3 gap-1">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            filter === 'all' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'
-          }`}
+          className={`bidify-tab ${filter === 'all' ? 'bidify-tab-active' : ''}`}
         >
           All Bids
           <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">{allBids.length}</span>
-          {filter === 'all' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
         </button>
         <button
           onClick={() => setFilter('won')}
-          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            filter === 'won' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'
-          }`}
+          className={`bidify-tab ${filter === 'won' ? 'bidify-tab-active' : ''}`}
         >
           <Trophy className="h-3.5 w-3.5 inline mr-1" />
           Won
-          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">{wonCount}</span>
-          {filter === 'won' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
+          <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">{wonCount}</span>
         </button>
         <button
           onClick={() => setFilter('not-won')}
-          className={`px-4 py-2.5 text-sm font-medium transition-colors relative ${
-            filter === 'not-won' ? 'text-indigo-600' : 'text-slate-500 hover:text-slate-700'
-          }`}
+          className={`bidify-tab ${filter === 'not-won' ? 'bidify-tab-active' : ''}`}
         >
           Not Won
           <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">{notWonCount}</span>
-          {filter === 'not-won' && <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600" />}
         </button>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-gray-100 p-4 flex gap-4 animate-pulse">
+            <div key={i} className="bidify-card p-4 flex gap-4 animate-pulse">
               <div className="h-16 w-16 rounded-xl bg-slate-100 flex-shrink-0" />
               <div className="flex-1 space-y-2 py-1">
                 <div className="h-4 bg-slate-100 rounded w-1/2" />
@@ -95,12 +87,12 @@ export default function OwnBidsPage() {
           ))}
         </div>
       ) : bids.length === 0 ? (
-        <div className="py-24 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+        <div className="bidify-card py-24 text-center text-slate-400 border-dashed">
           <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
           <p className="text-base font-medium">No bids placed yet</p>
           <p className="text-sm mt-1">Browse auctions and place your first bid!</p>
           <Link to="/auctions">
-            <button className="mt-4 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+            <button className="bidify-primary mt-4">
               Browse Auctions
             </button>
           </Link>
@@ -113,13 +105,13 @@ export default function OwnBidsPage() {
             const paymentPending = isWinner && bid.payment?.status === 'WAITING_FOR_PAYMENT';
             const paymentPaid = isWinner && bid.payment?.status === 'PAID';
             const cardBorder = paymentPending
-              ? 'border-yellow-300 bg-yellow-50/60'
+              ? 'border-amber-300 bg-amber-50/60'
               : isWinner
-                ? 'border-green-300 bg-green-50/40'
-                : 'border-slate-100 hover:border-indigo-200';
+                ? 'border-slate-300 bg-slate-50/40'
+                : 'border-slate-100 hover:border-slate-200';
             return (
               <Link key={bid.id} to={`/own/bids/${bid.id}`}>
-                <div className={`bg-white rounded-2xl border hover:shadow-md transition-all cursor-pointer group ${cardBorder}`}>
+                <div className={`rounded-lg border bg-white hover:shadow-md transition-all cursor-pointer group ${cardBorder}`}>
                   <div className="p-4 flex items-center gap-4">
                     <div className="h-16 w-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
                       {product?.cover_image_link ? (
@@ -131,13 +123,13 @@ export default function OwnBidsPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-slate-900 truncate group-hover:text-indigo-600 transition-colors">
+                      <h3 className="font-semibold text-slate-900 truncate group-hover:text-slate-700 transition-colors">
                         {product?.name ?? `Auction #${bid.auction_id}`}
                       </h3>
                       <div className="flex flex-wrap gap-3 mt-1.5">
                         <span className="flex items-center gap-1 text-xs text-slate-500">
-                          <Tag className="h-3.5 w-3.5 text-indigo-400" />{' '}
-                          <strong className="text-indigo-600">{formatIDR(bid.amount)}</strong>
+                          <Tag className="h-3.5 w-3.5 text-slate-400" />{' '}
+                          <strong className="text-slate-700">{formatIDR(bid.amount)}</strong>
                         </span>
                         <span className="flex items-center gap-1 text-xs text-slate-400">
                           <Clock className="h-3.5 w-3.5" /> {formatDate(bid.created_at)}
@@ -150,18 +142,18 @@ export default function OwnBidsPage() {
                           </span>
                         )}
                         {paymentPending && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-yellow-700 bg-yellow-100 px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full">
                             <CreditCard className="h-3 w-3" /> Payment Required
                           </span>
                         )}
                         {paymentPaid && (
-                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">
+                          <span className="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">
                             <CreditCard className="h-3 w-3" /> Paid
                           </span>
                         )}
                       </div>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-indigo-500 transition-colors flex-shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-slate-300 group-hover:text-slate-500 transition-colors flex-shrink-0" />
                   </div>
                 </div>
               </Link>
@@ -186,7 +178,7 @@ export default function OwnBidsPage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-slate-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
               >
                 {p}
               </button>

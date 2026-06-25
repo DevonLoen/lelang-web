@@ -1,16 +1,21 @@
-import { useState } from 'react';
-import Logo from '../../../assets/logo.png';
-import { FaEnvelope, FaIdCard, FaUser, FaCalendarAlt } from 'react-icons/fa';
-import { ToastType } from '../../../enums/toast-type';
-import { useToast } from '../../../contexts/toast-context';
-import { AuthService } from '../services/auth.service';
-import { InputField } from '../../../components/input-field';
-import { InputFieldPassword } from '../../../components/input-field-password';
-import { capitalizeWords } from '../../../utils/string';
-import DropdownField from '../../../components/dropdown';
-import { DatePicker } from '../../../components/date-picker';
-import { useNavigate } from 'react-router';
-import { formatDateReq } from '../../../utils/date';
+import { useState } from "react";
+import Logo from "../../../assets/bidify-mark.svg";
+import {
+  FaEnvelope,
+  FaIdCard,
+  FaUser,
+  FaCalendarAlt,
+} from "react-icons/fa";
+import { ToastType } from "../../../enums/toast-type";
+import { useToast } from "../../../contexts/toast-context";
+import { AuthService } from "../services/auth.service";
+import { InputField } from "../../../components/input-field";
+import { InputFieldPassword } from "../../../components/input-field-password";
+import { capitalizeWords } from "../../../utils/string";
+import DropdownField from "../../../components/dropdown";
+import { DatePicker } from "../../../components/date-picker";
+import { useNavigate } from "react-router";
+import { formatDateReq } from "../../../utils/date";
 
 interface SignupFieldState {
   fullname: string;
@@ -32,19 +37,19 @@ const getErrorMessage = (error: unknown, fallback: string) => (error instanceof 
 
 export default function SignupPage() {
   const [field, setField] = useState<SignupFieldState>({
-    fullname: '',
-    email: '',
-    password: '',
-    gender: '',
-    birth: '',
+    fullname: "",
+    email: "",
+    password: "",
+    gender: "",
+    birth: "",
   });
 
   const [errors, setErrors] = useState<SignupFieldErrors>({
-    fullname: '',
-    email: '',
-    password: '',
-    gender: '',
-    birth: '',
+    fullname: "",
+    email: "",
+    password: "",
+    gender: "",
+    birth: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -54,33 +59,33 @@ export default function SignupPage() {
 
   const validateField = async () => {
     const newErrors: SignupFieldErrors = {
-      fullname: '',
-      email: '',
-      password: '',
-      gender: '',
-      birth: '',
+      fullname: "",
+      email: "",
+      password: "",
+      gender: "",
+      birth: "",
     };
 
     if (!field.fullname.trim()) {
-      newErrors.fullname = 'Full name is required';
+      newErrors.fullname = "Full name is required";
     }
 
     if (!field.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = "Email is required";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(field.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = "Email is invalid";
     }
 
     if (!field.gender.trim()) {
-      newErrors.gender = 'Gender is required';
+      newErrors.gender = "Gender is required";
     }
 
     if (!field.birth.trim()) {
-      newErrors.birth = 'Birth date is required';
+      newErrors.birth = "Birth date is required";
     }
 
     if (!field.password.trim()) {
-      newErrors.password = 'Password is required';
+      newErrors.password = "Password is required";
     }
 
     setErrors(newErrors);
@@ -95,7 +100,7 @@ export default function SignupPage() {
       gender: field.gender,
       password: field.password,
     };
-    localStorage.setItem('signupPayload', JSON.stringify(payloadSignup));
+    localStorage.setItem("signupPayload", JSON.stringify(payloadSignup));
   };
 
   const handleSignup = async () => {
@@ -103,14 +108,12 @@ export default function SignupPage() {
       try {
         setIsSubmitting(true);
 
-        const payload = {
+        const result = await new AuthService().sendOtp({
           email: field.email,
-        };
-
-        const result = await new AuthService().sendOtp(payload);
+        });
         showToast(result.message || 'OTP has been sent to your email', ToastType.SUCCESS);
         await saveDataToLocalStorage();
-        navigate('/verify-otp');
+        navigate("/verify-otp");
       } catch (error: unknown) {
         showToast(getErrorMessage(error, 'Failed to send OTP'), ToastType.ERROR);
       } finally {
@@ -119,16 +122,22 @@ export default function SignupPage() {
     }
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement> | React.FocusEvent<HTMLSelectElement>) => {
+  const handleBlur = (
+    e: React.FocusEvent<HTMLInputElement> | React.FocusEvent<HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
 
     setErrors((prev) => ({
       ...prev,
-      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : '',
+      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : "",
     }));
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement> | React.ChangeEvent<HTMLSelectElement>) => {
+  const handleChange = (
+    e:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLSelectElement>
+  ) => {
     const { name, value } = e.target;
     setField((prev) => ({ ...prev, [name]: value }));
   };
@@ -144,27 +153,24 @@ export default function SignupPage() {
   };
 
   const genderOptions = [
-    { value: 'FEMALE', label: 'Female' },
-    { value: 'MALE', label: 'Male' },
+    { value: "FEMALE", label: "Female" },
+    { value: "MALE", label: "Male" },
   ];
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
-      {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-center gap-3 py-6 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
+    <div className="bidify-auth-shell min-h-screen flex flex-col lg:flex-row">
+      <div className="lg:hidden flex items-center justify-center gap-3 py-6 px-4">
+        <img src={Logo} alt="Bidify" className="h-10 w-10" />
+        <h1 className="text-xl font-bold text-white">Bidify</h1>
       </div>
 
-      {/* Left Panel - Form */}
-      <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-12 bg-slate-900 overflow-y-auto">
+      <div className="flex-1 flex items-start lg:items-center justify-center p-6 lg:p-12 overflow-y-auto">
         <div className="w-full max-w-md py-4" onKeyDown={handleKeyDown}>
-          {/* Header */}
           <div className="mb-6">
             <h2 className="text-3xl font-bold text-white mb-2">Create Account</h2>
-            <p className="text-slate-400">Join our auction community today</p>
+            <p className="text-slate-400">Create your Bidify account and start bidding with confidence.</p>
           </div>
 
-          {/* Form */}
           <div className="space-y-4">
             <InputField
               label="Full Name"
@@ -229,38 +235,36 @@ export default function SignupPage() {
             />
 
             <p className="text-xs text-slate-500 leading-relaxed">
-              By selecting <span className="font-medium text-slate-300">Sign Up</span>, you agree to our{' '}
+              By selecting <span className="font-medium text-slate-300">Sign Up</span>,
+              you agree to our{" "}
               <a href="/user-agreement" className="text-amber-500 hover:text-amber-400">
                 User Agreement
-              </a>{' '}
-              and acknowledge reading our{' '}
+              </a>{" "}
+              and acknowledge reading our{" "}
               <a href="/privacy-notice" className="text-amber-500 hover:text-amber-400">
                 Privacy Notice
-              </a>
-              .
+              </a>.
             </p>
 
-            {/* Signup Button */}
             <button
               onClick={handleSignup}
               disabled={isSubmitting}
-              className="w-full h-12 rounded-lg bg-amber-500 font-semibold text-white transition-all hover:bg-amber-600 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
+              className="w-full h-12 rounded-lg bg-amber-400 font-bold text-slate-950 transition-all hover:bg-amber-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
             >
               {isSubmitting ? (
                 <div className="flex justify-center items-center gap-1">
-                  <div className="h-2 w-2 rounded-full bg-white animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="h-2 w-2 rounded-full bg-white animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="h-2 w-2 rounded-full bg-white animate-bounce"></div>
+                  <div className="h-2 w-2 rounded-full bg-slate-950 animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 rounded-full bg-slate-950 animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 rounded-full bg-slate-950 animate-bounce"></div>
                 </div>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </button>
           </div>
 
-          {/* Login Link */}
           <p className="mt-6 text-center text-slate-400">
-            Already have an account?{' '}
+            Already have an account?{" "}
             <a href="/login" className="text-amber-500 hover:text-amber-400 font-medium transition-colors">
               Sign in
             </a>
@@ -268,14 +272,16 @@ export default function SignupPage() {
         </div>
       </div>
 
-      {/* Right Panel - Branding (hidden on mobile) */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
+      <div className="bidify-auth-brand hidden lg:flex flex-1 flex-col items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-4 ">
-            <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <img src={Logo} alt="Bidify" className="h-24 w-24 drop-shadow-lg" />
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg">Bidify</h1>
           </div>
           <h2 className="text-3xl font-bold text-white mb-4">Start Your Bidding Journey</h2>
-          <p className="text-amber-100 text-lg">Create an account and discover unique items from sellers around the world.</p>
+          <p className="text-slate-200 text-lg">
+            Build trust as a bidder, become a seller, and keep every transaction organized.
+          </p>
         </div>
       </div>
     </div>

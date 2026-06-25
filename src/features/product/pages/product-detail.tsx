@@ -1,20 +1,52 @@
 import { useState } from 'react';
-import { useParams } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import { useProductDetail } from '../hooks/use-product-detail';
+import { CalendarDays, ChevronLeft, ImageOff, Layers, PackageCheck, Tag, X, ZoomIn } from 'lucide-react';
+
+const statusStyles: Record<string, string> = {
+  DRAFT: 'border-slate-200 bg-slate-100 text-slate-700',
+  REQUEST: 'border-slate-200 bg-slate-50 text-slate-700',
+  VERIFIED: 'border-slate-200 bg-slate-50 text-slate-800',
+  ON_BIDS: 'border-amber-200 bg-amber-50 text-amber-800',
+  REJECTED: 'border-red-200 bg-red-50 text-red-800',
+  COMPLETED: 'border-slate-300 bg-slate-100 text-slate-800',
+};
+
+const formatDate = (date?: Date) =>
+  date
+    ? new Intl.DateTimeFormat('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).format(date)
+    : 'Not available';
 
 export default function ProductDetail() {
   const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const productId = id ? Number(id) : NaN;
+  const hasValidId = Number.isFinite(productId);
+  const { data, isLoading } = useProductDetail(hasValidId ? productId : '');
 
-  if (id == null) return <h1>no id</h1>;
-  const { data, isLoading } = useProductDetail(parseInt(id));
+  if (!hasValidId) return <main className="bidify-page text-center text-slate-500">Product ID is missing.</main>;
 
-  if (isLoading) return <div className="text-center py-20">Loading...</div>;
-  if (!data) return <div className="text-center py-20">Product not found.</div>;
+  if (isLoading) {
+    return (
+      <main className="bidify-page">
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(340px,0.9fr)]">
+          <div className="aspect-[4/3] animate-pulse rounded-lg bg-slate-100" />
+          <div className="space-y-4">
+            <div className="h-8 w-2/3 animate-pulse rounded bg-slate-100" />
+            <div className="h-28 animate-pulse rounded bg-slate-100" />
+            <div className="h-40 animate-pulse rounded bg-slate-100" />
+          </div>
+        </div>
+      </main>
+    );
+  }
+  if (!data) return <main className="bidify-page text-center text-slate-500">Product not found.</main>;
 
   const allImages = [data.coverImageUrl, ...(data.imageUrls || [])];
   const currentImage = allImages[selectedImageIndex];
+  const statusClass = statusStyles[data.status] ?? 'border-slate-200 bg-slate-100 text-slate-700';
 
   return (
     <>
@@ -28,76 +60,111 @@ export default function ProductDetail() {
             alt="Full view"
             className="max-w-[95%] max-h-[90vh] object-contain cursor-zoom-out shadow-2xl"
           />
-          <button className="absolute top-6 right-8 text-white text-5xl font-light hover:text-gray-300">&times;</button>
+          <button className="absolute right-5 top-5 rounded-full bg-white/10 p-2 text-white/80 transition-colors hover:bg-white/20 hover:text-white">
+            <X className="h-6 w-6" />
+          </button>
         </div>
       )}
 
-      <main className="max-w-7xl mx-auto py-10 sm:px-6 lg:px-8">
-        <div className="bg-white p-6 sm:p-8 rounded-2xl shadow-sm">
-          <div className="mb-6 text-sm text-gray-500">
-            <a href="/" className="hover:text-indigo-600">
-              Produk Saya
-            </a>
-            <span className="mx-2">/</span>
-            <span className="font-medium text-gray-800">Detail Produk</span>
-          </div>
+      <main className="bidify-page">
+        <button onClick={() => navigate(-1)} className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition-colors hover:text-slate-950">
+          <ChevronLeft className="h-4 w-4" /> Back
+        </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
-            <div>
-              <div className="mb-4 overflow-hidden rounded-xl bg-gray-50 border border-gray-100">
-                <img
-                  src={currentImage}
-                  alt={data.name}
-                  className="w-full h-auto cursor-zoom-in object-cover aspect-square hover:scale-[1.02] transition-transform duration-300"
-                  onClick={() => setIsLightboxOpen(true)}
-                />
-              </div>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1.15fr)_minmax(340px,0.85fr)]">
+          <section className="space-y-3">
+            <div
+              className="group relative aspect-[4/3] overflow-hidden rounded-lg border border-slate-200 bg-slate-100 shadow-sm"
+              onClick={() => currentImage && setIsLightboxOpen(true)}
+            >
+              {currentImage ? (
+                <>
+                  <img
+                    src={currentImage}
+                    alt={data.name}
+                    className="h-full w-full cursor-zoom-in object-cover transition-transform duration-300 group-hover:scale-[1.015]"
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center bg-slate-950/0 opacity-0 transition-all group-hover:bg-slate-950/10 group-hover:opacity-100">
+                    <span className="rounded-full bg-white/90 p-2 shadow-sm">
+                      <ZoomIn className="h-5 w-5 text-slate-700" />
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <div className="flex h-full flex-col items-center justify-center gap-2 text-slate-400">
+                  <ImageOff className="h-10 w-10" />
+                  <span className="text-sm">No image available</span>
+                </div>
+              )}
+            </div>
 
-              <div className="grid grid-cols-5 gap-3">
+            {allImages.length > 1 && (
+              <div className="grid grid-cols-5 gap-2 sm:grid-cols-6">
                 {allImages.map((url, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedImageIndex(index)}
-                    className={`relative rounded-lg overflow-hidden border-2 transition-all aspect-square ${
+                    className={`relative aspect-square overflow-hidden rounded border transition-all ${
                       selectedImageIndex === index
-                        ? 'border-indigo-600 ring-2 ring-indigo-100'
-                        : 'border-transparent opacity-60 hover:opacity-100'
+                        ? 'border-slate-900 ring-2 ring-slate-200'
+                        : 'border-slate-200 opacity-70 hover:opacity-100'
                     }`}
                   >
-                    <img src={url} alt={`View ${index}`} className="w-full h-full object-cover" />
+                    <img src={url} alt={`View ${index + 1}`} className="h-full w-full object-cover" />
                   </button>
                 ))}
               </div>
+            )}
+          </section>
+
+          <section className="space-y-5">
+            <div>
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-semibold ${statusClass}`}>
+                  {data.status.replace(/_/g, ' ')}
+                </span>
+                <span className="inline-flex rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-600">
+                  {data.condition}
+                </span>
+              </div>
+              <h1 className="text-3xl font-bold tracking-tight text-slate-950">{data.name}</h1>
+              <p className="mt-3 text-sm leading-6 text-slate-600">{data.description || 'No description provided.'}</p>
             </div>
 
-            <div className="flex flex-col">
-              <div className="flex-1">
-                <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">{data.condition}</span>
-                <h1 className="text-3xl font-bold text-gray-900 mt-2">{data.name}</h1>
-
-                <div className="mt-4 flex items-center gap-2">
-                  <span className="text-sm text-gray-500 font-medium">Status:</span>
-                  <span className="bg-green-100 text-green-700 text-xs font-bold px-3 py-1 rounded-full">{data.status}</span>
-                </div>
-
-                <div className="mt-8 bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500 mb-1">Harga Awal:</p>
-                  <p className="text-3xl font-black text-gray-900">Rp 150.000</p>
-                </div>
-
-                <div className="mt-8">
-                  <h2 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">Deskripsi</h2>
-                  <p className="text-gray-600 leading-relaxed text-sm">{data.description || 'No description provided.'}</p>
-                </div>
+            <div className="bidify-panel divide-y divide-slate-100">
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                  <PackageCheck className="h-4 w-4 text-slate-400" /> Status
+                </span>
+                <strong className="text-right text-sm text-slate-900">{data.status.replace(/_/g, ' ')}</strong>
               </div>
-
-              <div className="mt-10 pt-6 border-t border-gray-100">
-                <button className="w-full bg-indigo-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-indigo-700 active:scale-[0.98] transition-all">
-                  Mulai Lelang
-                </button>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                  <Tag className="h-4 w-4 text-slate-400" /> Condition
+                </span>
+                <strong className="text-right text-sm text-slate-900">{data.condition}</strong>
+              </div>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                  <CalendarDays className="h-4 w-4 text-slate-400" /> Created
+                </span>
+                <strong className="text-right text-sm text-slate-900">{formatDate(data.createdAt)}</strong>
+              </div>
+              <div className="flex items-center justify-between gap-4 px-5 py-4">
+                <span className="inline-flex items-center gap-2 text-sm text-slate-500">
+                  <Layers className="h-4 w-4 text-slate-400" /> Gallery
+                </span>
+                <strong className="text-right text-sm text-slate-900">{allImages.length} image{allImages.length === 1 ? '' : 's'}</strong>
               </div>
             </div>
-          </div>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-5">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-slate-700">Auction Readiness</h2>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Verified products can be scheduled from your product inventory. Keep the photos and description clear before starting an auction.
+              </p>
+            </div>
+          </section>
         </div>
       </main>
     </>

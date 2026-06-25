@@ -19,7 +19,7 @@ const throwMsg = (e: unknown, fallback: string): never => {
 export const auctionService = {
   listAuctions: async (params: AuctionFetchRequest): Promise<PaginatedData<AuctionResponse>> => {
     try {
-      const res = await apiClient.post('/auctions/filter', params);
+      const res = await publicApiClient.post('/auctions/filter', params);
       return res.data;
     } catch (e) {
       return throwMsg(e, 'Failed to load auctions');
@@ -35,7 +35,7 @@ export const auctionService = {
     }
   },
 
-  getAuction: async (auctionId: string): Promise<AuctionResponse> => {
+  getAuction: async (auctionId: string | number): Promise<AuctionResponse> => {
     try {
       const res = await publicApiClient.get(`/auctions/${auctionId}`);
       return res.data.auction;
@@ -44,7 +44,7 @@ export const auctionService = {
     }
   },
 
-  listBids: async (auctionId: string, page = 1, limit = 50): Promise<PaginatedData<AuctionBidResponse>> => {
+  listBids: async (auctionId: string | number, page = 1, limit = 50): Promise<PaginatedData<AuctionBidResponse>> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/bids/filter`, {
         page, limit, sorts: [{ field: 'amount', direction: 'desc' }],
@@ -55,7 +55,7 @@ export const auctionService = {
     }
   },
 
-  placeBid: async (auctionId: string, payload: AuctionBidCreateRequest): Promise<AuctionBidResponse> => {
+  placeBid: async (auctionId: string | number, payload: AuctionBidCreateRequest): Promise<AuctionBidResponse> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/bids`, payload);
       return res.data.bid;
@@ -64,7 +64,7 @@ export const auctionService = {
     }
   },
 
-  listWinners: async (auctionId: string, page = 1, limit = 10): Promise<PaginatedData<AuctionWinnerResponse>> => {
+  listWinners: async (auctionId: string | number, page = 1, limit = 10): Promise<PaginatedData<AuctionWinnerResponse>> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/winners/filter`, { page, limit });
       return res.data;
@@ -73,7 +73,7 @@ export const auctionService = {
     }
   },
 
-  getWinner: async (auctionId: string, winnerId: string): Promise<AuctionWinnerResponse> => {
+  getWinner: async (auctionId: string | number, winnerId: string | number): Promise<AuctionWinnerResponse> => {
     try {
       const res = await apiClient.get(`/auctions/${auctionId}/winners/${winnerId}`);
       return res.data.winner;
@@ -82,7 +82,7 @@ export const auctionService = {
     }
   },
 
-  listPayments: async (auctionId: string): Promise<PaymentResponse[]> => {
+  listPayments: async (auctionId: string | number): Promise<PaymentResponse[]> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/payments/filter`, {});
       return res.data.payments ?? [];
@@ -91,7 +91,7 @@ export const auctionService = {
     }
   },
 
-  getPayment: async (auctionId: string, paymentId: string): Promise<PaymentResponse> => {
+  getPayment: async (auctionId: string | number, paymentId: string | number): Promise<PaymentResponse> => {
     try {
       const res = await apiClient.get(`/auctions/${auctionId}/payments/${paymentId}`);
       return res.data.payment;
@@ -100,7 +100,7 @@ export const auctionService = {
     }
   },
 
-  listShipments: async (auctionId: string): Promise<ShipmentResponse[]> => {
+  listShipments: async (auctionId: string | number): Promise<ShipmentResponse[]> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/shipments/filter`, {});
       return res.data.shipments;
@@ -109,7 +109,7 @@ export const auctionService = {
     }
   },
 
-  getShipment: async (auctionId: string, shipmentId: string): Promise<ShipmentResponse> => {
+  getShipment: async (auctionId: string | number, shipmentId: string | number): Promise<ShipmentResponse> => {
     try {
       const res = await apiClient.get(`/auctions/${auctionId}/shipments/${shipmentId}`);
       return res.data.shipment;
@@ -118,7 +118,7 @@ export const auctionService = {
     }
   },
 
-  updateBuyerAddress: async (auctionId: string, shipmentId: string, address_id: string): Promise<ShipmentResponse> => {
+  updateBuyerAddress: async (auctionId: string | number, shipmentId: string | number, address_id: string | number): Promise<ShipmentResponse> => {
     try {
       const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/buyer-address`, { address_id });
       return res.data.shipment;
@@ -127,7 +127,7 @@ export const auctionService = {
     }
   },
 
-  updateSellerAddress: async (auctionId: string, shipmentId: string, address_id: string): Promise<ShipmentResponse> => {
+  updateSellerAddress: async (auctionId: string | number, shipmentId: string | number, address_id: string | number): Promise<ShipmentResponse> => {
     try {
       const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/seller-address`, { address_id });
       return res.data.shipment;
@@ -136,7 +136,7 @@ export const auctionService = {
     }
   },
 
-  shipItem: async (auctionId: string, shipmentId: string, payload: { courier_code: string; service_code: string }): Promise<ShipmentResponse> => {
+  shipItem: async (auctionId: string | number, shipmentId: string | number, payload: { courier_code: string; service_code: string }): Promise<ShipmentResponse> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/shipments/${shipmentId}/ship`, payload);
       return res.data.shipment;
@@ -145,7 +145,7 @@ export const auctionService = {
     }
   },
 
-  receiveItem: async (auctionId: string, shipmentId: string, delivery_proof_image_path: string): Promise<ShipmentResponse> => {
+  receiveItem: async (auctionId: string | number, shipmentId: string | number, delivery_proof_image_path: string): Promise<ShipmentResponse> => {
     try {
       const res = await apiClient.post(`/auctions/${auctionId}/shipments/${shipmentId}/receive`, { delivery_proof_image_path });
       return res.data.shipment;
@@ -154,9 +154,8 @@ export const auctionService = {
     }
   },
 
-  getTracking: async (auctionId: string, shipmentId: string): Promise<ShipmentTrackingResponse> => {
-    const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-    if (!uuidPattern.test(auctionId) || !uuidPattern.test(shipmentId)) {
+  getTracking: async (auctionId: string | number, shipmentId: string | number): Promise<ShipmentTrackingResponse> => {
+    if (!auctionId || !shipmentId) {
       throw new Error('Invalid auction or shipment identifier');
     }
 

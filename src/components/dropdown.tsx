@@ -34,47 +34,43 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
 }) => {
   const selectId = id || name || "dropdown-field";
 
-  // Kelas untuk label, menggabungkan logika agar lebih rapi
   const labelClasses = `
-    absolute left-4 text-gray-400 transition-all duration-200 pointer-events-none
-    truncate ${icon ? "right-16" : "right-10"} 
+    absolute left-4 text-slate-400 transition-all duration-200 pointer-events-none
+    truncate ${icon ? "right-16" : "right-10"}
     ${
       value
-        ? "top-0 text-sm" // Jika ada value, label naik
-        : "top-3.5 text-base" // Jika tidak, label di tengah
+        ? "top-1.5 text-xs font-medium"
+        : "top-4 text-sm"
     }
-    peer-focus:top-0 peer-focus:text-sm peer-focus:text-white
+    peer-focus:top-1.5 peer-focus:text-xs peer-focus:font-medium peer-focus:text-amber-200
   `;
 
   return (
-    // Struktur disederhanakan, tidak perlu div bertumpuk
     <div className="relative">
       <select
         id={selectId}
         name={name}
         value={value}
-        onChange={onChange} // Disederhanakan, tidak perlu trigger onBlur manual
+        onChange={onChange}
         onBlur={onBlur}
         disabled={disabled}
-        className={`peer w-full appearance-none bg-transparent pl-4 pt-5 pb-2 text-gray-200 
-          focus:outline-none truncate
+        className={`peer h-14 w-full appearance-none rounded-lg bg-white/[0.06] pl-4 pt-5 pb-2 text-white
+          shadow-sm outline-none ring-1 ring-white/10 transition-all truncate
           ${
             error
-              ? "border-b border-red-500 focus:border-red-500"
-              : "border-b border-gray-500 focus:border-white"
+              ? "ring-red-400 focus:ring-red-400"
+              : "focus:bg-white/[0.08] focus:ring-amber-400/80"
           }
           ${disabled ? "cursor-not-allowed opacity-50" : ""}
-          // Padding kanan ditambah untuk memberi ruang bagi ikon panah dan ikon kustom
           ${icon ? "pr-16" : "pr-10"}`}
       >
-        {/* Opsi placeholder */}
         <option value="" disabled hidden></option>
 
         {options.map((option) => (
           <option
             key={option.value}
             value={option.value}
-            className="bg-[#1f2c44] text-gray-200"
+            className="bg-[#172235] text-white"
           >
             {option.label}
           </option>
@@ -85,8 +81,7 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
         {label}
       </label>
 
-      {/* Kontainer untuk ikon (panah dropdown + ikon kustom) */}
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400">
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400">
         {icon && <span className="mr-2">{icon}</span>}
         <svg
           className="h-5 w-5"
@@ -104,7 +99,7 @@ const DropdownField: React.FC<DropdownFieldProps> = ({
       </div>
 
       {error && errorMessage && (
-        <div className="mt-1 rounded px-2 py-1 text-sm text-red-500">
+        <div className="mt-1.5 rounded px-1 text-sm text-red-300">
           {errorMessage}
         </div>
       )}

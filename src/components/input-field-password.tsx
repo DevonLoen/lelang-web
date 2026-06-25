@@ -25,7 +25,6 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    // 1. Tambahkan `relative` di sini
     <div className="relative">
       <input
         type={showPassword ? "text" : "password"}
@@ -35,34 +34,33 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
         onBlur={onBlur}
         placeholder=" "
         onChange={onChange}
-        // 2. Tambahkan `truncate` dan atur padding kanan untuk memberi ruang pada ikon
-        className={`peer w-full bg-transparent pl-4 pr-10 pt-5 pb-2 text-gray-200 
-        placeholder-transparent focus:outline-none truncate
+        className={`peer h-14 w-full rounded-lg bg-white/[0.06] pl-4 pr-11 pt-5 pb-2 text-white 
+        placeholder-transparent shadow-sm outline-none ring-1 ring-white/10 transition-all truncate
         ${
           error
-            ? "border-b border-red-500 focus:border-red-500"
-            : "border-b border-gray-500 focus:border-white"
+            ? "ring-red-400 focus:ring-red-400"
+            : "focus:bg-white/[0.08] focus:ring-amber-400/80"
         }`}
       />
       {error && (
-        <div className="rounded px-2 py-1 text-sm text-red-500">
+        <div className="mt-1.5 rounded px-1 text-sm text-red-300">
           {errorMessage}
         </div>
       )}
 
       <label
         htmlFor={name}
-        // 3. Tambahkan `truncate` dan batas kanan agar tidak menimpa ikon
-        className="absolute left-4 top-0 text-sm text-gray-400 transition-all duration-200 
-        peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-400
-        peer-focus:top-0 peer-focus:text-sm peer-focus:text-white
+        className="absolute left-4 top-1.5 text-xs font-medium text-slate-400 transition-all duration-200 
+        peer-placeholder-shown:top-4 peer-placeholder-shown:text-sm peer-placeholder-shown:text-slate-400
+        peer-focus:top-1.5 peer-focus:text-xs peer-focus:text-amber-200
         truncate right-10"
       >
         {label}
       </label>
-      <span
-        className="absolute right-3 top-7 -translate-y-1/2 text-gray-400 cursor-pointer"
-        // Logika "tekan dan tahan" yang Anda buat sebelumnya
+      <button
+        type="button"
+        aria-label={showPassword ? "Hide password" : "Show password"}
+        className="absolute right-2 top-7 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 transition-colors hover:bg-white/10 hover:text-white"
         onMouseDown={() => setShowPassword(true)}
         onMouseUp={() => setShowPassword(false)}
         onMouseLeave={() => setShowPassword(false)}
@@ -74,7 +72,7 @@ export const InputFieldPassword: React.FC<InputFieldPasswordProps> = ({
         ) : (
           <FaEyeSlash className="h-5 w-5" />
         )}
-      </span>
+      </button>
     </div>
   );
 };

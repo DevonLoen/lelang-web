@@ -1,8 +1,9 @@
-﻿import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auctionService } from '../services/auction.service';
 import { ownService } from '../../own/services/own.service';
+import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import { AuctionStatus, type AuctionBidResponse, type AuctionResponse, type PaginatedData } from '../services/auction.schema';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
@@ -11,7 +12,6 @@ import {
   Gavel,
   Clock,
   Tag,
-  Package,
   Users,
   ImageOff,
   Trophy,
@@ -34,7 +34,7 @@ import {
 interface LiveBidPayload {
   amount: number;
   user?: string;
-  user_id?: string;
+  user_id?: number | string;
 }
 
 type BidListData = PaginatedData<AuctionBidResponse> | { nodes: AuctionBidResponse[] };
@@ -48,19 +48,19 @@ const getErrorMessage = (error: unknown, fallback: string) => {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }> = {
-  SCHEDULED: { label: 'Scheduled', bg: 'bg-sky-100', text: 'text-sky-800' },
-  ON_GOING: { label: 'Live Now', bg: 'bg-green-100', text: 'text-green-800' },
-  WAITING_FOR_PAYMENT: { label: 'Awaiting Payment', bg: 'bg-yellow-100', text: 'text-yellow-800' },
-  WAITING_FOR_SELLER_DECISION: { label: 'Pending Decision', bg: 'bg-orange-100', text: 'text-orange-800' },
-  WAITING_FOR_BUYER_ADDRESS: { label: 'Waiting for Address', bg: 'bg-indigo-100', text: 'text-indigo-800' },
-  WAITING_FOR_SHIPMENT: { label: 'Preparing Shipment', bg: 'bg-blue-100', text: 'text-blue-800' },
-  SHIPPED: { label: 'Shipped', bg: 'bg-purple-100', text: 'text-purple-800' },
-  DELIVERED: { label: 'Delivered', bg: 'bg-teal-100', text: 'text-teal-800' },
+  SCHEDULED: { label: 'Scheduled', bg: 'bg-slate-100', text: 'text-slate-700' },
+  ON_GOING: { label: 'Live Now', bg: 'bg-slate-100', text: 'text-slate-800' },
+  WAITING_FOR_PAYMENT: { label: 'Awaiting Payment', bg: 'bg-amber-50', text: 'text-amber-900' },
+  WAITING_FOR_SELLER_DECISION: { label: 'Pending Decision', bg: 'bg-amber-50', text: 'text-amber-800' },
+  WAITING_FOR_BUYER_ADDRESS: { label: 'Waiting for Address', bg: 'bg-slate-100', text: 'text-slate-800' },
+  WAITING_FOR_SHIPMENT: { label: 'Preparing Shipment', bg: 'bg-slate-100', text: 'text-slate-700' },
+  SHIPPED: { label: 'Shipped', bg: 'bg-slate-100', text: 'text-slate-800' },
+  DELIVERED: { label: 'Delivered', bg: 'bg-slate-100', text: 'text-slate-800' },
   CANCELLED: { label: 'Cancelled', bg: 'bg-red-100', text: 'text-red-800' },
   COMPLETED: { label: 'Completed', bg: 'bg-slate-100', text: 'text-slate-700' },
 };
 
-// ── Countdown hook ────────────────────────────────────────────────────────────
+//  Countdown hook 
 function useCountdown(targetIso: string | undefined) {
   const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number; expired: boolean } | null>(null);
   useEffect(() => {
@@ -114,7 +114,7 @@ const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const formatDate = (s: string) =>
-  new Date(s).toLocaleString('id-ID', {
+  new Date(s).toLocaleString('en-US', {
     day: '2-digit',
     month: 'long',
     year: 'numeric',
@@ -168,16 +168,12 @@ export default function AuctionDetailPage() {
     const wsUrl = `ws://localhost:8080/ws/auctions/${id}`;
     const ws = new WebSocket(wsUrl);
 
-    ws.onopen = () => {
-      console.log(`Connected to live auction stream for Auction ID: ${id}`);
-    };
-
     ws.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as LiveBidPayload;
 
         const isItMe = !!profileFullname && payload.user === profileFullname;
-        const incomingUserId = isItMe && profileId ? profileId : payload.user_id || '';
+        const incomingUserId = isItMe && profileId ? profileId : Number(payload.user_id || 0);
 
         queryClient.setQueryData<AuctionResponse | undefined>(['auction', id], (oldData) => {
           if (!oldData?.winner?.auction_bid) return oldData;
@@ -197,7 +193,7 @@ export default function AuctionDetailPage() {
         if (isItMe) {
           queryClient.setQueryData<BidListData | undefined>(['my-bids-for-auction', id], (oldData) => {
             const newBidNode: AuctionBidResponse = {
-              id: String(Date.now()),
+              id: Date.now(),
               auction_id: Number(id),
               user_id: incomingUserId,
               amount: payload.amount,
@@ -240,15 +236,11 @@ export default function AuctionDetailPage() {
       console.error('WebSocket Error:', error);
     };
 
-    ws.onclose = () => {
-      console.log('Disconnected from live auction stream');
-    };
-
     return () => {
       ws.close();
     };
   }, [auctionStatus, id, profileFullname, profileId, queryClient, showToast]);
-  // ─────────────────────────────────────────────────────────────────────────────
+  // 
 
   const isPostAuction = !!auction && POST_AUCTION.has(auction.status);
   const isShipmentPhase = !!auction && SHIPMENT_PHASE.has(auction.status);
@@ -367,7 +359,7 @@ export default function AuctionDetailPage() {
         <p className="text-slate-500 mt-4 text-lg">Auction not found.</p>
         <Link
           to="/auctions"
-          className="inline-block mt-6 px-5 py-2.5 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+          className="inline-block mt-6 px-5 py-2.5 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-800 transition-colors"
         >
           Back to Auctions
         </Link>
@@ -383,7 +375,7 @@ export default function AuctionDetailPage() {
 
   return (
     <main className="max-w-5xl mx-auto px-4 pb-16">
-      {/* ── Top bar ─────────────────────────────────────────── */}
+      {/*  Top bar  */}
       <div className="flex items-center gap-2 py-6">
         <button
           onClick={() => navigate(-1)}
@@ -395,7 +387,7 @@ export default function AuctionDetailPage() {
         <span className="text-sm text-slate-800 font-medium truncate">{product?.name}</span>
       </div>
 
-      {/* ── Winner banner (buyer-only, post-auction) ──── */}
+      {/*  Winner banner (buyer-only, post-auction)  */}
       {isCurrentUserBuyer && isPostAuction && (
         <div className="mb-6 rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-5 py-4 flex items-center gap-4 shadow-sm">
           <div className="h-12 w-12 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
@@ -413,42 +405,42 @@ export default function AuctionDetailPage() {
         </div>
       )}
 
-      {/* ── Live/Scheduled bidding status ──────────────────── */}
+      {/*  Live/Scheduled bidding status  */}
       {profile && isLiveOrScheduled && (
         <div
           className={`mb-6 rounded-2xl px-5 py-3.5 flex items-center gap-3 border ${
             iAmWinning
-              ? 'bg-green-50 border-green-200'
+              ? 'bg-slate-50 border-slate-200'
               : myTopBid
-                ? 'bg-orange-50 border-orange-200'
-                : 'bg-indigo-50 border-indigo-100'
+                ? 'bg-amber-50 border-amber-200'
+                : 'bg-slate-50 border-indigo-100'
           }`}
         >
           {iAmWinning ? (
             <>
-              <Crown className="h-5 w-5 text-green-600 flex-shrink-0" />
-              <p className="text-sm font-semibold text-green-800">
+              <Crown className="h-5 w-5 text-slate-700 flex-shrink-0" />
+              <p className="text-sm font-semibold text-slate-800">
                 Your bid of <strong>{formatIDR(myTopBid?.amount ?? 0)}</strong> is currently winning!
               </p>
             </>
           ) : myTopBid ? (
             <>
-              <TrendingUp className="h-5 w-5 text-orange-600 flex-shrink-0" />
-              <p className="text-sm font-semibold text-orange-800">
-                You've bid <strong>{formatIDR(myTopBid.amount)}</strong> — currently outbid. Raise your bid!
+              <TrendingUp className="h-5 w-5 text-amber-700 flex-shrink-0" />
+              <p className="text-sm font-semibold text-amber-800">
+                You've bid <strong>{formatIDR(myTopBid.amount)}</strong>  currently outbid. Raise your bid!
               </p>
             </>
           ) : (
             <>
-              <Gavel className="h-5 w-5 text-indigo-500 flex-shrink-0" />
-              <p className="text-sm text-indigo-700">You haven't placed a bid yet.</p>
+              <Gavel className="h-5 w-5 text-slate-500 flex-shrink-0" />
+              <p className="text-sm text-slate-800">You haven't placed a bid yet.</p>
             </>
           )}
         </div>
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-        {/* ── Image gallery ───────────────────────────────── */}
+        {/*  Image gallery  */}
         <div className="space-y-3 lg:sticky lg:top-24">
           <div
             className="rounded-3xl overflow-hidden bg-slate-50 border border-slate-100 aspect-square shadow-md relative group cursor-zoom-in"
@@ -477,7 +469,7 @@ export default function AuctionDetailPage() {
                   key={i}
                   onClick={() => setSelectedImg(i)}
                   className={`h-16 w-16 rounded-xl overflow-hidden border-2 transition-all flex-shrink-0 ${
-                    selectedImg === i ? 'border-indigo-500 ring-2 ring-indigo-100' : 'border-transparent hover:border-slate-300'
+                    selectedImg === i ? 'border-slate-500 ring-2 ring-slate-200' : 'border-transparent hover:border-slate-300'
                   }`}
                 >
                   <img src={url} alt={`thumb-${i}`} className="w-full h-full object-cover" />
@@ -487,7 +479,7 @@ export default function AuctionDetailPage() {
           )}
         </div>
 
-        {/* ── Info panel ──────────────────────────────────── */}
+        {/*  Info panel  */}
         <div className="space-y-4">
           {/* Title & status */}
           <div>
@@ -497,14 +489,14 @@ export default function AuctionDetailPage() {
               >
                 {isLive && (
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-slate-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-500" />
                   </span>
                 )}
                 {cfg.label}
               </span>
               {product?.condition && (
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 bg-slate-50 px-2.5 py-1 rounded-full">
                   {product.condition}
                 </span>
               )}
@@ -518,7 +510,7 @@ export default function AuctionDetailPage() {
           </div>
 
           {product?.description && (
-            <p className="text-slate-600 text-sm leading-relaxed border-l-2 border-indigo-200 pl-3">{product.description}</p>
+            <p className="text-slate-600 text-sm leading-relaxed border-l-2 border-slate-200 pl-3">{product.description}</p>
           )}
 
           {/* Countdown */}
@@ -527,7 +519,7 @@ export default function AuctionDetailPage() {
               className={`rounded-2xl px-5 py-4 ${
                 isLive
                   ? 'bg-gradient-to-br from-red-600 to-rose-700 text-white shadow-lg shadow-red-200'
-                  : 'bg-gradient-to-br from-sky-600 to-blue-700 text-white shadow-lg shadow-sky-200'
+                  : 'bg-gradient-to-br from-slate-900 to-slate-800 text-white shadow-lg shadow-slate-200'
               }`}
             >
               <p className="text-xs font-semibold uppercase tracking-wider opacity-80 flex items-center gap-2 mb-3">
@@ -551,48 +543,42 @@ export default function AuctionDetailPage() {
 
           {/* Auction stats */}
           <div className="bg-slate-50 rounded-2xl border border-slate-100 divide-y divide-slate-100">
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-slate-500 flex items-center gap-2">
-                <Tag className="h-4 w-4 text-indigo-400" /> Starting Price
+                <Tag className="h-4 w-4 text-slate-400" /> Starting Price
               </span>
-              <strong className="text-slate-900 text-sm">{formatIDR(auction.starting_price)}</strong>
+              <strong className="text-slate-900 text-sm sm:text-right">{formatIDR(auction.starting_price)}</strong>
             </div>
             {highestBid != null && (
-              <div className="flex items-center justify-between px-4 py-3 bg-green-50/50">
+              <div className="flex flex-col items-start gap-1.5 px-4 py-3 bg-slate-50/50 sm:flex-row sm:items-center sm:justify-between">
                 <span className="text-sm text-slate-500 flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-green-500" /> Highest Bid
+                  <TrendingUp className="h-4 w-4 text-slate-500" /> Highest Bid
                 </span>
-                <strong className="text-green-700 text-sm font-bold">{formatIDR(highestBid)}</strong>
+                <strong className="text-slate-700 text-sm font-bold sm:text-right">{formatIDR(highestBid)}</strong>
               </div>
             )}
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-slate-500 flex items-center gap-2">
-                <Package className="h-4 w-4 text-indigo-400" /> Platform Fee
+                <CalendarDays className="h-4 w-4 text-slate-400" /> Starts
               </span>
-              <strong className="text-slate-900 text-sm">{formatIDR(auction.fee)}</strong>
+              <strong className="text-slate-900 text-sm sm:text-right">{formatDate(auction.start_time)}</strong>
             </div>
-            <div className="flex items-center justify-between px-4 py-3">
+            <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
               <span className="text-sm text-slate-500 flex items-center gap-2">
-                <CalendarDays className="h-4 w-4 text-indigo-400" /> Starts
+                <Clock className="h-4 w-4 text-slate-400" /> Ends
               </span>
-              <strong className="text-slate-900 text-sm">{formatDate(auction.start_time)}</strong>
-            </div>
-            <div className="flex items-center justify-between px-4 py-3">
-              <span className="text-sm text-slate-500 flex items-center gap-2">
-                <Clock className="h-4 w-4 text-orange-400" /> Ends
-              </span>
-              <strong className="text-slate-900 text-sm">{formatDate(auction.end_time)}</strong>
+              <strong className="text-slate-900 text-sm sm:text-right">{formatDate(auction.end_time)}</strong>
             </div>
           </div>
 
           {/* Bid form */}
           {canBid && (
-            <div className="bg-gradient-to-br from-indigo-600 to-indigo-700 rounded-2xl p-5 shadow-lg shadow-indigo-200">
-              <p className="text-indigo-200 text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 shadow-lg shadow-slate-200">
+              <p className="text-slate-300 text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2">
                 <Gavel className="h-4 w-4" /> Place Your Bid
               </p>
               {highestBid != null && (
-                <p className="text-indigo-200 text-xs mb-3">
+                <p className="text-slate-300 text-xs mb-3">
                   Current highest: <strong className="text-white">{formatIDR(highestBid)}</strong>
                 </p>
               )}
@@ -612,13 +598,13 @@ export default function AuctionDetailPage() {
                 <button
                   onClick={handleBid}
                   disabled={isBidding}
-                  className="px-5 py-3 bg-white text-indigo-700 font-semibold rounded-xl hover:bg-indigo-50 transition-colors disabled:opacity-60 text-sm flex items-center gap-2 flex-shrink-0"
+                  className="px-5 py-3 bg-white text-slate-800 font-semibold rounded-xl hover:bg-slate-50 transition-colors disabled:opacity-60 text-sm flex items-center gap-2 flex-shrink-0"
                 >
                   {isBidding ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gavel className="h-4 w-4" />}
-                  {isBidding ? 'Bidding…' : 'Bid Now'}
+                  {isBidding ? 'Bidding...' : 'Bid Now'}
                 </button>
               </div>
-              <p className="text-indigo-300 text-xs mt-2">
+              <p className="text-slate-300 text-xs mt-2">
                 Minimum: {formatIDR(highestBid != null ? highestBid + 1 : auction.starting_price)}
               </p>
             </div>
@@ -629,7 +615,7 @@ export default function AuctionDetailPage() {
               <p className="text-sm text-slate-500 mb-3">Sign in to place a bid</p>
               <Link
                 to="/login"
-                className="inline-block px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors"
+                className="inline-block px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold rounded-xl transition-colors"
               >
                 Sign In
               </Link>
@@ -638,11 +624,11 @@ export default function AuctionDetailPage() {
         </div>
       </div>
 
-      {/* ── My Bids History ────────────────────────────────────── */}
+      {/*  My Bids History  */}
       {profile && myBids.length > 0 && (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
           <h3 className="font-semibold text-slate-800 flex items-center gap-2 mb-4">
-            <Gavel className="h-4 w-4 text-indigo-500" /> My Bids for This Auction
+            <Gavel className="h-4 w-4 text-slate-500" /> My Bids for This Auction
             <span className="ml-auto text-xs text-slate-400 font-normal">
               {myBids.length} {myBids.length === 1 ? 'bid' : 'bids'}
             </span>
@@ -651,14 +637,14 @@ export default function AuctionDetailPage() {
             {myBids.map((bid) => (
               <div
                 key={bid.id}
-                className={`flex items-center justify-between py-3 ${bid.is_winner ? 'bg-green-50 -mx-4 px-4 rounded-xl' : ''}`}
+                className={`flex flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between ${bid.is_winner ? 'bg-slate-50 -mx-4 px-4 rounded-xl' : ''}`}
               >
                 <div className="flex items-center gap-2">
                   {bid.is_winner && <Trophy className="h-4 w-4 text-amber-500 flex-shrink-0" />}
                   <div>
                     <p className="text-sm font-medium text-slate-800">{formatIDR(bid.amount)}</p>
                     <p className="text-xs text-slate-400">
-                      {new Date(bid.created_at).toLocaleString('id-ID', {
+                      {new Date(bid.created_at).toLocaleString('en-US', {
                         day: '2-digit',
                         month: 'short',
                         hour: '2-digit',
@@ -668,7 +654,7 @@ export default function AuctionDetailPage() {
                   </div>
                 </div>
                 {bid.is_winner && (
-                  <span className="text-xs font-semibold text-green-700 bg-green-100 px-2 py-0.5 rounded-full">Winning Bid</span>
+                  <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded-full">Winning Bid</span>
                 )}
               </div>
             ))}
@@ -676,7 +662,7 @@ export default function AuctionDetailPage() {
         </div>
       )}
 
-      {/* ── Lightbox ─────────────────────────────────────────── */}
+      {/*  Lightbox  */}
       {lightboxOpen && images.length > 0 && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
@@ -728,12 +714,12 @@ export default function AuctionDetailPage() {
         </div>
       )}
 
-      {/* ── Post-auction buyer sections ──────────────────────── */}
+      {/*  Post-auction buyer sections  */}
       {isCurrentUserBuyer && (
         <div className="mt-8 space-y-4">
           {/* Shipment */}
           {isShipmentPhase && (
-            <Section title="Shipment" icon={Truck} accentBorder="border-purple-200" accentIcon="bg-purple-100 text-purple-600">
+            <Section title="Shipment" icon={Truck} accentBorder="border-slate-200" accentIcon="bg-slate-100 text-slate-600">
               <div className="space-y-5">
                 {/* Address selection */}
                 {auction.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS && (
@@ -743,7 +729,7 @@ export default function AuctionDetailPage() {
                       <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
                         <MapPin className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                         <p className="text-sm text-slate-500 mb-1">No address on file.</p>
-                        <Link to="/own/addresses" className="text-indigo-600 text-sm font-medium hover:underline">
+                        <Link to="/own/addresses" className="text-slate-700 text-sm font-medium hover:underline">
                           + Add an address
                         </Link>
                       </div>
@@ -754,16 +740,16 @@ export default function AuctionDetailPage() {
                             <label
                               key={addr.id}
                               className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                                selectedAddressId === addr.id
-                                  ? 'border-indigo-500 bg-indigo-50 shadow-sm'
-                                  : 'border-slate-200 hover:border-indigo-300'
+                                selectedAddressId === String(addr.id)
+                                  ? 'border-slate-500 bg-slate-50 shadow-sm'
+                                  : 'border-slate-200 hover:border-slate-300'
                               }`}
                             >
                               <input
                                 type="radio"
                                 name="address"
-                                value={addr.id}
-                                checked={selectedAddressId === addr.id}
+                                value={String(addr.id)}
+                                checked={selectedAddressId === String(addr.id)}
                                 onChange={(e) => setSelectedAddressId(e.target.value)}
                                 className="mt-1 accent-indigo-600"
                               />
@@ -771,13 +757,13 @@ export default function AuctionDetailPage() {
                                 <p className="text-sm font-semibold text-slate-800">
                                   {addr.label}
                                   {addr.is_default && (
-                                    <span className="ml-2 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full">
+                                    <span className="ml-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded-full">
                                       Default
                                     </span>
                                   )}
                                 </p>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                  {addr.recipient_name} · {addr.phone}
+                                  {addr.recipient_name}  {addr.phone}
                                 </p>
                                 <p className="text-xs text-slate-500">
                                   {addr.address}, {addr.city_name}, {addr.province_name} {addr.postal_code}
@@ -789,10 +775,10 @@ export default function AuctionDetailPage() {
                         <button
                           onClick={() => updateAddress()}
                           disabled={!selectedAddressId || isUpdatingAddress}
-                          className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                          className="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                         >
                           {isUpdatingAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-                          {isUpdatingAddress ? 'Saving…' : 'Use This Address'}
+                          {isUpdatingAddress ? 'Saving...' : 'Use This Address'}
                         </button>
                       </>
                     )}
@@ -849,16 +835,16 @@ export default function AuctionDetailPage() {
                 {/* Courier info */}
                 {shipment?.courier_code && (
                   <div className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                       <span className="text-slate-500">Courier</span>
-                      <span className="font-semibold text-slate-800">
-                        {shipment.courier_code} · {shipment.service_code}
+                      <span className="font-semibold text-slate-800 sm:text-right">
+                        {shipment.courier_code}  {shipment.service_code}
                       </span>
                     </div>
                     {shipment.shipping_cost != null && (
-                      <div className="flex items-center justify-between">
+                      <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                         <span className="text-slate-500">Shipping Cost</span>
-                        <span className="font-semibold text-slate-800">{formatIDR(shipment.shipping_cost)}</span>
+                        <span className="font-semibold text-slate-800 sm:text-right">{formatIDR(shipment.shipping_cost)}</span>
                       </div>
                     )}
                   </div>
@@ -866,21 +852,21 @@ export default function AuctionDetailPage() {
 
                 {/* Tracking */}
                 {shipment?.tracking_number && (
-                  <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-1.5">Tracking Number</p>
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Tracking Number</p>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                      <p className="font-mono font-bold text-purple-900 text-base">{shipment.tracking_number}</p>
+                      <p className="font-mono font-bold text-slate-900 text-base">{shipment.tracking_number}</p>
                       {auction?.id && (
                         <Link
                           to={`/${auction.id}/shipments/${shipment.id}/tracking`}
-                          className="inline-flex rounded-full border border-purple-200 bg-white px-3 py-2 text-sm font-semibold text-purple-700 hover:border-purple-300 hover:bg-purple-50"
+                          className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                         >
                           View shipment tracking
                         </Link>
                       )}
                     </div>
                     {shipment.shipped_at && (
-                      <p className="text-xs text-purple-500 mt-1">Shipped on {formatDate(shipment.shipped_at)}</p>
+                      <p className="text-xs text-slate-500 mt-1">Shipped on {formatDate(shipment.shipped_at)}</p>
                     )}
                   </div>
                 )}
@@ -901,7 +887,7 @@ export default function AuctionDetailPage() {
                       onClick={() => proofRef.current?.click()}
                       className={`w-full py-2.5 rounded-xl border text-sm font-medium transition-all flex items-center justify-center gap-2 ${
                         proofFile
-                          ? 'border-teal-300 bg-teal-50 text-teal-700'
+                          ? 'border-slate-300 bg-slate-50 text-slate-700'
                           : 'border-dashed border-slate-300 text-slate-500 hover:border-slate-400'
                       }`}
                     >
@@ -911,10 +897,10 @@ export default function AuctionDetailPage() {
                     <button
                       onClick={() => receiveItem()}
                       disabled={isReceiving}
-                      className="w-full py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md shadow-teal-100"
+                      className="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-md shadow-slate-100"
                     >
                       {isReceiving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-5 w-5" />}
-                      {isReceiving ? 'Confirming…' : 'Confirm Receipt'}
+                      {isReceiving ? 'Confirming...' : 'Confirm Receipt'}
                     </button>
                   </div>
                 )}
@@ -922,17 +908,24 @@ export default function AuctionDetailPage() {
             </Section>
           )}
 
+          <AuctionRegulationCard
+            context="buyer"
+            auction={auction}
+            payment={auction.payment}
+            shipment={shipment}
+          />
+
           {/* Delivered / completed */}
           {(auction.status === AuctionStatus.DELIVERED || auction.status === AuctionStatus.COMPLETED) && (
-            <div className="flex items-center gap-4 bg-teal-50 border border-teal-200 rounded-2xl px-5 py-4">
-              <div className="h-10 w-10 rounded-2xl bg-teal-100 flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="h-5 w-5 text-teal-600" />
+            <div className="flex items-center gap-4 bg-slate-50 border border-slate-200 rounded-2xl px-5 py-4">
+              <div className="h-10 w-10 rounded-2xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-5 w-5 text-slate-600" />
               </div>
               <div>
-                <p className="font-semibold text-teal-900">
+                <p className="font-semibold text-slate-900">
                   {auction.status === AuctionStatus.COMPLETED ? 'Transaction Complete' : 'Item Delivered'}
                 </p>
-                <p className="text-sm text-teal-700">
+                <p className="text-sm text-slate-700">
                   {auction.status === AuctionStatus.COMPLETED
                     ? 'This auction has been successfully completed.'
                     : 'Your item has been delivered. Please confirm receipt above.'}

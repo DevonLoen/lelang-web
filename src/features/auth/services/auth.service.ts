@@ -22,6 +22,16 @@ interface SendOtpPayload {
   email?: string;
 }
 
+interface ForgotPasswordPayload {
+  email: string;
+}
+
+export interface ResetPasswordPayload {
+  email: string;
+  otp: string;
+  password: string;
+}
+
 interface SaveFcmTokenPayload {
   fcm_token: string;
 }
@@ -59,6 +69,24 @@ export class AuthService {
       return res;
     } catch (error: unknown) {
       throw new Error(getErrorMessage(error, "Send OTP failed"));
+    }
+  }
+
+  async forgotPassword(data: ForgotPasswordPayload): Promise<ApiResult> {
+    try {
+      const res = await apiClient.post('/auth/forgot-password', data) as ApiResult;
+      return res;
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Forgot password failed"));
+    }
+  }
+
+  async resetPassword(data: ResetPasswordPayload): Promise<ApiResult> {
+    try {
+      const res = await apiClient.post('/auth/reset-password', data) as ApiResult;
+      return res;
+    } catch (error: unknown) {
+      throw new Error(getErrorMessage(error, "Reset password failed"));
     }
   }
 

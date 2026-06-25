@@ -7,7 +7,7 @@ interface DecodedToken {
   // Add other token fields if needed
 }
 
-export const checkAuth = async (): Promise<boolean> => {
+const hasValidToken = (): boolean => {
   const token = Cookies.get(Auth.TOKEN_KEY);
 
   if (!token || token === 'undefined' || token === 'null') return false;
@@ -27,7 +27,10 @@ export const checkAuth = async (): Promise<boolean> => {
   }
 };
 
+export const checkAuth = async (): Promise<boolean> => {
+  return hasValidToken();
+};
+
 export const hasAuthToken = (): boolean => {
-  const token = Cookies.get(Auth.TOKEN_KEY);
-  return !!token && token !== 'undefined' && token !== 'null';
+  return hasValidToken();
 };

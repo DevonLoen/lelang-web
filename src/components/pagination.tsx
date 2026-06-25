@@ -22,7 +22,7 @@ export function ProductPagination({ meta, onPageChange }: Props) {
     const showMax = 3;
 
     let start = Math.max(1, currentPage - 1);
-    let end = Math.min(totalPage, start + showMax - 1);
+    const end = Math.min(totalPage, start + showMax - 1);
 
     if (end === totalPage) {
       start = Math.max(1, totalPage - showMax + 1);

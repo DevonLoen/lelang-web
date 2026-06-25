@@ -1,5 +1,17 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
-import { CheckCircle2, Loader2, LocateFixed, Lock, MapPin, Minus, Plus, Search, X } from 'lucide-react';
+import {
+  CheckCircle2,
+  Loader2,
+  LocateFixed,
+  Lock,
+  MapPin,
+  Maximize2,
+  Minimize2,
+  Minus,
+  Plus,
+  Search,
+  X,
+} from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 
@@ -42,6 +54,7 @@ const DEFAULT_CENTER: LocationCoordinate = { latitude: -6.2088, longitude: 106.8
 const DEFAULT_ZOOM = 15;
 const MIN_ZOOM = 3;
 const MAX_ZOOM = 19;
+const MAP_UI_SELECTOR = '[data-map-ui="true"]';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
@@ -114,6 +127,7 @@ export function LocationPicker({
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   useEffect(() => {
     onLocationLoadedRef.current = onLocationLoaded;
@@ -121,17 +135,47 @@ export function LocationPicker({
   }, [onLocationError, onLocationLoaded]);
 
   useEffect(() => {
+    if (!isExpanded) return;
+
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setIsExpanded(false);
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isExpanded]);
+
+  useEffect(() => {
     const map = mapRef.current;
     if (!map) return;
+
+    let frame = 0;
+    const measure = () => {
+      const rect = map.getBoundingClientRect();
+      setSize({ width: rect.width, height: rect.height });
+    };
 
     const resizeObserver = new ResizeObserver(([entry]) => {
       const rect = entry.contentRect;
       setSize({ width: rect.width, height: rect.height });
     });
-    resizeObserver.observe(map);
 
-    return () => resizeObserver.disconnect();
-  }, []);
+    resizeObserver.observe(map);
+    measure();
+    frame = window.requestAnimationFrame(measure);
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+      resizeObserver.disconnect();
+    };
+  }, [isExpanded]);
 
   useEffect(() => {
     if (value) setCenter(value);
@@ -347,6 +391,11 @@ export function LocationPicker({
     const drag = dragRef.current;
     if (!drag || drag.pointerId !== event.pointerId || confirmed) return;
 
+    if (isMapUiTarget(event.target)) {
+      dragRef.current = null;
+      return;
+    }
+
     dragRef.current = null;
 
     if (drag.mode === 'map' && !drag.moved) {
@@ -365,186 +414,273 @@ export function LocationPicker({
     setCenter(currentLocation);
   };
 
-  return (
-    <section className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <label className="text-xs font-semibold text-slate-600 block">Map Location *</label>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {confirmed ? 'Location is confirmed and locked.' : 'Tap the map or drag the pin to choose exact coordinates.'}
-          </p>
+  const isMapUiTarget = (target: EventTarget | null) =>
+    target instanceof Element && target.closest(MAP_UI_SELECTOR) !== null;
+
+  const mapBoxClassName = cn(
+    'relative overflow-hidden border border-slate-200 bg-slate-100 select-none touch-none shadow-sm',
+    isExpanded ? 'h-full min-h-[24rem] rounded-2xl' : 'h-72 rounded-lg',
+    confirmed ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
+  );
+
+  const renderMapBox = () => (
+    <div
+      ref={mapRef}
+      role="application"
+      aria-label="Location picker map"
+      className={mapBoxClassName}
+      onPointerDown={(event) => {
+        if (isMapUiTarget(event.target)) return;
+        handlePointerDown(event);
+      }}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={() => {
+        dragRef.current = null;
+      }}
+    >
+      <div className="absolute left-3 right-14 top-3 z-10" data-map-ui="true">
+        <div className="relative">
+          <Search className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Input
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+            readOnly={confirmed}
+            placeholder="Search location or landmark"
+            className="h-10 rounded-lg bg-white/95 pl-9 pr-9 shadow-sm"
+            aria-label="Search location on map"
+          />
+          {searchQuery && !confirmed && (
+            <button
+              type="button"
+              aria-label="Clear location search"
+              onClick={() => {
+                setSearchQuery('');
+                setSearchResults([]);
+              }}
+              className="absolute right-2 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            >
+              <X className="h-3.5 w-3.5" />
+            </button>
+          )}
+
+          {(isSearching || searchResults.length > 0) && !confirmed && (
+            <div
+              className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg"
+              data-map-ui="true"
+              onPointerDown={(event) => event.stopPropagation()}
+            >
+              {isSearching && (
+                <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-slate-500">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  Searching locations...
+                </div>
+              )}
+              {!isSearching &&
+                searchResults.map(result => (
+                  <button
+                    key={result.place_id}
+                    type="button"
+                    onClick={() => selectSearchResult(result)}
+                    onPointerDown={(event) => event.stopPropagation()}
+                    className="flex w-full items-start gap-2 border-b border-slate-100 px-3 py-2.5 text-left text-sm transition-colors last:border-0 hover:bg-slate-50"
+                  >
+                    <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-slate-700" />
+                    <span className="max-h-10 overflow-hidden text-slate-700">{result.display_name}</span>
+                  </button>
+                ))}
+            </div>
+          )}
         </div>
-        {isLoadingLocation && (
-          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Locating
-          </span>
-        )}
       </div>
 
-      <div
-        ref={mapRef}
-        role="application"
-        aria-label="Location picker map"
-        className={cn(
-          'relative h-72 overflow-hidden rounded-xl border border-slate-200 bg-slate-100 select-none touch-none',
-          confirmed ? 'cursor-default' : 'cursor-grab active:cursor-grabbing',
-        )}
-        onPointerDown={handlePointerDown}
-        onPointerMove={handlePointerMove}
-        onPointerUp={handlePointerUp}
-        onPointerCancel={() => {
-          dragRef.current = null;
-        }}
-      >
-        <div className="absolute left-3 right-14 top-3 z-10">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              readOnly={confirmed}
-              placeholder="Search location or landmark"
-              className="h-10 rounded-lg bg-white/95 pl-9 pr-9 shadow-sm"
-              aria-label="Search location on map"
-            />
-            {searchQuery && !confirmed && (
-              <button
-                type="button"
-                aria-label="Clear location search"
-                onClick={() => {
-                  setSearchQuery('');
-                  setSearchResults([]);
-                }}
-                className="absolute right-2 top-1/2 z-10 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-              >
-                <X className="h-3.5 w-3.5" />
-              </button>
-            )}
+      {tiles.map(tile => (
+        <img
+          key={tile.key}
+          src={tile.url}
+          alt=""
+          draggable={false}
+          className="absolute h-64 w-64 max-w-none"
+          style={{ left: tile.left, top: tile.top }}
+        />
+      ))}
 
-            {(isSearching || searchResults.length > 0) && !confirmed && (
-              <div className="absolute left-0 right-0 top-full z-20 mt-1 max-h-52 overflow-y-auto rounded-lg border border-slate-200 bg-white shadow-lg">
-                {isSearching && (
-                  <div className="flex items-center gap-2 px-3 py-2.5 text-xs text-slate-500">
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Searching locations...
-                  </div>
-                )}
-                {!isSearching &&
-                  searchResults.map(result => (
-                    <button
-                      key={result.place_id}
-                      type="button"
-                      onClick={() => selectSearchResult(result)}
-                      className="flex w-full items-start gap-2 border-b border-slate-100 px-3 py-2.5 text-left text-sm transition-colors last:border-0 hover:bg-slate-50"
-                    >
-                      <MapPin className="mt-0.5 h-4 w-4 flex-shrink-0 text-indigo-600" />
-                      <span className="max-h-10 overflow-hidden text-slate-700">{result.display_name}</span>
-                    </button>
-                  ))}
-              </div>
-            )}
+      {currentPoint && (
+        <div
+          className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-slate-500 shadow"
+          style={{ left: currentPoint.x, top: currentPoint.y }}
+          aria-label="Current location"
+        />
+      )}
+
+      {selectedPoint && (
+        <button
+          type="button"
+          aria-label={confirmed ? 'Confirmed selected location' : 'Drag selected location pin'}
+          disabled={confirmed}
+          onPointerDown={handlePinPointerDown}
+          className="absolute -translate-x-1/2 -translate-y-full disabled:cursor-not-allowed"
+          style={{ left: selectedPoint.x, top: selectedPoint.y }}
+        >
+          <MapPin className={cn('h-9 w-9 drop-shadow-md', confirmed ? 'fill-slate-600 text-slate-700' : 'fill-indigo-600 text-slate-800')} />
+        </button>
+      )}
+
+      {confirmed && (
+        <div className="absolute inset-0 bg-white/20">
+          <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-sm">
+            <Lock className="h-3.5 w-3.5" />
+            Locked
           </div>
         </div>
+      )}
 
-        {tiles.map(tile => (
-          <img
-            key={tile.key}
-            src={tile.url}
-            alt=""
-            draggable={false}
-            className="absolute h-64 w-64 max-w-none"
-            style={{ left: tile.left, top: tile.top }}
-          />
-        ))}
+      <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm" data-map-ui="true">
+        <button
+          type="button"
+          aria-label="Zoom in"
+          disabled={confirmed || zoom >= MAX_ZOOM}
+          onClick={() => changeZoom(zoom + 1)}
+          className="flex h-9 w-9 items-center justify-center hover:bg-slate-50 disabled:opacity-40"
+        >
+          <Plus className="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          aria-label="Zoom out"
+          disabled={confirmed || zoom <= MIN_ZOOM}
+          onClick={() => changeZoom(zoom - 1)}
+          className="flex h-9 w-9 items-center justify-center border-t border-slate-200 hover:bg-slate-50 disabled:opacity-40"
+        >
+          <Minus className="h-4 w-4" />
+        </button>
+      </div>
 
-        {currentPoint && (
-          <div
-            className="absolute h-4 w-4 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white bg-blue-500 shadow"
-            style={{ left: currentPoint.x, top: currentPoint.y }}
-            aria-label="Current location"
-          />
-        )}
-
-        {selectedPoint && (
-          <button
-            type="button"
-            aria-label={confirmed ? 'Confirmed selected location' : 'Drag selected location pin'}
-            disabled={confirmed}
-            onPointerDown={handlePinPointerDown}
-            className="absolute -translate-x-1/2 -translate-y-full disabled:cursor-not-allowed"
-            style={{ left: selectedPoint.x, top: selectedPoint.y }}
-          >
-            <MapPin className={cn('h-9 w-9 drop-shadow-md', confirmed ? 'fill-emerald-600 text-emerald-700' : 'fill-indigo-600 text-indigo-700')} />
-          </button>
-        )}
-
-        {confirmed && (
-          <div className="absolute inset-0 bg-white/20">
-            <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-lg bg-white/95 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 shadow-sm">
-              <Lock className="h-3.5 w-3.5" />
-              Locked
-            </div>
-          </div>
-        )}
-
-        <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-          <button
-            type="button"
-            aria-label="Zoom in"
-            disabled={confirmed || zoom >= MAX_ZOOM}
-            onClick={() => changeZoom(zoom + 1)}
-            className="flex h-9 w-9 items-center justify-center hover:bg-slate-50 disabled:opacity-40"
-          >
-            <Plus className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Zoom out"
-            disabled={confirmed || zoom <= MIN_ZOOM}
-            onClick={() => changeZoom(zoom - 1)}
-            className="flex h-9 w-9 items-center justify-center border-t border-slate-200 hover:bg-slate-50 disabled:opacity-40"
-          >
-            <Minus className="h-4 w-4" />
-          </button>
-        </div>
+      <div className="absolute bottom-3 right-3 flex items-center gap-2" data-map-ui="true">
+        <button
+          type="button"
+          aria-label={isExpanded ? 'Collapse map' : 'Expand map'}
+          onClick={() => setIsExpanded((value) => !value)}
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm hover:bg-slate-50"
+        >
+          {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+        </button>
 
         <button
           type="button"
           aria-label="Center map on current location"
           disabled={confirmed || !currentLocation}
           onClick={recenterMap}
-          className="absolute bottom-3 right-3 flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm hover:bg-slate-50 disabled:opacity-40"
+          className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white shadow-sm hover:bg-slate-50 disabled:opacity-40"
         >
           <LocateFixed className="h-4 w-4" />
         </button>
       </div>
+    </div>
+  );
 
-      <div>
-        <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Selected Coordinates *</label>
-        <Input
-          readOnly
-          value={formatCoordinate(value)}
-          placeholder="Tap the map to select coordinates"
-          className="pl-3 bg-slate-50 text-slate-700"
-          aria-live="polite"
-        />
-      </div>
+  return (
+    <section className={cn('space-y-3', isExpanded && 'fixed inset-0 z-[60] m-0 flex flex-col bg-slate-950/60 p-3 sm:p-6')}>
+      {isExpanded ? (
+        <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+          <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+            <div>
+              <p className="text-sm font-semibold text-slate-800">Map Location</p>
+              <p className="text-xs text-slate-500">
+                {confirmed ? 'Location is confirmed and locked.' : 'Tap the map or drag the pin to choose exact coordinates.'}
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label="Collapse map"
+              onClick={() => setIsExpanded(false)}
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+            >
+              <Minimize2 className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex min-h-0 flex-1 flex-col gap-3 p-3 lg:flex-row">
+            <div className="min-h-0 flex-1">
+              {renderMapBox()}
+            </div>
+            <div className="space-y-3 lg:w-80 lg:shrink-0 lg:overflow-y-auto">
+              <div>
+                <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Selected Coordinates *</label>
+                <Input
+                  readOnly
+                  value={formatCoordinate(value)}
+                  placeholder="Tap the map to select coordinates"
+                  className="pl-3 bg-slate-50 text-slate-700"
+                  aria-live="polite"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={onConfirm}
+                disabled={!value || confirmed}
+                className={cn(
+                  'w-full py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5',
+                  confirmed
+                    ? 'bg-slate-100 text-slate-700'
+                    : 'bg-amber-400 text-slate-950 hover:bg-amber-300 disabled:bg-slate-200 disabled:text-slate-500',
+                )}
+              >
+                {confirmed ? <Lock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                {confirmed ? 'Location Confirmed' : 'Confirm Map Location'}
+              </button>
+              <p className="text-xs leading-5 text-slate-500">
+                Tip: use fullscreen when you need more precision, especially in dense areas or when placing a pin on
+                the right street side.
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <label className="text-xs font-semibold text-slate-600 block">Map Location *</label>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {confirmed ? 'Location is confirmed and locked.' : 'Tap the map or drag the pin to choose exact coordinates.'}
+              </p>
+            </div>
+            {isLoadingLocation && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Locating
+              </span>
+            )}
+          </div>
 
-      <button
-        type="button"
-        onClick={onConfirm}
-        disabled={!value || confirmed}
-        className={cn(
-          'w-full py-2.5 rounded-xl text-sm font-semibold transition-colors flex items-center justify-center gap-1.5',
-          confirmed
-            ? 'bg-emerald-100 text-emerald-700'
-            : 'bg-slate-900 text-white hover:bg-slate-800 disabled:bg-slate-200 disabled:text-slate-500',
-        )}
-      >
-        {confirmed ? <Lock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
-        {confirmed ? 'Location Confirmed' : 'Confirm Map Location'}
-      </button>
+          {renderMapBox()}
+
+          <div>
+            <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Selected Coordinates *</label>
+            <Input
+              readOnly
+              value={formatCoordinate(value)}
+              placeholder="Tap the map to select coordinates"
+              className="pl-3 bg-slate-50 text-slate-700"
+              aria-live="polite"
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={onConfirm}
+            disabled={!value || confirmed}
+            className={cn(
+              'w-full py-2.5 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center gap-1.5',
+              confirmed
+                ? 'bg-slate-100 text-slate-700'
+                : 'bg-amber-400 text-slate-950 hover:bg-amber-300 disabled:bg-slate-200 disabled:text-slate-500',
+            )}
+          >
+            {confirmed ? <Lock className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+            {confirmed ? 'Location Confirmed' : 'Confirm Map Location'}
+          </button>
+        </>
+      )}
     </section>
   );
 }

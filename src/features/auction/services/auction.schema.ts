@@ -29,7 +29,7 @@ export const ProductCondition = {
 export type ProductCondition = (typeof ProductCondition)[keyof typeof ProductCondition];
 
 export interface UserResponse {
-  id: string;
+  id: number;
   fullname: string;
   email: string;
   birth: string;
@@ -47,15 +47,15 @@ export interface UserResponse {
 }
 
 export interface UserRoleResponse {
-  id: string;
-  user_id: string;
+  id: number;
+  user_id: number;
   role: string;
   created_at: string;
   updated_at: string;
 }
 
 export interface ProductStatusHistoryResponse {
-  id: string;
+  id: number;
   product_id: number;
   status: string;
   message?: string;
@@ -64,8 +64,8 @@ export interface ProductStatusHistoryResponse {
 }
 
 export interface ProductResponse {
-  id: string;
-  user_id: string;
+  id: number;
+  user_id: number;
   name: string;
   description?: string;
   condition: ProductCondition;
@@ -80,7 +80,7 @@ export interface ProductResponse {
 }
 
 export interface AuctionResponse {
-  id: string;
+  id: number;
   product_id: number;
   product?: ProductResponse;
   starting_price: number;
@@ -96,9 +96,9 @@ export interface AuctionResponse {
 }
 
 export interface AuctionBidResponse {
-  id: string;
+  id: number;
   auction_id: number;
-  user_id: string;
+  user_id: number;
   amount: number;
   is_winner?: boolean;
   user?: UserResponse;
@@ -109,9 +109,9 @@ export interface AuctionBidResponse {
 }
 
 export interface AuctionWinnerResponse {
-  id: string;
+  id: number;
   auction_id: number;
-  auction_bid_id: string;
+  auction_bid_id: number;
   status: string;
   auction?: AuctionResponse;
   auction_bid?: AuctionBidResponse;
@@ -120,14 +120,14 @@ export interface AuctionWinnerResponse {
 }
 
 export interface PaymentResponse {
-  id: string;
+  id: number;
   auction_id: number;
-  user_id: string;
+  user_id: number;
   amount: number;
   status: string;
   snap_token?: string;
   snap_url?: string;
-  payment_method_id?: string;
+  payment_method_id?: number;
   expired_at?: string;
   auction?: AuctionResponse;
   created_at: string;
@@ -158,11 +158,11 @@ export interface ShipmentCostEstimate {
 }
 
 export interface ShipmentResponse {
-  id: string;
-  auction_bid_id: string;
-  user_id: string;
-  buyer_address_id?: string;
-  seller_address_id?: string;
+  id: number;
+  auction_bid_id: number;
+  user_id: number;
+  buyer_address_id?: number;
+  seller_address_id?: number;
   buyer_address_snapshot?: ShipmentAddressSnapshot;
   seller_address_snapshot?: ShipmentAddressSnapshot;
   courier_code?: string;
@@ -172,6 +172,13 @@ export interface ShipmentResponse {
   tracking_number?: string;
   delivery_proof_image_path?: string;
   estimated_costs: ShipmentCostEstimate[];
+  buyer_address_deadline_at?: string;
+  ship_deadline_at?: string;
+  delivered_at?: string;
+  receive_deadline_at?: string;
+  buyer_address_failed_at?: string;
+  seller_failed_at?: string;
+  auto_received_at?: string;
   shipped_at?: string;
   received_at?: string;
   auction_bid?: AuctionBidResponse;
@@ -215,8 +222,8 @@ export interface ShipmentTrackingResponse {
 }
 
 export interface UserAddressResponse {
-  id: string;
-  user_id: string;
+  id: number;
+  user_id: number;
   label: string;
   recipient_name: string;
   phone: string;

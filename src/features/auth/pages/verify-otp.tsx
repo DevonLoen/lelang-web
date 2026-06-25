@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import Logo from '../../../assets/logo.png';
+import Logo from '../../../assets/bidify-mark.svg';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { AuthService, type SignupPayload } from '../services/auth.service';
@@ -151,14 +151,14 @@ export default function VerifyOtpPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
-      {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
+    <div className="bidify-auth-shell min-h-screen flex flex-col lg:flex-row">
+      <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4">
+        <img src={Logo} alt="Bidify" className="h-12 w-12" />
+        <h1 className="text-2xl font-bold text-white">Bidify</h1>
       </div>
 
       {/* Left Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-slate-900">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
           {/* Header */}
           <div className="mb-8 text-center lg:text-left">
@@ -181,7 +181,7 @@ export default function VerifyOtpPage() {
                 value={digit}
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
-                className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-xl bg-slate-800 border-2 border-slate-700 text-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all"
+                className="w-12 h-14 sm:w-14 sm:h-16 text-center text-xl sm:text-2xl font-bold rounded-lg bg-white/[0.06] border border-white/10 text-white focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-all"
               />
             ))}
           </div>
@@ -190,7 +190,7 @@ export default function VerifyOtpPage() {
           <button
             onClick={handleVerifyOtp}
             disabled={isSubmitting}
-            className="w-full h-12 rounded-lg bg-amber-500 font-semibold text-white transition-all hover:bg-amber-600 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
+            className="w-full h-12 rounded-lg bg-amber-400 font-bold text-slate-950 transition-all hover:bg-amber-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
           >
             {isSubmitting ? (
               <div className="flex justify-center items-center gap-1">
@@ -227,13 +227,18 @@ export default function VerifyOtpPage() {
       </div>
 
       {/* Right Panel - Branding (hidden on mobile) */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
+      <div className="bidify-auth-brand hidden lg:flex flex-1 flex-col items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-4">
-            <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <img src={Logo} alt="Bidify" className="h-20 w-20 drop-shadow-lg" />
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg">Bidify</h1>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Almost There!</h2>
-          <p className="text-amber-100 text-lg">Verify your email address to complete your registration and start bidding.</p>
+          <h2 className="text-3xl font-bold text-white mb-4">
+            Almost There!
+          </h2>
+          <p className="text-slate-200 text-lg">
+            Verify your email address to complete your registration and start bidding.
+          </p>
         </div>
       </div>
     </div>

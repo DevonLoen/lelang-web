@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import Logo from '../../../assets/logo.png';
+import Logo from '../../../assets/bidify-mark.svg';
 import { FaEnvelope } from 'react-icons/fa';
 import { ToastType } from '../../../enums/toast-type';
 import { useToast } from '../../../contexts/toast-context';
@@ -70,8 +70,6 @@ export default function LoginPage() {
         const result = await new AuthService().login(payload);
         showToast(result.message || 'Login Successfully', ToastType.SUCCESS);
         qc.invalidateQueries({ queryKey: ['own-profile'] });
-
-        // inisialisasi fcm
         await initFCM();
         navigate(`/`);
       } catch (error: unknown) {
@@ -108,37 +106,32 @@ export default function LoginPage() {
   }, []);
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-slate-900">
-      {/* Mobile Header - Logo section visible on small screens */}
-      <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-        <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
+    <div className="bidify-auth-shell min-h-screen flex flex-col lg:flex-row">
+      <div className="lg:hidden flex items-center justify-center gap-3 py-8 px-4">
+        <img src={Logo} alt="Bidify" className="h-12 w-12" />
+        <h1 className="text-2xl font-bold text-white">Bidify</h1>
       </div>
 
-      {/* Left Panel - Form */}
-      <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-slate-900">
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md" onKeyDown={handleKeyDown}>
-          {/* Header */}
           <div className="mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">Welcome back</h2>
-            <p className="text-slate-400">Sign in to continue to your account</p>
+            <p className="text-slate-400">Sign in to continue bidding, selling, and tracking your auctions.</p>
           </div>
 
-          {/* Form */}
           <div className="space-y-5">
-            <div className="relative">
-              <InputField
-                label="Email"
-                type="email"
-                name="email"
-                id="email"
-                value={field.email}
-                onChange={handleChange}
-                onBlur={handleBlur}
-                error={!!errors.email}
-                errorMessage={errors.email}
-                icon={<FaEnvelope className="h-4 w-4" />}
-              />
-            </div>
+            <InputField
+              label="Email"
+              type="email"
+              name="email"
+              id="email"
+              value={field.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={!!errors.email}
+              errorMessage={errors.email}
+              icon={<FaEnvelope className="h-4 w-4" />}
+            />
 
             <div className="relative">
               <InputFieldPassword
@@ -158,17 +151,16 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Login Button */}
             <button
               onClick={handleLogin}
               disabled={isSubmitting}
-              className="w-full h-12 rounded-lg bg-amber-500 font-semibold text-white transition-all hover:bg-amber-600 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
+              className="w-full h-12 rounded-lg bg-amber-400 font-bold text-slate-950 transition-all hover:bg-amber-300 active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed shadow-lg shadow-amber-500/20"
             >
               {isSubmitting ? (
                 <div className="flex justify-center items-center gap-1">
-                  <div className="h-2 w-2 rounded-full bg-white animate-bounce [animation-delay:-0.3s]"></div>
-                  <div className="h-2 w-2 rounded-full bg-white animate-bounce [animation-delay:-0.15s]"></div>
-                  <div className="h-2 w-2 rounded-full bg-white animate-bounce"></div>
+                  <div className="h-2 w-2 rounded-full bg-slate-950 animate-bounce [animation-delay:-0.3s]"></div>
+                  <div className="h-2 w-2 rounded-full bg-slate-950 animate-bounce [animation-delay:-0.15s]"></div>
+                  <div className="h-2 w-2 rounded-full bg-slate-950 animate-bounce"></div>
                 </div>
               ) : (
                 'Sign In'
@@ -176,7 +168,6 @@ export default function LoginPage() {
             </button>
           </div>
 
-          {/* Signup Link */}
           <p className="mt-8 text-center text-slate-400">
             {"Don't have an account? "}
             <a href="/signup" className="text-amber-500 hover:text-amber-400 font-medium transition-colors">
@@ -186,15 +177,15 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right Panel - Branding (hidden on mobile) */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-12">
+      <div className="bidify-auth-brand hidden lg:flex flex-1 flex-col items-center justify-center p-12">
         <div className="max-w-md text-center">
-          <div className="flex items-center justify-center gap-4 ">
-            <img src={Logo} alt="Auction Logo" className="h-32 w-auto drop-shadow-lg" />
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <img src={Logo} alt="Bidify" className="h-24 w-24 drop-shadow-lg" />
+            <h1 className="text-5xl font-bold text-white drop-shadow-lg">Bidify</h1>
           </div>
-          <h2 className="text-3xl font-bold text-white mb-4">Enter the World of Bids</h2>
-          <p className="text-amber-100 text-lg">
-            Your dream item is just one bid away. Join thousands of users and start bidding today.
+          <h2 className="text-3xl font-bold text-white mb-4">Enter the live marketplace</h2>
+          <p className="text-slate-200 text-lg">
+            Discover curated products, compete in real time, and manage every auction from one secure workspace.
           </p>
         </div>
       </div>

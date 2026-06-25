@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
@@ -6,13 +6,15 @@ import { auctionService } from '../../auction/services/auction.service';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { Input } from '@/components/ui/input';
+import { DateTimePicker, toLocalDateTimeInputValue } from '@/components/date-time-picker';
+import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import {
   ChevronLeft, Edit3, X, CheckCircle, Clock, Tag, Package, ImageOff,
   Trophy, RefreshCcw, Gift, Truck, MapPin, CheckCircle2, CalendarDays,
   Banknote, Loader2, ZoomIn, Timer, TrendingUp, Users,
 } from 'lucide-react';
 
-// ── Countdown hook ────────────────────────────────────────────────────────────
+//  Countdown hook 
 function useCountdown(targetIso: string | undefined) {
   const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number; expired: boolean } | null>(null);
   useEffect(() => {
@@ -34,13 +36,13 @@ function useCountdown(targetIso: string | undefined) {
 }
 
 const statusStyles: Record<string, string> = {
-  SCHEDULED: 'bg-sky-100 text-sky-800',
-  ON_GOING: 'bg-green-100 text-green-800',
-  WAITING_FOR_PAYMENT: 'bg-yellow-100 text-yellow-800',
-  WAITING_FOR_SELLER_DECISION: 'bg-orange-100 text-orange-800',
-  WAITING_FOR_SHIPMENT: 'bg-orange-100 text-orange-800',
-  SHIPPED: 'bg-purple-100 text-purple-800',
-  DELIVERED: 'bg-teal-100 text-teal-800',
+  SCHEDULED: 'bg-slate-100 text-slate-700',
+  ON_GOING: 'bg-slate-100 text-slate-800',
+  WAITING_FOR_PAYMENT: 'bg-amber-50 text-amber-900',
+  WAITING_FOR_SELLER_DECISION: 'bg-amber-100 text-amber-900',
+  WAITING_FOR_SHIPMENT: 'bg-amber-100 text-amber-900',
+  SHIPPED: 'bg-slate-100 text-slate-800',
+  DELIVERED: 'bg-slate-100 text-slate-800',
   CANCELLED: 'bg-red-100 text-red-800',
   COMPLETED: 'bg-gray-200 text-gray-700',
 };
@@ -49,13 +51,19 @@ const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const formatDate = (s: string) =>
-  new Date(s).toLocaleString('id-ID', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  new Date(s).toLocaleString('en-US', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
 const toDatetimeLocal = (iso: string) => {
   const d = new Date(iso);
   const offset = d.getTimezoneOffset();
   const local = new Date(d.getTime() - offset * 60000);
   return local.toISOString().slice(0, 16);
+};
+
+const getMinimumScheduleTime = () => {
+  const next = new Date(Date.now() + 5 * 60 * 1000);
+  next.setSeconds(0, 0);
+  return toLocalDateTimeInputValue(next);
 };
 
 const POST_AUCTION_STATUSES = new Set([
@@ -73,6 +81,7 @@ export default function OwnAuctionDetailPage() {
   const [startingPrice, setStartingPrice] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
+  const [scheduleError, setScheduleError] = useState('');
   const [selectedCost, setSelectedCost] = useState('');
   const [selectedSellerAddressId, setSelectedSellerAddressId] = useState('');
   const [selectedImg, setSelectedImg] = useState(0);
@@ -89,6 +98,7 @@ export default function OwnAuctionDetailPage() {
     setStartingPrice(String(auction.starting_price));
     setStartTime(toDatetimeLocal(auction.start_time));
     setEndTime(toDatetimeLocal(auction.end_time));
+    setScheduleError('');
     setIsEditing(true);
   };
 
@@ -104,8 +114,34 @@ export default function OwnAuctionDetailPage() {
       setIsEditing(false);
       qc.invalidateQueries({ queryKey: ['own-auction', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Failed to update auction', ToastType.ERROR),
   });
+
+  const handleUpdateAuction = () => {
+    const minScheduleTime = getMinimumScheduleTime();
+    setScheduleError('');
+    if (!startingPrice || Number(startingPrice) <= 0) {
+      setScheduleError('Starting price must be greater than zero.');
+      showToast('Enter a valid starting price', ToastType.ERROR);
+      return;
+    }
+    if (!startTime || !endTime) {
+      setScheduleError('Choose both start and end time.');
+      showToast('Select start and end time', ToastType.ERROR);
+      return;
+    }
+    if (new Date(startTime).getTime() < new Date(minScheduleTime).getTime()) {
+      setScheduleError('Start time must be at least five minutes from now.');
+      showToast('Start time must be in the future', ToastType.ERROR);
+      return;
+    }
+    if (new Date(startTime) >= new Date(endTime)) {
+      setScheduleError('End time must be after start time.');
+      showToast('End time must be after start time', ToastType.ERROR);
+      return;
+    }
+    updateAuction();
+  };
 
   // Winners
   const { data: winnersData } = useQuery({
@@ -122,7 +158,7 @@ export default function OwnAuctionDetailPage() {
       showToast(res.message || 'Auction relisted!', ToastType.SUCCESS);
       qc.invalidateQueries({ queryKey: ['own-auction', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Failed to relist auction', ToastType.ERROR),
   });
 
   // Second chance
@@ -132,7 +168,7 @@ export default function OwnAuctionDetailPage() {
       showToast(res.message || 'Second chance offered!', ToastType.SUCCESS);
       qc.invalidateQueries({ queryKey: ['own-auction', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Failed to offer second chance', ToastType.ERROR),
   });
 
   // Shipments
@@ -149,16 +185,16 @@ export default function OwnAuctionDetailPage() {
     queryFn: () => ownService.listUserAddresses(),
     enabled: !!id && !!auction && auction.status === 'WAITING_FOR_SHIPMENT',
   });
-  const ownerAddresses = ownerAddressesData?.nodes ?? [];
+  const ownerAddresses = useMemo(() => ownerAddressesData?.nodes ?? [], [ownerAddressesData?.nodes]);
 
   useEffect(() => {
     if (!shipment || !ownerAddresses.length) return;
     if (shipment.seller_address_id) {
-      setSelectedSellerAddressId(shipment.seller_address_id);
+      setSelectedSellerAddressId(String(shipment.seller_address_id));
       return;
     }
     const defaultAddress = ownerAddresses.find((addr) => addr.is_default);
-    if (defaultAddress) setSelectedSellerAddressId(defaultAddress.id);
+    if (defaultAddress) setSelectedSellerAddressId(String(defaultAddress.id));
   }, [shipment, ownerAddresses]);
 
   const { mutate: updateSellerAddress, isPending: isUpdatingSellerAddress } = useMutation({
@@ -167,7 +203,7 @@ export default function OwnAuctionDetailPage() {
       showToast('Sender address selected!', ToastType.SUCCESS);
       qc.invalidateQueries({ queryKey: ['own-auction-shipments', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Failed to select sender address', ToastType.ERROR),
   });
 
   // Ship item
@@ -181,7 +217,7 @@ export default function OwnAuctionDetailPage() {
       qc.invalidateQueries({ queryKey: ['own-auction', id] });
       qc.invalidateQueries({ queryKey: ['own-auction-shipments', id] });
     },
-    onError: (e: any) => showToast(e.message, ToastType.ERROR),
+    onError: (e: unknown) => showToast(e instanceof Error ? e.message : 'Failed to ship item', ToastType.ERROR),
   });
 
   // Bid history from auction response (sorted by amount descending)
@@ -218,6 +254,7 @@ export default function OwnAuctionDetailPage() {
   const isWaitingDecision = auction.status === 'WAITING_FOR_SELLER_DECISION';
   const cfg = statusStyles[auction.status];
   const isLive = auction.status === 'ON_GOING';
+  const minScheduleTime = getMinimumScheduleTime();
 
   return (
     <>
@@ -257,7 +294,7 @@ export default function OwnAuctionDetailPage() {
                 <button
                   key={i}
                   onClick={() => setSelectedImg(i)}
-                  className={`flex-shrink-0 h-16 w-16 rounded-xl overflow-hidden border-2 transition-all ${i === selectedImg ? 'border-indigo-500 shadow-md' : 'border-slate-200 opacity-60 hover:opacity-100'}`}
+                  className={`flex-shrink-0 h-16 w-16 rounded-xl overflow-hidden border-2 transition-all ${i === selectedImg ? 'border-slate-500 shadow-md' : 'border-slate-200 opacity-60 hover:opacity-100'}`}
                 >
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
@@ -274,27 +311,27 @@ export default function OwnAuctionDetailPage() {
               <span className={`text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1.5 ${cfg}`}>
                 {isLive && (
                   <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-slate-500" />
                   </span>
                 )}
                 {auction.status.replace(/_/g, ' ')}
               </span>
               {product?.condition && (
-                <span className="text-xs font-semibold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full">
+                <span className="text-xs font-semibold uppercase tracking-wider text-slate-700 bg-slate-50 px-2.5 py-1 rounded-full">
                   {product.condition}
                 </span>
               )}
             </div>
             <h1 className="text-2xl font-bold text-slate-900">{product?.name ?? 'Untitled'}</h1>
             {product?.description && (
-              <p className="text-sm text-slate-500 mt-2 leading-relaxed border-l-2 border-indigo-200 pl-3">{product.description}</p>
+              <p className="text-sm text-slate-500 mt-2 leading-relaxed border-l-2 border-slate-200 pl-3">{product.description}</p>
             )}
           </div>
 
           {/* Countdown */}
           {countdown && !countdown.expired && (
-            <div className={`rounded-2xl px-4 py-3 flex items-center gap-3 ${auction.status === 'ON_GOING' ? 'bg-gradient-to-r from-red-500 to-orange-500' : 'bg-gradient-to-r from-indigo-500 to-violet-500'} text-white`}>
+            <div className={`rounded-2xl px-4 py-3 flex items-center gap-3 ${auction.status === 'ON_GOING' ? 'bg-gradient-to-r from-slate-900 to-slate-800' : 'bg-gradient-to-r from-slate-900 to-slate-800'} text-white`}>
               <Timer className="h-5 w-5 flex-shrink-0" />
               <div>
                 <p className="text-xs font-medium opacity-80">{auction.status === 'ON_GOING' ? 'Closing in' : 'Starts in'}</p>
@@ -309,30 +346,30 @@ export default function OwnAuctionDetailPage() {
           {!isEditing ? (
             <>
               <div className="bg-slate-50 rounded-2xl border border-slate-100 divide-y divide-slate-100">
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-slate-500 flex items-center gap-2"><Tag className="h-4 w-4 text-indigo-400" /> Starting Price</span>
-                  <strong className="text-slate-900 text-sm">{formatIDR(auction.starting_price)}</strong>
+                <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-slate-500 flex items-center gap-2"><Tag className="h-4 w-4 text-slate-400" /> Starting Price</span>
+                  <strong className="text-slate-900 text-sm sm:text-right">{formatIDR(auction.starting_price)}</strong>
                 </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-slate-500 flex items-center gap-2"><Banknote className="h-4 w-4 text-indigo-400" /> Platform Fee</span>
-                  <strong className="text-slate-900 text-sm">{formatIDR(auction.fee)}</strong>
+                <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-slate-500 flex items-center gap-2"><Banknote className="h-4 w-4 text-slate-400" /> Seller Admin Fee</span>
+                  <strong className="text-slate-900 text-sm sm:text-right">{formatIDR(auction.fee)}</strong>
                 </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-slate-500 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-indigo-400" /> Starts</span>
-                  <strong className="text-slate-900 text-sm">{formatDate(auction.start_time)}</strong>
+                <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-slate-500 flex items-center gap-2"><CalendarDays className="h-4 w-4 text-slate-400" /> Starts</span>
+                  <strong className="text-slate-900 text-sm sm:text-right">{formatDate(auction.start_time)}</strong>
                 </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-slate-500 flex items-center gap-2"><Clock className="h-4 w-4 text-orange-400" /> Ends</span>
-                  <strong className="text-slate-900 text-sm">{formatDate(auction.end_time)}</strong>
+                <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-slate-500 flex items-center gap-2"><Clock className="h-4 w-4 text-amber-600" /> Ends</span>
+                  <strong className="text-slate-900 text-sm sm:text-right">{formatDate(auction.end_time)}</strong>
                 </div>
-                <div className="flex items-center justify-between px-4 py-3">
-                  <span className="text-sm text-slate-500 flex items-center gap-2"><Package className="h-4 w-4 text-indigo-400" /> Weight</span>
-                  <strong className="text-slate-900 text-sm">{product?.weight_gram ? `${product.weight_gram} g` : '—'}</strong>
+                <div className="flex flex-col items-start gap-1.5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+                  <span className="text-sm text-slate-500 flex items-center gap-2"><Package className="h-4 w-4 text-slate-400" /> Weight</span>
+                  <strong className="text-slate-900 text-sm sm:text-right">{product?.weight_gram ? `${product.weight_gram} g` : ''}</strong>
                 </div>
               </div>
               {isScheduled && (
                 <button onClick={startEdit}
-                  className="flex items-center gap-2 text-sm font-semibold text-indigo-600 hover:text-indigo-800 transition-colors px-4 py-2.5 rounded-xl border border-indigo-200 hover:bg-indigo-50 self-start">
+                  className="flex items-center gap-2 text-sm font-semibold text-slate-700 hover:text-slate-800 transition-colors px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 self-start">
                   <Edit3 className="h-4 w-4" /> Edit Auction
                 </button>
               )}
@@ -340,7 +377,7 @@ export default function OwnAuctionDetailPage() {
           ) : (
             <div className="bg-slate-50 rounded-2xl border border-slate-200 p-5 space-y-4">
               <h2 className="font-semibold text-slate-800 flex items-center gap-2 text-sm">
-                <Edit3 className="h-4 w-4 text-indigo-500" /> Edit Auction
+                <Edit3 className="h-4 w-4 text-slate-500" /> Edit Auction
               </h2>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Starting Price (IDR)</label>
@@ -348,21 +385,38 @@ export default function OwnAuctionDetailPage() {
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">Start Time</label>
-                <Input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                <DateTimePicker
+                  label="Auction starts"
+                  value={startTime}
+                  onChange={setStartTime}
+                  minValue={minScheduleTime}
+                  helperText="Pick a start time at least five minutes from now."
+                />
               </div>
               <div>
                 <label className="text-xs font-semibold text-slate-600 mb-1.5 block">End Time</label>
-                <Input type="datetime-local" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                <DateTimePicker
+                  label="Auction ends"
+                  value={endTime}
+                  onChange={setEndTime}
+                  minValue={startTime || minScheduleTime}
+                  helperText="The end time must be after the start time."
+                />
               </div>
+              {scheduleError && (
+                <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                  {scheduleError}
+                </div>
+              )}
               <div className="flex gap-3 pt-1">
                 <button onClick={() => setIsEditing(false)}
                   className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-700 hover:bg-slate-100 transition-colors flex items-center justify-center gap-1.5">
                   <X className="h-4 w-4" /> Cancel
                 </button>
-                <button onClick={() => updateAuction()} disabled={isPending}
-                  className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
+                <button onClick={handleUpdateAuction} disabled={isPending}
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-1.5 text-sm">
                   {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="h-4 w-4" />}
-                  {isPending ? 'Saving…' : 'Save'}
+                  {isPending ? 'Saving...' : 'Save'}
                 </button>
               </div>
             </div>
@@ -370,7 +424,7 @@ export default function OwnAuctionDetailPage() {
         </div>
       </div>
 
-      {/* ── Post-auction sections ─────────────────────────────── */}
+      {/*  Post-auction sections  */}
       <div className="mt-8 space-y-4">
 
         {/* Winner */}
@@ -383,7 +437,7 @@ export default function OwnAuctionDetailPage() {
               <p className="font-bold text-amber-900">Auction Winner</p>
               <p className="text-sm text-amber-700 mt-0.5">
                 Winning bid: <strong>{formatIDR(winner.auction_bid?.amount ?? 0)}</strong>
-                {' · '}Status: <strong className="capitalize">{winner.status.replace(/_/g, ' ')}</strong>
+                {'  '}Status: <strong className="capitalize">{winner.status.replace(/_/g, ' ')}</strong>
               </p>
             </div>
           </div>
@@ -393,22 +447,22 @@ export default function OwnAuctionDetailPage() {
         {bids.length > 0 && (
           <div className="rounded-2xl border border-slate-200 bg-white shadow-sm p-5">
             <h3 className="font-semibold text-slate-800 flex items-center gap-2 mb-4">
-              <TrendingUp className="h-4 w-4 text-indigo-500" /> Bid History
+              <TrendingUp className="h-4 w-4 text-slate-500" /> Bid History
               <span className="ml-auto text-xs text-slate-400 font-normal flex items-center gap-1">
                 <Users className="h-3.5 w-3.5" /> {bids.length} bids
               </span>
             </h3>
             <div className="divide-y divide-slate-100 max-h-60 overflow-y-auto">
               {bids.map((bid, i) => (
-                <div key={bid.id} className={`flex items-center justify-between py-2.5 ${i === 0 ? 'bg-green-50 -mx-3 px-3 rounded-xl' : ''}`}>
+                <div key={bid.id} className={`flex flex-col items-start gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between ${i === 0 ? 'bg-slate-50 -mx-3 px-3 rounded-xl' : ''}`}>
                   <div className="flex items-center gap-2">
                     {i === 0 && <Trophy className="h-4 w-4 text-amber-500 flex-shrink-0" />}
                     <div>
                       <p className="text-sm font-medium text-slate-800">{bid.user?.fullname ?? 'Bidder'}</p>
-                      <p className="text-xs text-slate-400">{bid.created_at ? new Date(bid.created_at).toLocaleString() : ''}</p>
+                      <p className="text-xs text-slate-400">{bid.created_at ? new Date(bid.created_at).toLocaleString('en-US') : ''}</p>
                     </div>
                   </div>
-                  <span className={`text-sm font-bold ${i === 0 ? 'text-green-700' : 'text-slate-700'}`}>{formatIDR(bid.amount)}</span>
+                  <span className={`text-sm font-bold ${i === 0 ? 'text-slate-700' : 'text-slate-700'}`}>{formatIDR(bid.amount)}</span>
                 </div>
               ))}
             </div>
@@ -417,24 +471,24 @@ export default function OwnAuctionDetailPage() {
 
         {/* Seller Decision */}
         {isWaitingDecision && (
-          <div className="rounded-2xl border border-orange-200 bg-orange-50 p-5">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5">
             <div className="flex items-center gap-3 mb-4">
-              <div className="h-9 w-9 rounded-xl bg-orange-100 flex items-center justify-center">
-                <RefreshCcw className="h-5 w-5 text-orange-600" />
+              <div className="h-9 w-9 rounded-xl bg-amber-100 flex items-center justify-center">
+                <RefreshCcw className="h-5 w-5 text-amber-700" />
               </div>
               <div>
-                <p className="font-semibold text-orange-900">Seller Decision Required</p>
-                <p className="text-sm text-orange-700">The auction ended without a winner. Choose how to proceed:</p>
+                <p className="font-semibold text-amber-950">Seller Decision Required</p>
+                <p className="text-sm text-amber-800">The auction ended without a winner. Choose how to proceed:</p>
               </div>
             </div>
             <div className="flex gap-3">
               <button onClick={() => relist()} disabled={isRelisting}
-                className="flex-1 py-3 rounded-xl border border-orange-300 bg-white text-orange-700 font-semibold text-sm hover:bg-orange-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
+                className="flex-1 py-3 rounded-xl border border-amber-300 bg-white text-amber-800 font-semibold text-sm hover:bg-amber-50 transition-colors disabled:opacity-60 flex items-center justify-center gap-2">
                 {isRelisting ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCcw className="h-4 w-4" />}
                 Relist Auction
               </button>
               <button onClick={() => secondChance()} disabled={isSecondChancing}
-                className="flex-1 py-3 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
+                className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm flex items-center justify-center gap-2">
                 {isSecondChancing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Gift className="h-4 w-4" />}
                 Second Chance
               </button>
@@ -444,10 +498,10 @@ export default function OwnAuctionDetailPage() {
 
         {/* Shipment */}
         {shipment && SHIPMENT_STATUSES.has(auction.status) && (
-          <div className="rounded-2xl border border-purple-200 bg-white overflow-hidden">
+          <div className="rounded-2xl border border-slate-200 bg-white overflow-hidden">
             <div className="px-5 py-3.5 border-b border-purple-100 flex items-center gap-3">
-              <div className="h-8 w-8 rounded-xl bg-purple-100 flex items-center justify-center">
-                <Truck className="h-4 w-4 text-purple-600" />
+              <div className="h-8 w-8 rounded-xl bg-slate-100 flex items-center justify-center">
+                <Truck className="h-4 w-4 text-slate-600" />
               </div>
               <span className="font-semibold text-slate-800">Shipment</span>
             </div>
@@ -462,7 +516,7 @@ export default function OwnAuctionDetailPage() {
                       <div className="text-center py-6 border border-dashed border-slate-200 rounded-xl">
                         <MapPin className="h-8 w-8 text-slate-300 mx-auto mb-2" />
                         <p className="text-sm text-slate-500 mb-1">No seller address on file.</p>
-                        <Link to="/own/addresses" className="text-indigo-600 text-sm font-medium hover:underline">
+                        <Link to="/own/addresses" className="text-slate-700 text-sm font-medium hover:underline">
                           + Add an address
                         </Link>
                       </div>
@@ -473,16 +527,16 @@ export default function OwnAuctionDetailPage() {
                             <label
                               key={addr.id}
                               className={`flex items-start gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                                selectedSellerAddressId === addr.id
-                                  ? 'border-indigo-500 bg-indigo-50 shadow-sm'
-                                  : 'border-slate-200 hover:border-indigo-300'
+                                selectedSellerAddressId === String(addr.id)
+                                  ? 'border-slate-500 bg-slate-50 shadow-sm'
+                                  : 'border-slate-200 hover:border-slate-300'
                               }`}
                             >
                               <input
                                 type="radio"
                                 name="sellerAddress"
-                                value={addr.id}
-                                checked={selectedSellerAddressId === addr.id}
+                                value={String(addr.id)}
+                                checked={selectedSellerAddressId === String(addr.id)}
                                 onChange={(e) => setSelectedSellerAddressId(e.target.value)}
                                 className="mt-1 accent-indigo-600"
                               />
@@ -490,12 +544,12 @@ export default function OwnAuctionDetailPage() {
                                 <p className="text-sm font-semibold text-slate-800">
                                   {addr.label}
                                   {addr.is_default && (
-                                    <span className="ml-2 text-xs text-indigo-600 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-full">
+                                    <span className="ml-2 text-xs text-slate-700 bg-slate-50 border border-slate-200 px-1.5 py-0.5 rounded-full">
                                       Default
                                     </span>
                                   )}
                                 </p>
-                                <p className="text-xs text-slate-500 mt-0.5">{addr.recipient_name} · {addr.phone}</p>
+                                <p className="text-xs text-slate-500 mt-0.5">{addr.recipient_name}  {addr.phone}</p>
                                 <p className="text-xs text-slate-500">{addr.address}, {addr.city_name}, {addr.province_name} {addr.postal_code}</p>
                               </div>
                             </label>
@@ -504,10 +558,10 @@ export default function OwnAuctionDetailPage() {
                         <button
                           onClick={() => updateSellerAddress()}
                           disabled={!selectedSellerAddressId || isUpdatingSellerAddress}
-                          className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
+                          className="w-full py-3 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2"
                         >
                           {isUpdatingSellerAddress ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
-                          {isUpdatingSellerAddress ? 'Saving…' : 'Use This Address'}
+                          {isUpdatingSellerAddress ? 'Saving...' : 'Use This Address'}
                         </button>
                       </>
                     )}
@@ -534,7 +588,7 @@ export default function OwnAuctionDetailPage() {
                       <p className="text-slate-500 mt-1">No sender address snapshot is available yet.</p>
                       <p className="text-sm text-slate-500 mt-2">
                         Please add your seller address in{' '}
-                        <Link to="/own/addresses" className="font-semibold text-indigo-600 hover:underline">My Addresses</Link> before shipping.
+                        <Link to="/own/addresses" className="font-semibold text-slate-700 hover:underline">My Addresses</Link> before shipping.
                       </p>
                     </div>
                   )}
@@ -559,7 +613,7 @@ export default function OwnAuctionDetailPage() {
                 </div>
               ) : (
                 <div className="flex items-center gap-2 text-sm text-slate-400 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Waiting for buyer to set shipping address…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Waiting for buyer to set shipping address
                 </div>
               )}
 
@@ -576,13 +630,13 @@ export default function OwnAuctionDetailPage() {
                         return (
                           <label key={val}
                             className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
-                              selectedCost === val ? 'border-indigo-500 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'
+                              selectedCost === val ? 'border-slate-500 bg-slate-50' : 'border-slate-200 hover:border-slate-300'
                             }`}>
                             <input type="radio" name="courier" value={val} checked={selectedCost === val}
                               onChange={(e) => setSelectedCost(e.target.value)} className="accent-indigo-600" />
                             <div className="flex-1">
-                              <p className="text-sm font-semibold text-slate-800">{cost.courier_name} · {cost.courier_service_name}</p>
-                              <p className="text-xs text-slate-500">{cost.duration} · {formatIDR(cost.price)}</p>
+                              <p className="text-sm font-semibold text-slate-800">{cost.courier_name}  {cost.courier_service_name}</p>
+                              <p className="text-xs text-slate-500">{cost.duration}  {formatIDR(cost.price)}</p>
                             </div>
                           </label>
                         );
@@ -590,63 +644,70 @@ export default function OwnAuctionDetailPage() {
                     </div>
                   )}
                   <button onClick={() => shipItem()} disabled={!selectedCost || isShipping}
-                    className="py-3 px-5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm flex items-center gap-2">
+                    className="py-3 px-5 bg-slate-900 hover:bg-slate-800 disabled:opacity-60 text-white font-semibold rounded-xl transition-colors text-sm flex items-center gap-2">
                     {isShipping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Truck className="h-4 w-4" />}
-                    {isShipping ? 'Shipping…' : 'Ship Item'}
+                    {isShipping ? 'Shipping...' : 'Ship Item'}
                   </button>
                 </div>
               )}
 
               {/* Courier info */}
               {shipment.courier_code && (
-                <div className="flex items-center justify-between text-sm border-t border-slate-100 pt-4">
+                <div className="flex flex-col items-start gap-1.5 text-sm border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-slate-500">Courier</span>
-                  <strong className="text-slate-800">{shipment.courier_code} · {shipment.service_code}</strong>
+                  <strong className="text-slate-800 sm:text-right">{shipment.courier_code}  {shipment.service_code}</strong>
                 </div>
               )}
               {shipment.shipping_cost != null && (
-                <div className="flex items-center justify-between text-sm">
+                <div className="flex flex-col items-start gap-1.5 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-slate-500">Shipping Cost</span>
-                  <strong className="text-slate-800">{formatIDR(shipment.shipping_cost)}</strong>
+                  <strong className="text-slate-800 sm:text-right">{formatIDR(shipment.shipping_cost)}</strong>
                 </div>
               )}
 
               {/* Tracking */}
               {shipment.tracking_number && (
-                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4">
+                <div className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-wider text-purple-500 mb-1.5">Tracking Number</p>
-                      <p className="font-mono font-bold text-purple-900 text-base">{shipment.tracking_number}</p>
+                      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">Tracking Number</p>
+                      <p className="font-mono font-bold text-slate-900 text-base">{shipment.tracking_number}</p>
                     </div>
                     {auction?.id && (
                       <Link
                         to={`/${auction.id}/shipments/${shipment.id}/tracking`}
-                        className="inline-flex rounded-full border border-purple-200 bg-white px-3 py-2 text-sm font-semibold text-purple-700 hover:border-purple-300 hover:bg-purple-50"
+                        className="inline-flex rounded-full border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50"
                       >
                         View shipment tracking
                       </Link>
                     )}
                   </div>
                   {shipment.shipped_at && (
-                    <p className="text-xs text-purple-500 mt-1">Shipped on {formatDate(shipment.shipped_at)}</p>
+                    <p className="text-xs text-slate-500 mt-1">Shipped on {formatDate(shipment.shipped_at)}</p>
                   )}
                 </div>
               )}
 
               {/* Received by buyer */}
               {shipment.received_at && (
-                <div className="flex items-center gap-3 bg-teal-50 border border-teal-200 rounded-xl p-4">
-                  <CheckCircle2 className="h-5 w-5 text-teal-600 flex-shrink-0" />
+                <div className="flex items-center gap-3 bg-slate-50 border border-slate-200 rounded-xl p-4">
+                  <CheckCircle2 className="h-5 w-5 text-slate-600 flex-shrink-0" />
                   <div>
-                    <p className="font-semibold text-teal-900 text-sm">Item Received by Buyer</p>
-                    <p className="text-xs text-teal-600 mt-0.5">{formatDate(shipment.received_at)}</p>
+                    <p className="font-semibold text-slate-900 text-sm">Item Received by Buyer</p>
+                    <p className="text-xs text-slate-600 mt-0.5">{formatDate(shipment.received_at)}</p>
                   </div>
                 </div>
               )}
             </div>
           </div>
         )}
+
+        <AuctionRegulationCard
+          context="seller"
+          auction={auction}
+          payment={auction.payment}
+          shipment={shipment}
+        />
       </div>
     </main>
 

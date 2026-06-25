@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { type ReactNode, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
 import { Link, useNavigate } from 'react-router';
@@ -19,19 +19,19 @@ const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
 
 const formatDate = (s: string) =>
-  new Date(s).toLocaleString('id-ID', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  new Date(s).toLocaleString('en-US', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 
-const PAYMENT_STATUS: Record<string, { label: string; bg: string; text: string; icon: React.ReactNode }> = {
+const PAYMENT_STATUS: Record<string, { label: string; bg: string; text: string; icon: ReactNode }> = {
   WAITING_FOR_PAYMENT: {
     label: 'Awaiting Payment',
-    bg: 'bg-yellow-100',
-    text: 'text-yellow-800',
+    bg: 'bg-amber-50',
+    text: 'text-amber-900',
     icon: <Clock className="h-3.5 w-3.5" />,
   },
   PAID: {
     label: 'Paid',
-    bg: 'bg-green-100',
-    text: 'text-green-800',
+    bg: 'bg-slate-100',
+    text: 'text-slate-800',
     icon: <CheckCircle2 className="h-3.5 w-3.5" />,
   },
   EXPIRED: {
@@ -68,8 +68,7 @@ export default function OwnPaymentsPage() {
   const totalPages = Math.ceil(total / limit);
 
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10">
-      {/* Header */}
+    <main className="bidify-page-narrow">
       <div className="mb-8">
         <button
           onClick={() => navigate(-1)}
@@ -78,12 +77,12 @@ export default function OwnPaymentsPage() {
           <ChevronLeft className="h-4 w-4" /> Back
         </button>
         <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-2xl bg-indigo-100 flex items-center justify-center">
-            <CreditCard className="h-5 w-5 text-indigo-600" />
+          <div className="h-10 w-10 rounded-2xl bg-slate-100 flex items-center justify-center">
+            <CreditCard className="h-5 w-5 text-slate-700" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-slate-900">My Payments</h1>
-            <p className="text-slate-500 text-sm mt-0.5">All your auction payments in one place.</p>
+            <h1 className="bidify-title">My Payments</h1>
+            <p className="bidify-subtitle">Review payment status and complete pending checkout.</p>
           </div>
         </div>
       </div>
@@ -95,25 +94,23 @@ export default function OwnPaymentsPage() {
             {
               label: 'Total',
               value: total,
-              bg: 'bg-indigo-50',
-              text: 'text-indigo-700',
+              bg: 'bg-slate-50',
+              text: 'text-slate-800',
             },
             {
               label: 'Awaiting',
-              value:
-                payments.filter((p) => p.status === 'WAITING_FOR_PAYMENT').length +
-                (data?.total_by_status?.WAITING_FOR_PAYMENT ?? 0),
-              bg: 'bg-yellow-50',
-              text: 'text-yellow-700',
+              value: payments.filter((p) => p.status === 'WAITING_FOR_PAYMENT').length,
+              bg: 'bg-amber-50',
+              text: 'text-amber-800',
             },
             {
               label: 'Paid',
-              value: payments.filter((p) => p.status === 'PAID').length + (data?.total_by_status?.PAID ?? 0),
-              bg: 'bg-green-50',
-              text: 'text-green-700',
+              value: payments.filter((p) => p.status === 'PAID').length,
+              bg: 'bg-slate-50',
+              text: 'text-slate-700',
             },
           ].map((s) => (
-            <div key={s.label} className={`${s.bg} rounded-2xl border border-transparent px-4 py-3 text-center`}>
+            <div key={s.label} className={`${s.bg} rounded-lg border border-transparent px-4 py-3 text-center`}>
               <p className={`text-xl font-bold ${s.text}`}>{s.value}</p>
               <p className="text-xs text-slate-500 mt-0.5">{s.label}</p>
             </div>
@@ -125,7 +122,7 @@ export default function OwnPaymentsPage() {
       {isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-2xl border border-slate-100 p-4 flex gap-4 animate-pulse">
+            <div key={i} className="bidify-card p-4 flex gap-4 animate-pulse">
               <div className="h-16 w-16 rounded-xl bg-slate-100 flex-shrink-0" />
               <div className="flex-1 space-y-2 py-1">
                 <div className="h-4 bg-slate-100 rounded w-1/2" />
@@ -137,12 +134,12 @@ export default function OwnPaymentsPage() {
           ))}
         </div>
       ) : payments.length === 0 ? (
-        <div className="py-24 text-center text-slate-400 border border-dashed border-slate-200 rounded-2xl">
+        <div className="bidify-card py-24 text-center text-slate-400 border-dashed">
           <CreditCard className="h-12 w-12 mx-auto mb-3 opacity-20" />
           <p className="text-base font-medium">No payments yet</p>
           <p className="text-sm mt-1">Win an auction to get started.</p>
           <Link to="/auctions">
-            <button className="mt-4 px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl transition-colors">
+            <button className="bidify-primary mt-4">
               Browse Auctions
             </button>
           </Link>
@@ -165,8 +162,10 @@ export default function OwnPaymentsPage() {
             return (
               <div
                 key={payment.id}
-                className={`bg-white rounded-2xl border transition-all ${
-                  isActionable ? 'border-yellow-300 shadow-sm shadow-yellow-100' : 'border-slate-100 hover:border-slate-200'
+                className={`rounded-lg border bg-white transition-all ${
+                  isActionable
+                    ? 'border-amber-300 shadow-sm shadow-amber-100'
+                    : 'border-slate-100 hover:border-slate-200'
                 }`}
               >
                 <div className="p-4 flex items-center gap-4">
@@ -184,11 +183,11 @@ export default function OwnPaymentsPage() {
                   {/* Info */}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-semibold text-slate-900 truncate text-sm">
-                      {product?.name ?? `Auction #${payment.auction_id}`}
+                      {product?.name ?? `Auction #${String(payment.auction_id).slice(0, 8)}`}
                     </h3>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
                       <span className="flex items-center gap-1 text-xs text-slate-500">
-                        <Banknote className="h-3.5 w-3.5 text-indigo-400" />
+                        <Banknote className="h-3.5 w-3.5 text-slate-400" />
                         <strong className="text-slate-800">{formatIDR(payment.amount)}</strong>
                       </span>
                       <span className="flex items-center gap-1 text-xs text-slate-400">
@@ -201,7 +200,7 @@ export default function OwnPaymentsPage() {
                       >
                         <Clock className="h-3 w-3" />
                         Pay before {formatDate(payment.expired_at)}
-                        {isExpiringSoon && ' — expiring soon!'}
+                        {isExpiringSoon && '  expiring soon!'}
                       </p>
                     )}
                   </div>
@@ -216,7 +215,7 @@ export default function OwnPaymentsPage() {
                     {isActionable && (
                       <button
                         onClick={() => navigate(`/auctions/${payment.auction_id}/payments/${payment.id}/pay`)}
-                        className="text-xs font-semibold px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-1"
+                        className="text-xs font-semibold px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded transition-colors flex items-center gap-1"
                       >
                         <CreditCard className="h-3.5 w-3.5" /> Pay Now
                       </button>
@@ -224,9 +223,9 @@ export default function OwnPaymentsPage() {
                     {payment.status === 'PAID' && payment.auction_id && (
                       <Link
                         to={`/auctions/${payment.auction_id}`}
-                        className="text-xs text-indigo-600 hover:underline font-medium"
+                        className="text-xs text-slate-700 hover:underline font-medium"
                       >
-                        View Auction →
+                        View Auction
                       </Link>
                     )}
                   </div>
@@ -237,7 +236,7 @@ export default function OwnPaymentsPage() {
                   <div className="px-4 pb-3 pt-0">
                     <div className="flex items-center gap-2 text-xs text-slate-400 bg-slate-50 rounded-lg px-3 py-2">
                       <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      Preparing payment link…
+                      Preparing payment link...
                     </div>
                   </div>
                 )}
@@ -265,7 +264,7 @@ export default function OwnPaymentsPage() {
                 key={p}
                 onClick={() => setPage(p)}
                 className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
-                  p === page ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:bg-slate-100'
+                  p === page ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 {p}

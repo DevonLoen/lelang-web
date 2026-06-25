@@ -56,7 +56,7 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
     <>
       <div
         id="successToast"
-        className="fixed bottom-5 right-5 bg-green-500 text-white py-3 px-5 rounded-lg shadow-xl hidden flex items-center gap-3"
+        className="fixed bottom-5 right-5 bg-slate-500 text-white py-3 px-5 rounded-lg shadow-xl hidden flex items-center gap-3"
       >
         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path
@@ -72,9 +72,10 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
         <form
           onSubmit={handleSubmit((data) => mutate(data))}
-          className="bg-white rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh]"
+          className="bg-white rounded-lg p-6 w-full max-w-lg overflow-y-auto max-h-[90vh] shadow-xl"
         >
-          <h2 className="text-2xl font-bold mb-4">Request Product To Be Auction</h2>
+          <h2 className="text-2xl font-bold mb-1 text-slate-950">Submit Product for Review</h2>
+          <p className="mb-5 text-sm text-slate-500">Add product details and images before scheduling an auction.</p>
 
           <div className="space-y-4">
             <div>
@@ -86,7 +87,7 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                 type="text"
                 id="name"
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-slate-500 sm:text-sm"
               />
             </div>
 
@@ -101,7 +102,7 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                 id="description"
                 rows={3}
                 required
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-slate-500 sm:text-sm"
               ></textarea>
             </div>
             <div>
@@ -109,13 +110,13 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                 Weight (grams)
               </label>
               <input
-                {...register('weight_gram')}
+                {...register('weight_gram', { valueAsNumber: true })}
                 type="number"
                 id="weight_gram"
                 min={1}
                 required
                 placeholder="e.g. 1000 for 1 kg"
-                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-slate-500 sm:text-sm"
               />
               {errors.weight_gram && <p className="text-red-500 text-xs">{errors.weight_gram.message}</p>}
             </div>
@@ -128,7 +129,7 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                 {...register('condition')}
                 id="condition"
                 required
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-slate-500 sm:text-sm rounded-md"
               >
                 <option value={'NEW'}>New</option>
                 <option value={'PRELOVED'}>Preloved</option>
@@ -144,10 +145,10 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                     <img src={coverPreview} alt="Preview" className="h-32 w-32 object-cover rounded-md" />
                     <button
                       type="button"
-                      onClick={() => setValue('coverImageUrl', undefined as any)}
+                      onClick={() => setValue('coverImageUrl', undefined)}
                       className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
                     >
-                      ✕
+                      
                     </button>
                   </div>
                 ) : (
@@ -163,7 +164,7 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                     <div className="flex text-sm text-gray-600">
                       <label
                         htmlFor="coverImage"
-                        className="relative cursor-pointer bg-white rounded-md font-medium text-indigo-600 hover:text-indigo-500"
+                        className="relative cursor-pointer bg-white rounded-md font-medium text-slate-700 hover:text-slate-500"
                       >
                         <span>Upload File</span>
                         <input
@@ -188,7 +189,7 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
                 type="file"
                 accept="image/*"
                 onChange={(e) => onFileChange(e, 'imageUrls')}
-                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-indigo-50 file:text-indigo-600"
+                className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-slate-50 file:text-slate-700"
               />
               <div className="mt-2 grid grid-cols-4 gap-2">
                 {detailPreviews.map((url, index) => (
@@ -199,11 +200,11 @@ export default function CreateProductPopup({ isOpen, onClose }: { isOpen: boolea
           </div>
 
           <div className="mt-6 flex justify-end gap-3">
-            <button type="button" onClick={onClose}>
+            <button type="button" onClick={onClose} className="bidify-secondary">
               Cancel
             </button>
-            <button type="submit" disabled={isPending} className="bg-indigo-600 text-white px-4 py-2 rounded">
-              {isPending ? 'Processing...' : 'Request Auction'}
+            <button type="submit" disabled={isPending} className="bidify-primary">
+              {isPending ? 'Processing...' : 'Submit Product'}
             </button>
           </div>
         </form>

@@ -1,8 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
-import { createPortal } from "react-dom"; // <-- 1. Import createPortal
+import { createPortal } from "react-dom";
 import { formatDateEnUS } from "../utils/date.ts";
 
-// ... (interface DatePickerProps tetap sama)
 interface DatePickerProps {
   label: string;
   name?: string;
@@ -24,7 +23,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   value,
   icon,
   onChange,
-  onBlur: _onBlur,
+  onBlur,
   error = false,
   errorMessage = "",
   disabled = false,
@@ -45,23 +44,20 @@ export const DatePicker: React.FC<DatePickerProps> = ({
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Efek untuk mengatur posisi popover
   useEffect(() => {
     if (isOpen && inputContainerRef.current) {
       const rect = inputContainerRef.current.getBoundingClientRect();
-      const popoverHeight = 350; // Perkiraan tinggi popover
+      const popoverHeight = 350;
       const spaceBelow = window.innerHeight - rect.bottom;
-      let style: React.CSSProperties = {
+      const style: React.CSSProperties = {
         left: `${rect.left}px`,
-        width: `${rect.width > 288 ? rect.width : 288}px`, // Lebar minimal 72 (w-72)
+        width: `${rect.width > 288 ? rect.width : 288}px`,
       };
 
       if (spaceBelow < popoverHeight && rect.top > popoverHeight) {
-        // Tampilkan di atas
         style.bottom = `${window.innerHeight - rect.top}px`;
         style.marginBottom = "8px";
       } else {
-        // Tampilkan di bawah
         style.top = `${rect.bottom}px`;
         style.marginTop = "8px";
       }
@@ -69,7 +65,6 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     }
   }, [isOpen]);
 
-  // ... (sisa useEffect dan functions lainnya tetap sama)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -183,7 +178,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => handleYearChange(-10)}
-            className="p-1 rounded-full text-white hover:bg-gray-600"
+            className="rounded-lg px-2 py-1 text-white transition-colors hover:bg-white/10"
           >
             &lt;&lt;
           </button>
@@ -192,7 +187,7 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           </div>
           <button
             onClick={() => handleYearChange(10)}
-            className="p-1 rounded-full text-white hover:bg-gray-600"
+            className="rounded-lg px-2 py-1 text-white transition-colors hover:bg-white/10"
           >
             &gt;&gt;
           </button>
@@ -202,9 +197,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             <button
               key={year}
               onClick={() => handleYearClick(year)}
-              className={`p-2 rounded-md text-white hover:bg-yellow-500 hover:text-white ${
+              className={`rounded-lg p-2 text-white transition-colors hover:bg-amber-400 hover:text-slate-950 ${
                 draftDate.getFullYear() === year
-                  ? "bg-yellow-500 text-white font-bold"
+                  ? "bg-amber-400 text-slate-950 font-bold"
                   : ""
               }`}
             >
@@ -228,26 +223,26 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       "Sep",
       "Oct",
       "Nov",
-      "Des",
+      "Dec",
     ];
     return (
       <>
         <div className="flex items-center justify-between mb-4">
           <button
             onClick={() => handleYearChange(-1)}
-            className="p-1 rounded-full text-white hover:bg-gray-600"
+            className="rounded-lg px-2 py-1 text-white transition-colors hover:bg-white/10"
           >
             &lt;
           </button>
           <button
             onClick={() => setViewMode("years")}
-            className="font-bold text-white hover:text-yellow-400"
+            className="font-bold text-white transition-colors hover:text-amber-200"
           >
             {viewDate.getFullYear()}
           </button>
           <button
             onClick={() => handleYearChange(1)}
-            className="p-1 rounded-full text-white hover:bg-gray-600"
+            className="rounded-lg px-2 py-1 text-white transition-colors hover:bg-white/10"
           >
             &gt;
           </button>
@@ -257,9 +252,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             <button
               key={month}
               onClick={() => handleMonthClick(index)}
-              className={`p-2 rounded-md text-white hover:bg-yellow-500 hover:text-white ${
+              className={`rounded-lg p-2 text-white transition-colors hover:bg-amber-400 hover:text-slate-950 ${
                 viewDate.getMonth() === index
-                  ? "bg-yellow-500 text-white font-bold"
+                  ? "bg-amber-400 text-slate-950 font-bold"
                   : ""
               }`}
             >
@@ -271,12 +266,11 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     );
   };
 
-  // Komponen Popover yang akan di-portal
   const PopoverContent = (
     <div
       ref={pickerRef}
       style={popoverStyle}
-      className="fixed z-50 rounded-lg bg-[#1f2c44] p-4 shadow-lg border border-gray-700" // <-- Gunakan `fixed` dan z-index tinggi
+      className="fixed z-50 rounded-lg border border-white/10 bg-[#172235] p-4 shadow-xl shadow-slate-950/25"
       onMouseDown={(e) => e.preventDefault()}
     >
       {viewMode === "days" ? (
@@ -284,13 +278,13 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={() => handleMonthChange(-1)}
-              className="p-1 rounded-full text-white hover:bg-gray-600"
+              className="rounded-lg px-2 py-1 text-white transition-colors hover:bg-white/10"
             >
               &lt;
             </button>
             <button
               onClick={() => setViewMode("months")}
-              className="font-bold text-white hover:text-yellow-400"
+              className="font-bold text-white transition-colors hover:text-amber-200"
             >
               {viewDate.toLocaleString("en-US", {
                 month: "long",
@@ -299,14 +293,14 @@ export const DatePicker: React.FC<DatePickerProps> = ({
             </button>
             <button
               onClick={() => handleMonthChange(1)}
-              className="p-1 rounded-full text-white hover:bg-gray-600"
+              className="rounded-lg px-2 py-1 text-white transition-colors hover:bg-white/10"
             >
               &gt;
             </button>
           </div>
-          <div className="grid grid-cols-7 gap-1 text-center text-sm text-gray-300">
+          <div className="grid grid-cols-7 gap-1 text-center text-sm text-slate-300">
             {days.map((day) => (
-              <div key={day} className="font-medium text-gray-400">
+              <div key={day} className="font-medium text-slate-400">
                 {day}
               </div>
             ))}
@@ -317,9 +311,9 @@ export const DatePicker: React.FC<DatePickerProps> = ({
               <button
                 key={day + 1}
                 onClick={() => handleDayClick(day + 1)}
-                className={`p-1 rounded-full hover:bg-yellow-500 hover:text-white ${
+                className={`rounded-lg p-1 transition-colors hover:bg-amber-400 hover:text-slate-950 ${
                   isSelected(day + 1)
-                    ? "bg-yellow-500 text-white font-bold"
+                    ? "bg-amber-400 text-slate-950 font-bold"
                     : ""
                 }`}
               >
@@ -333,16 +327,16 @@ export const DatePicker: React.FC<DatePickerProps> = ({
       ) : (
         renderYears()
       )}
-      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-700">
+      <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-white/10">
         <button
           onClick={handleCancel}
-          className="px-3 py-1 rounded-md text-sm text-gray-300 hover:bg-gray-600"
+          className="rounded-lg px-3 py-1.5 text-sm font-medium text-slate-300 transition-colors hover:bg-white/10 hover:text-white"
         >
           Cancel
         </button>
         <button
           onClick={handleApply}
-          className="px-3 py-1 rounded-md text-sm bg-yellow-500 text-white hover:bg-yellow-600"
+          className="rounded-lg bg-amber-400 px-3 py-1.5 text-sm font-bold text-slate-950 transition-colors hover:bg-amber-300"
         >
           Set
         </button>
@@ -360,44 +354,42 @@ export const DatePicker: React.FC<DatePickerProps> = ({
           name={name}
           value={value}
           onFocus={() => !disabled && setIsOpen(true)}
+          onBlur={onBlur}
           readOnly={readOnly || true}
           disabled={disabled}
           placeholder=" "
-          // <-- 2. Perbaikan layout input
           className={`
-            peer w-full cursor-pointer appearance-none bg-transparent 
-            pl-4 pt-5 pb-2 text-gray-200 truncate
-            ${icon ? "pr-10" : "pr-4"} 
-            placeholder-transparent focus:outline-none
+            peer h-14 w-full cursor-pointer appearance-none rounded-lg bg-white/[0.06]
+            pl-4 pt-5 pb-2 text-white truncate shadow-sm ring-1 ring-white/10 transition-all
+            ${icon ? "pr-11" : "pr-4"}
+            placeholder-transparent outline-none
             ${
               error
-                ? "border-b border-red-500 focus:border-red-500"
-                : "border-b border-gray-500 focus:border-white"
+                ? "ring-red-400 focus:ring-red-400"
+                : "focus:bg-white/[0.08] focus:ring-amber-400/80"
             }
             ${disabled ? "cursor-not-allowed opacity-50" : ""}
           `}
         />
         <label
           htmlFor={inputId}
-          // <-- 3. Perbaikan layout label
           className={`
-            absolute left-4 text-gray-400 transition-all duration-200 pointer-events-none
-            truncate ${icon ? "right-10" : "right-4"}
-            ${value || isOpen ? "top-0 text-sm" : "top-3.5 text-base"}
-            peer-focus:top-0 peer-focus:text-sm 
-            ${error ? "peer-focus:text-red-400" : "peer-focus:text-white"}
+            absolute left-4 text-slate-400 transition-all duration-200 pointer-events-none
+            truncate ${icon ? "right-11" : "right-4"}
+            ${value || isOpen ? "top-1.5 text-xs font-medium" : "top-4 text-sm"}
+            peer-focus:top-1.5 peer-focus:text-xs peer-focus:font-medium
+            ${error ? "peer-focus:text-red-300" : "peer-focus:text-amber-200"}
           `}
         >
           {label}
         </label>
-        {icon && ( // <-- Ikon kini menggunakan posisi yang sama dengan input field lain
-          <span className="absolute right-3 top-7 -translate-y-1/2 text-gray-400 pointer-events-none">
+        {icon && (
+          <span className="absolute right-3 top-7 -translate-y-1/2 text-slate-400 pointer-events-none">
             {icon}
           </span>
         )}
       </div>
 
-      {/* 4. Render Popover menggunakan Portal */}
       {isOpen && createPortal(PopoverContent, document.body)}
 
       {error && errorMessage && (

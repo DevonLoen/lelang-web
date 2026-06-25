@@ -1,8 +1,9 @@
 import { apiClient } from '../../../lib/axios';
 import type { BiteshipAreaResponse } from '../../auction/services/auction.schema';
 
-const throwMsg = (e: any, fallback: string): never => {
-  throw new Error(e?.response?.data?.message || e?.message || fallback);
+const throwMsg = (e: unknown, fallback: string): never => {
+  if (e instanceof Error) throw new Error(e.message || fallback);
+  throw new Error(fallback);
 };
 
 export const biteshipService = {
