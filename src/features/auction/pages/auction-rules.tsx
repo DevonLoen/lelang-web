@@ -63,14 +63,25 @@ const sellerRules = [
 export default function AuctionRulesPage() {
   const isAuthenticated = hasAuthToken();
   const { data: user, isLoading } = useProfile();
+  
   const isSeller = user?.roles?.some((role) => role.role === 'SELLER') ?? false;
   const isBidder = user?.roles?.some((role) => role.role === 'BIDDER') ?? false;
+  
   const canSeeSellerRules = !isLoading && isAuthenticated && isSeller;
-  const canSeeBidderRules = !isLoading && isAuthenticated && !isSeller && isBidder;
-  const title = isSeller ? 'Seller Auction Rules' : isBidder ? 'Bidder Auction Rules' : 'Auction Rules';
-  const description = isSeller
-    ? 'Responsibilities for product owners, auction creators, shipment, fee, and payout flow.'
-    : isBidder
+  // Hapus !isSeller dan tambahkan (isBidder || isSeller) untuk jaga-jaga
+  // jika API hanya mengembalikan role SELLER tanpa BIDDER
+  const canSeeBidderRules = !isLoading && isAuthenticated && (isBidder || isSeller);
+  
+  // Sesuaikan title dan description untuk user yang bisa melihat keduanya
+  const title = canSeeSellerRules 
+    ? 'Seller & Bidder Auction Rules' 
+    : canSeeBidderRules 
+      ? 'Bidder Auction Rules' 
+      : 'Auction Rules';
+      
+  const description = canSeeSellerRules
+    ? 'Responsibilities for product owners and bidders, covering auction creation, bidding, shipment, and payout flow.'
+    : canSeeBidderRules
       ? 'Responsibilities for bidders and auction winners, including payment, address, and receipt flow.'
       : 'Request bidder or seller access to view the rules for that role.';
 
@@ -101,8 +112,24 @@ export default function AuctionRulesPage() {
       </section>
 
       <div className="grid gap-6">
-        {canSeeBidderRules && <RuleSection id="bidder" icon={UserCheck} title="Bidder Rules" intro="For bidders and auction winners." groups={bidderRules} />}
-        {canSeeSellerRules && <RuleSection id="seller" icon={Store} title="Seller Rules" intro="For product owners and auction creators." groups={sellerRules} />}
+        {canSeeBidderRules && (
+          <RuleSection 
+            id="bidder" 
+            icon={UserCheck} 
+            title="Bidder Rules" 
+            intro="For bidders and auction winners." 
+            groups={bidderRules} 
+          />
+        )}
+        {canSeeSellerRules && (
+          <RuleSection 
+            id="seller" 
+            icon={Store} 
+            title="Seller Rules" 
+            intro="For product owners and auction creators." 
+            groups={sellerRules} 
+          />
+        )}
         {!isLoading && !canSeeBidderRules && !canSeeSellerRules && (
           <section className="rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm">
             <ShieldCheck className="mx-auto mb-3 h-8 w-8 text-slate-300" />
