@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { DateTimePicker, toLocalDateTimeInputValue } from '@/components/date-time-picker';
 import { Link } from 'react-router';
-import { Plus, ChevronLeft, ChevronRight, X, Gavel, ImageOff, Search, BarChart3 } from 'lucide-react';
+import { Plus, ChevronRight, X, Gavel, ImageOff, Search, BarChart3 } from 'lucide-react';
 import type { AuctionResponse, ProductResponse } from '../../auction/services/auction.schema';
+import { AppPagination } from '@/components/pagination';
 
 const statusStyles: Record<string, string> = {
   SCHEDULED: 'bg-slate-100 text-slate-700',
@@ -251,7 +252,7 @@ export default function OwnAuctionsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const limit = 12;
+  const limit = 6;
 
   const { data, isLoading } = useQuery({
     queryKey: ['own-auctions', status, page],
@@ -271,7 +272,6 @@ export default function OwnAuctionsPage() {
     return auction.product?.name?.toLowerCase().includes(keyword) || String(auction.id).includes(keyword);
   });
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
   const performance = {
     scheduled: allAuctions.filter((auction) => auction.status === 'SCHEDULED').length,
     closed: allAuctions.filter((auction) => auction.status === 'COMPLETED').length,
@@ -290,12 +290,17 @@ export default function OwnAuctionsPage() {
                 <h1 className="text-3xl font-bold text-slate-900">My Auctions</h1>
                 <p className="text-slate-500 mt-1">Manage your live auctions and view sales history.</p>
               </div>
-              <button
-                onClick={() => setIsCreateOpen(true)}
-                className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
-              >
-                <Plus className="h-4 w-4" /> Schedule Auction
-              </button>
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <button
+                  onClick={() => setIsCreateOpen(true)}
+                  className="flex items-center gap-2 rounded bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  <Plus className="h-4 w-4" /> Schedule Auction
+                </button>
+                <Link to="/auction-rules#seller" className="text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+                  View seller rules
+                </Link>
+              </div>
             </div>
 
             <div className="mt-6 rounded bg-slate-200 p-1">
@@ -329,6 +334,7 @@ export default function OwnAuctionsPage() {
                 className="h-11 rounded border-slate-200 bg-white pl-9"
               />
             </div>
+            <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mt-4" />
           </div>
 
           <aside className="rounded border border-slate-200 bg-white p-5 shadow-sm">
@@ -383,37 +389,6 @@ export default function OwnAuctionsPage() {
           </div>
         )}
 
-        {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2 mt-10">
-            <button
-              disabled={page <= 1}
-              onClick={() => setPage((p) => p - 1)}
-              className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </button>
-            {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-              const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-              const p = start + i;
-              return (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`}
-                >
-                  {p}
-                </button>
-              );
-            })}
-            <button
-              disabled={page >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-          </div>
-        )}
       </main>
     </>
   );

@@ -4,9 +4,9 @@ import { ownService } from '../services/own.service';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
 import type { WithdrawalRequestStatus } from '../services/own.schema';
-import { Wallet, Loader2, CheckCircle, ArrowDownToLine, BadgeCheck, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Wallet, Loader2, CheckCircle, ArrowDownToLine, BadgeCheck, AlertCircle } from 'lucide-react';
+import { AppPagination } from '@/components/pagination';
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(amount);
@@ -34,7 +34,7 @@ export default function OwnWithdrawalPage() {
   const [amount, setAmount] = useState('');
   const [status, setStatus] = useState<WithdrawalRequestStatus | ''>('');
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = 6;
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['own-profile'],
@@ -88,7 +88,6 @@ export default function OwnWithdrawalPage() {
   const isOverBalance = parsedAmount > balance;
   const withdrawalRequests = withdrawalData?.nodes ?? [];
   const total = withdrawalData?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
 
   if (isLoading) {
     return (
@@ -224,6 +223,11 @@ export default function OwnWithdrawalPage() {
               ))}
             </div>
           </div>
+          {total > limit && (
+            <div className="border-b border-slate-100 px-5 py-4">
+              <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mt-0 border-0 px-0 py-0 shadow-none" />
+            </div>
+          )}
 
           {isHistoryLoading ? (
             <div className="flex min-h-80 items-center justify-center">
@@ -265,20 +269,6 @@ export default function OwnWithdrawalPage() {
                   </div>
                 </div>
               ))}
-            </div>
-          )}
-
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2 border-t border-slate-100 px-5 py-4">
-              <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-9 w-9 p-0">
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="px-3 text-sm font-medium text-slate-600">
-                Page {page} of {totalPages}
-              </span>
-              <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-9 w-9 p-0">
-                <ChevronRight className="h-4 w-4" />
-              </Button>
             </div>
           )}
         </section>

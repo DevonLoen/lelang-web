@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { useParams, useNavigate } from 'react-router';
+import { Link, useParams, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
-import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import { CreditCard, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
 
 declare global {
@@ -339,7 +338,12 @@ export default function OwnPaymentPage() {
             </ul>
           </div>
 
-          <AuctionRegulationCard context="buyer" payment={payment} auction={payment.auction} />
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Before paying, review the bidder flow.</p>
+            <Link to="/auction-rules#bidder" className="mt-1 inline-flex text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+              View bidder auction rules
+            </Link>
+          </div>
         </div>
 
         {/* Right: Midtrans Embed */}

@@ -3,7 +3,6 @@ import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auctionService } from '../services/auction.service';
 import { ownService } from '../../own/services/own.service';
-import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import { AuctionStatus, type AuctionBidResponse, type AuctionResponse, type PaginatedData } from '../services/auction.schema';
 import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
@@ -908,12 +907,12 @@ export default function AuctionDetailPage() {
             </Section>
           )}
 
-          <AuctionRegulationCard
-            context="buyer"
-            auction={auction}
-            payment={auction.payment}
-            shipment={shipment}
-          />
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p className="text-sm font-semibold text-slate-900">Need to check bidder responsibilities?</p>
+            <Link to="/auction-rules#bidder" className="mt-1 inline-flex text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+              View bidder auction rules
+            </Link>
+          </div>
 
           {/* Delivered / completed */}
           {(auction.status === AuctionStatus.DELIVERED || auction.status === AuctionStatus.COMPLETED) && (

@@ -10,8 +10,6 @@ import {
   ArrowRight,
   BadgeDollarSign,
   Camera,
-  ChevronLeft,
-  ChevronRight,
   FileText,
   ImageOff,
   Package,
@@ -24,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { ProductResponse } from '../../auction/services/auction.schema';
 import { ProductStatus } from '../../auction/services/auction.schema';
+import { AppPagination } from '@/components/pagination';
 
 const statusStyles: Record<string, string> = {
   DRAFT: 'bg-gray-100 text-gray-700',
@@ -199,7 +198,7 @@ export default function OwnProductsPage() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const limit = 12;
+  const limit = 6;
 
   const { data, isLoading } = useQuery({
     queryKey: ['own-products', status, search, page],
@@ -225,7 +224,6 @@ export default function OwnProductsPage() {
   const products = data?.nodes ?? [];
   const summaryProducts = summaryData?.nodes ?? products;
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
   const productSummary = [
     { label: 'Request', value: summaryProducts.filter((product) => product.status === ProductStatus.REQUEST).length, tone: 'bg-amber-400' },
     { label: 'Verified', value: summaryProducts.filter((product) => product.status === ProductStatus.VERIFIED).length, tone: 'bg-slate-500' },
@@ -276,6 +274,7 @@ export default function OwnProductsPage() {
                 </div>
               </div>
             </div>
+            <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
 
             {/* Grid */}
             {isLoading ? (
@@ -300,27 +299,6 @@ export default function OwnProductsPage() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {products.map((p) => <OwnProductCard key={p.id} product={p} />)}
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-center gap-2 mt-10">
-                <button disabled={page <= 1} onClick={() => setPage((p) => p - 1)}
-                  className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors">
-                  <ChevronLeft className="h-4 w-4" />
-                </button>
-                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                  const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-                  const p = start + i;
-                  return (
-                    <button key={p} onClick={() => setPage(p)} className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${ p === page ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100' }`}>{p}</button>
-                  );
-                })}
-                <button disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)}
-                  className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors">
-                  <ChevronRight className="h-4 w-4" />
-                </button>
               </div>
             )}
           </div>

@@ -1,7 +1,6 @@
 import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
-import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import {
   ChevronLeft, Trophy, Tag, Clock, Package, ImageOff, CreditCard,
   Banknote, CalendarDays, AlertCircle, ExternalLink, Gavel,
@@ -219,7 +218,12 @@ export default function OwnBidDetailPage() {
       )}
 
       {isWinner && (
-        <AuctionRegulationCard context="buyer" auction={auction} payment={payment} />
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Need to check payment and shipment rules?</p>
+          <Link to="/auction-rules#bidder" className="mt-1 inline-flex items-center gap-1 text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+            View bidder auction rules <ExternalLink className="h-3.5 w-3.5" />
+          </Link>
+        </div>
       )}
 
       {/* Not winner message */}

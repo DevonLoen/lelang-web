@@ -5,7 +5,6 @@ import { Link, useNavigate } from 'react-router';
 import {
   CreditCard,
   ChevronLeft,
-  ChevronRight,
   Clock,
   Banknote,
   ImageOff,
@@ -14,6 +13,7 @@ import {
   Loader2,
   AlertCircle,
 } from 'lucide-react';
+import { AppPagination } from '@/components/pagination';
 
 const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -51,7 +51,7 @@ const PAYMENT_STATUS: Record<string, { label: string; bg: string; text: string; 
 export default function OwnPaymentsPage() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
-  const limit = 10;
+  const limit = 6;
 
   const { data, isLoading } = useQuery({
     queryKey: ['own-payments', page],
@@ -65,7 +65,6 @@ export default function OwnPaymentsPage() {
 
   const payments = data?.nodes ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
 
   return (
     <main className="bidify-page-narrow">
@@ -117,6 +116,7 @@ export default function OwnPaymentsPage() {
           ))}
         </div>
       )}
+      <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
 
       {/* List */}
       {isLoading ? (
@@ -168,7 +168,7 @@ export default function OwnPaymentsPage() {
                     : 'border-slate-100 hover:border-slate-200'
                 }`}
               >
-                <div className="p-4 flex items-center gap-4">
+                <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center">
                   {/* Thumbnail */}
                   <div className="h-16 w-16 rounded-xl overflow-hidden bg-slate-50 border border-slate-100 flex-shrink-0">
                     {product?.cover_image_link ? (
@@ -206,7 +206,7 @@ export default function OwnPaymentsPage() {
                   </div>
 
                   {/* Status + action */}
-                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <div className="flex flex-row flex-wrap items-center gap-2 sm:flex-shrink-0 sm:flex-col sm:items-end">
                     <span
                       className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.bg} ${cfg.text}`}
                     >
@@ -246,40 +246,6 @@ export default function OwnPaymentsPage() {
         </div>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-            const p = start + i;
-            return (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
-                  p === page ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {p}
-              </button>
-            );
-          })}
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="h-9 w-9 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      )}
     </main>
   );
 }

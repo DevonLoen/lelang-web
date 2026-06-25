@@ -7,7 +7,6 @@ import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { Input } from '@/components/ui/input';
 import { DateTimePicker, toLocalDateTimeInputValue } from '@/components/date-time-picker';
-import { AuctionRegulationCard } from '@/components/auction-regulation-card';
 import {
   ChevronLeft, Edit3, X, CheckCircle, Clock, Tag, Package, ImageOff,
   Trophy, RefreshCcw, Gift, Truck, MapPin, CheckCircle2, CalendarDays,
@@ -702,12 +701,12 @@ export default function OwnAuctionDetailPage() {
           </div>
         )}
 
-        <AuctionRegulationCard
-          context="seller"
-          auction={auction}
-          payment={auction.payment}
-          shipment={shipment}
-        />
+        <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <p className="text-sm font-semibold text-slate-900">Need to check seller responsibilities?</p>
+          <Link to="/auction-rules#seller" className="mt-1 inline-flex text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+            View seller auction rules
+          </Link>
+        </div>
       </div>
     </main>
 

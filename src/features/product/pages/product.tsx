@@ -42,7 +42,7 @@ function ProductListSection({ onOpenModal }: { onOpenModal: () => void }): JSX.E
   const [filter, setFilter] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const { data, isLoading } = useProducts(currentPage, 9, status, condition, filter);
+  const { data, isLoading } = useProducts(currentPage, 6, status, condition, filter);
   const products = data?.data || [];
   const meta = data?.meta;
 
@@ -56,7 +56,7 @@ function ProductListSection({ onOpenModal }: { onOpenModal: () => void }): JSX.E
           <p className="bidify-subtitle">Submit, manage, and track the status of your auction items.</p>
         </div>
 
-        <Button onClick={onOpenModal} className="shrink-0 rounded bg-slate-900 hover:bg-slate-800" size={'lg'}>
+        <Button onClick={onOpenModal} className="w-full shrink-0 rounded bg-slate-900 hover:bg-slate-800 sm:w-auto" size={'lg'}>
           <Plus className="mr-2 h-4 w-4" /> Submit Auction Item
         </Button>
       </div>
@@ -107,7 +107,7 @@ function ProductListSection({ onOpenModal }: { onOpenModal: () => void }): JSX.E
         </div>
       </div>
       <div className="flex items-start justify-between border-t pt-6">
-        {meta && <ProductPagination meta={meta} onPageChange={(newPage) => setCurrentPage(newPage)} />}
+        {meta && <ProductPagination meta={meta} onPageChange={(newPage) => setCurrentPage(newPage)} className="mb-4 mt-0 w-full" />}
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
         {isLoading

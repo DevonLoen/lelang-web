@@ -11,6 +11,7 @@ import type { UserAddressCreateRequest } from '../services/user-address.schema';
 import { MapPin, Plus, Edit3, Trash2, Star, Search, X, CheckCircle2, ChevronLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { LocationPicker, type LocationCoordinate } from '../components/location-picker';
+import { AppPagination } from '@/components/pagination';
 
 interface ReverseGeocodeResponse {
   display_name?: string;
@@ -99,12 +100,20 @@ export default function UserAddressesPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [isLocationConfirmed, setIsLocationConfirmed] = useState(false);
   const [isResolvingLocation, setIsResolvingLocation] = useState(false);
+  const [page, setPage] = useState(1);
+  const limit = 6;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['user-addresses'],
-    queryFn: () => ownService.listUserAddresses(),
+    queryKey: ['user-addresses', page],
+    queryFn: () =>
+      ownService.listUserAddresses({
+        page,
+        limit,
+        sorts: [{ field: 'created_at', direction: 'desc' }],
+      }),
   });
   const addresses = data?.nodes ?? [];
+  const total = data?.total ?? 0;
 
   const { data: areas, isFetching: isSearching } = useQuery({
     queryKey: ['biteship-areas', areaSearch],
@@ -117,6 +126,7 @@ export default function UserAddressesPage() {
     onSuccess: () => {
       showToast('Address created!', ToastType.SUCCESS);
       cancelForm();
+      setPage(1);
       qc.invalidateQueries({ queryKey: ['user-addresses'] });
     },
     onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to create address'), ToastType.ERROR),
@@ -274,7 +284,7 @@ export default function UserAddressesPage() {
         <ChevronLeft className="h-4 w-4" /> Profile
       </button>
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="bidify-title">My Addresses</h1>
           <p className="bidify-subtitle">Manage map-confirmed shipping addresses.</p>
@@ -443,11 +453,12 @@ export default function UserAddressesPage() {
         </div>
       ) : (
         <div className="space-y-3">
+          <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
           {addresses.map((addr) => (
             <div key={addr.id} className={`bg-white rounded-2xl border overflow-hidden transition-colors ${
               addr.is_default ? 'border-slate-300 shadow-sm shadow-indigo-50' : 'border-slate-200'
             }`}>
-              <div className="flex items-start gap-4 p-4">
+              <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-slate-900">{addr.label}</span>
@@ -466,7 +477,7 @@ export default function UserAddressesPage() {
                   <p className="text-sm text-slate-600 mt-0.5">{addr.address}</p>
                   <p className="text-sm text-slate-500">{addr.city_name}, {addr.province_name} {addr.postal_code}</p>
                 </div>
-                <div className="flex gap-2 flex-shrink-0">
+                <div className="flex flex-shrink-0 gap-2">
                   <button onClick={() => startEdit(addr)}
                     className="h-8 w-8 rounded-lg border border-slate-200 hover:bg-slate-50 flex items-center justify-center transition-colors">
                     <Edit3 className="h-4 w-4 text-slate-600" />

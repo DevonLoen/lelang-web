@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { Bell, ChevronLeft, ChevronRight, Loader2, MailOpen } from 'lucide-react';
+import { Bell, Loader2, MailOpen } from 'lucide-react';
 import { ownService } from '../services/own.service';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getNotificationMeta } from '../utils/notification-display';
+import { AppPagination } from '@/components/pagination';
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString('en-US', {
@@ -18,7 +18,7 @@ const formatDate = (value: string) =>
 
 export default function OwnNotificationsPage() {
   const [page, setPage] = useState(1);
-  const limit = 20;
+  const limit = 6;
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['own-notifications', 'history', page],
@@ -44,7 +44,6 @@ export default function OwnNotificationsPage() {
   const notifications = data?.nodes ?? [];
   const total = data?.total ?? 0;
   const unreadTotal = unreadData?.total ?? notifications.filter((notification) => !notification.is_read).length;
-  const totalPages = Math.ceil(total / limit);
 
   return (
     <main className="bidify-page-narrow">
@@ -64,6 +63,7 @@ export default function OwnNotificationsPage() {
           </div>
         </div>
       </div>
+      <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
 
       {isLoading ? (
         <div className="flex min-h-64 items-center justify-center">
@@ -118,20 +118,6 @@ export default function OwnNotificationsPage() {
               </Link>
             );
           })}
-        </div>
-      )}
-
-      {totalPages > 1 && (
-        <div className="mt-8 flex items-center justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} className="h-9 w-9 p-0">
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <span className="px-3 text-sm font-medium text-slate-600">
-            Page {page} of {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage((p) => p + 1)} className="h-9 w-9 p-0">
-            <ChevronRight className="h-4 w-4" />
-          </Button>
         </div>
       )}
     </main>

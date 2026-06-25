@@ -1,69 +1,99 @@
-# React + TypeScript + Vite
+# Bidify Web
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Frontend web app for the Bidify auction platform, built with React, TypeScript, Vite, Tailwind CSS, and TanStack Query.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- Node.js 20 or newer
+- npm 10 or newer
+- Auction backend API running and reachable from the browser
 
-## Expanding the ESLint configuration
+## Setup
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Install dependencies:
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Create local environment config:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cp .env.example .env
 ```
+
+On Windows PowerShell:
+
+```powershell
+Copy-Item .env.example .env
+```
+
+Update `.env` with the backend URL and third-party client keys.
+
+## Environment Variables
+
+```env
+VITE_API_URL=http://localhost:8080
+VITE_MIDTRANS_CLIENT_KEY=
+VITE_MIDTRANS_IS_PRODUCTION=false
+VITE_FIREBASE_API_KEY=
+VITE_FIREBASE_AUTH_DOMAIN=
+VITE_FIREBASE_PROJECT_ID=
+VITE_FIREBASE_STORAGE_BUCKET=
+VITE_FIREBASE_MESSAGING_SENDER_ID=
+VITE_FIREBASE_APP_ID=
+VITE_FIREBASE_MEASUREMENT_ID=
+VITE_FIREBASE_VAPID_KEY=
+```
+
+Notes:
+
+- `VITE_API_URL` should point to the auction service API.
+- `VITE_MIDTRANS_IS_PRODUCTION=false` uses the Midtrans sandbox script.
+- Firebase variables are used for web push notification registration.
+
+## Development
+
+Run the dev server:
+
+```bash
+npm run dev
+```
+
+Vite will print the local URL, usually `http://localhost:5173`.
+
+## Production Build
+
+Run TypeScript and Vite production build:
+
+```bash
+npm run build
+```
+
+Preview the built app locally:
+
+```bash
+npm run preview
+```
+
+## Quality Checks
+
+Run ESLint:
+
+```bash
+npm run lint
+```
+
+Recommended pre-deploy check:
+
+```bash
+npm run lint
+npm run build
+```
+
+## Deployment Notes
+
+- Build output is generated in `dist/`.
+- Serve `dist/` with SPA fallback to `index.html` so routes like `/auction-rules` and `/own/bids` work after refresh.
+- Make sure production environment variables are configured in the hosting platform before building.
+- Do not commit `.env`; use `.env.example` as the shared template.

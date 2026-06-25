@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
 import { Link } from 'react-router';
-import { Trophy, ChevronLeft, ChevronRight, Gavel, Clock, Tag, ImageOff, CreditCard } from 'lucide-react';
+import { Trophy, ChevronRight, Gavel, Clock, Tag, ImageOff, CreditCard } from 'lucide-react';
+import { AppPagination } from '@/components/pagination';
 
 const formatIDR = (n: number) =>
   new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(n);
@@ -13,7 +14,7 @@ const formatDate = (s: string) =>
 export default function OwnBidsPage() {
   const [page, setPage] = useState(1);
   const [filter, setFilter] = useState<'all' | 'won' | 'not-won'>('all');
-  const limit = 10;
+  const limit = 6;
 
   const { data, isLoading } = useQuery({
     queryKey: ['own-bids', page],
@@ -27,7 +28,6 @@ export default function OwnBidsPage() {
 
   const allBids = data?.nodes ?? [];
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
 
   // Filter bids based on winner status
   const bids =
@@ -42,22 +42,27 @@ export default function OwnBidsPage() {
 
   return (
     <main className="bidify-page-narrow">
-      <div className="mb-8">
-        <h1 className="bidify-title">My Bids</h1>
-        <p className="bidify-subtitle">Track active bids, winning bids, and payment follow-ups.</p>
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="bidify-title">My Bids</h1>
+          <p className="bidify-subtitle">Track active bids, winning bids, and payment follow-ups.</p>
+        </div>
+        <Link to="/auction-rules#bidder" className="text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+          View bidder rules
+        </Link>
       </div>
 
       <div className="mb-6 rounded bg-slate-200 p-1">
         <div className="grid grid-cols-3 gap-1">
         <button
-          onClick={() => setFilter('all')}
+          onClick={() => { setFilter('all'); setPage(1); }}
           className={`bidify-tab ${filter === 'all' ? 'bidify-tab-active' : ''}`}
         >
           All Bids
           <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-600">{allBids.length}</span>
         </button>
         <button
-          onClick={() => setFilter('won')}
+          onClick={() => { setFilter('won'); setPage(1); }}
           className={`bidify-tab ${filter === 'won' ? 'bidify-tab-active' : ''}`}
         >
           <Trophy className="h-3.5 w-3.5 inline mr-1" />
@@ -65,7 +70,7 @@ export default function OwnBidsPage() {
           <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-700">{wonCount}</span>
         </button>
         <button
-          onClick={() => setFilter('not-won')}
+          onClick={() => { setFilter('not-won'); setPage(1); }}
           className={`bidify-tab ${filter === 'not-won' ? 'bidify-tab-active' : ''}`}
         >
           Not Won
@@ -73,6 +78,7 @@ export default function OwnBidsPage() {
         </button>
         </div>
       </div>
+      <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
 
       {isLoading ? (
         <div className="space-y-3">
@@ -162,37 +168,6 @@ export default function OwnBidsPage() {
         </div>
       )}
 
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
-          <button
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="h-9 w-9 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-            const p = start + i;
-            return (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${p === page ? 'bg-slate-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-              >
-                {p}
-              </button>
-            );
-          })}
-          <button
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="h-9 w-9 p-0 rounded-lg border border-slate-200 hover:bg-slate-50 disabled:opacity-50 flex items-center justify-center transition-colors"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        </div>
-      )}
     </main>
   );
 }

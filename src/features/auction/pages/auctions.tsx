@@ -1,11 +1,35 @@
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { auctionService } from '../services/auction.service';
 import AuctionCard from '../components/auction-card';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ChevronLeft, ChevronRight, Filter, Gavel, Search } from 'lucide-react';
+import { Filter, Gavel, Search } from 'lucide-react';
 import { ProductCondition } from '../services/auction.schema';
+import { AppPagination } from '@/components/pagination';
+
+const getAuctionBidCount = (auction: { bids?: unknown[] }) => {
+  const countFields = auction as { bid_count?: unknown; bids_count?: unknown; total_bids?: unknown };
+  const explicitCount = countFields.bid_count ?? countFields.bids_count ?? countFields.total_bids;
+  if (typeof explicitCount === 'number') return explicitCount;
+  if (typeof explicitCount === 'string') return Number(explicitCount) || 0;
+  return auction.bids?.length ?? 0;
+};
+
+const getMostBidAuction = <T extends { bids?: unknown[]; end_time: string }>(auctions: T[]) =>
+  auctions.reduce<T | undefined>((selected, auction) => {
+    if (!selected) return auction;
+
+    const selectedBidCount = getAuctionBidCount(selected);
+    const auctionBidCount = getAuctionBidCount(auction);
+
+    if (auctionBidCount > selectedBidCount) return auction;
+    if (auctionBidCount === selectedBidCount && new Date(auction.end_time).getTime() < new Date(selected.end_time).getTime()) {
+      return auction;
+    }
+
+    return selected;
+  }, undefined);
 
 export default function AuctionsPage() {
   const [page, setPage] = useState(1);
@@ -13,7 +37,7 @@ export default function AuctionsPage() {
   const [search, setSearch] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
-  const limit = 10;
+  const limit = 6;
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['auctions', 'on-going', page],
@@ -21,6 +45,16 @@ export default function AuctionsPage() {
       auctionService.listOngoingAuctions({
         page,
         limit,
+        sorts: [{ field: 'end_time', direction: 'asc' }],
+      }),
+  });
+
+  const { data: featuredData } = useQuery({
+    queryKey: ['auctions', 'featured', 'most-bids'],
+    queryFn: () =>
+      auctionService.listOngoingAuctions({
+        page: 1,
+        limit: 100,
         sorts: [{ field: 'end_time', direction: 'asc' }],
       }),
   });
@@ -35,8 +69,8 @@ export default function AuctionsPage() {
     return matchesSearch && matchesCondition && matchesMin && matchesMax;
   });
   const total = data?.total ?? 0;
-  const totalPages = Math.ceil(total / limit);
-  const featuredAuction = (data?.nodes ?? [])[0];
+  const featuredAuction = getMostBidAuction(featuredData?.nodes ?? []);
+  const featuredBidCount = featuredAuction ? getAuctionBidCount(featuredAuction) : 0;
   const featuredImage = featuredAuction?.product?.cover_image_link;
 
   return (
@@ -56,6 +90,9 @@ export default function AuctionsPage() {
               <a href="/own/products" className="rounded bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/15">
                 Sell Item
               </a>
+              <Link to="/auction-rules" className="rounded bg-white/10 px-5 py-3 text-sm font-bold text-white hover:bg-white/15">
+                Auction Rules
+              </Link>
             </div>
           </div>
           <div className="hidden rounded-lg bg-white/10 p-3 md:block">
@@ -68,8 +105,9 @@ export default function AuctionsPage() {
             </div>
             <div className="mt-3 flex items-end justify-between gap-3">
               <div>
-                <p className="text-[10px] font-semibold text-slate-300">Featured Auction</p>
+                <p className="text-[10px] font-semibold text-slate-300">Most Bids Auction</p>
                 <p className="line-clamp-1 text-sm font-bold">{featuredAuction?.product?.name ?? 'Live auction'}</p>
+                {featuredAuction && <p className="mt-0.5 text-[10px] font-semibold text-slate-300">{featuredBidCount} bid{featuredBidCount !== 1 ? 's' : ''}</p>}
               </div>
               <p className="text-right text-xs font-bold text-amber-300">
                 Rp {(featuredAuction?.winner?.auction_bid?.amount ?? featuredAuction?.starting_price ?? 0).toLocaleString('en-US')}
@@ -140,84 +178,49 @@ export default function AuctionsPage() {
             <p className="text-sm font-semibold text-slate-700">
               {total} live auction{total !== 1 ? 's' : ''}
             </p>
+            <Link to="/auction-rules#bidder" className="text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+              View bidding rules
+            </Link>
           </div>
+          <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
 
-      {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="bg-white rounded-3xl border border-slate-100 overflow-hidden animate-pulse shadow-sm">
-              <div className="h-48 bg-slate-100" />
-              <div className="p-4 space-y-3">
-                <div className="h-4 bg-slate-100 rounded w-3/4" />
-                <div className="h-3 bg-slate-100 rounded w-1/2" />
-                <div className="h-px bg-slate-100" />
-                <div className="h-3 bg-slate-100 rounded w-2/3" />
-              </div>
+          {isLoading ? (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm animate-pulse">
+                  <div className="h-48 bg-slate-100" />
+                  <div className="p-4 space-y-3">
+                    <div className="h-4 bg-slate-100 rounded w-3/4" />
+                    <div className="h-3 bg-slate-100 rounded w-1/2" />
+                    <div className="h-px bg-slate-100" />
+                    <div className="h-3 bg-slate-100 rounded w-2/3" />
+                  </div>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : isError ? (
-        <Card className="py-24 border-red-100">
-          <CardContent className="text-center text-red-500">
-            <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p className="text-base font-medium">Failed to load auctions</p>
-            <p className="text-sm mt-1">{error instanceof Error ? error.message : 'Please try again later'}</p>
-          </CardContent>
-        </Card>
-      ) : auctions.length === 0 ? (
-        <Card className="py-24 border-dashed">
-          <CardContent className="text-center text-slate-500">
-            <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p className="text-base font-medium">No auctions found</p>
-            <p className="text-sm mt-1">No live auctions are available right now</p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-          {auctions.map((a) => (
-            <AuctionCard key={a.id} auction={a} />
-          ))}
-        </div>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2 mt-10">
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
-            className="h-9 w-9 p-0 border-slate-200"
-          >
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-            const start = Math.max(1, Math.min(page - 2, totalPages - 4));
-            const p = start + i;
-            return (
-              <button
-                key={p}
-                onClick={() => setPage(p)}
-                className={`h-9 w-9 rounded-lg text-sm font-medium transition-colors ${
-                  p === page ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-              >
-                {p}
-              </button>
-            );
-          })}
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
-            className="h-9 w-9 p-0 border-slate-200"
-          >
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+          ) : isError ? (
+            <Card className="py-24 border-red-100">
+              <CardContent className="text-center text-red-500">
+                <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-base font-medium">Failed to load auctions</p>
+                <p className="text-sm mt-1">{error instanceof Error ? error.message : 'Please try again later'}</p>
+              </CardContent>
+            </Card>
+          ) : auctions.length === 0 ? (
+            <Card className="py-24 border-dashed">
+              <CardContent className="text-center text-slate-500">
+                <Gavel className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-base font-medium">No auctions found</p>
+                <p className="text-sm mt-1">No live auctions are available right now</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
+              {auctions.map((a) => (
+                <AuctionCard key={a.id} auction={a} />
+              ))}
+            </div>
+          )}
         </section>
       </div>
     </main>
