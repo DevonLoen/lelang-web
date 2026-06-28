@@ -1,4 +1,5 @@
 import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
 import { Auth } from "../../../enums/auth-token";
 import { apiClient } from "../../../lib/axios";
 
@@ -41,13 +42,24 @@ interface ApiResult<T = unknown> {
   message?: string;
 }
 
+interface AuthTokenPayload {
+  exp: number;
+}
+
 const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
 export class AuthService {
   async login(data: LoginPayload): Promise<ApiResult<{ token: string }>> {
     try {
       const res = await apiClient.post('/auth/login', data) as ApiResult<{ token: string }>;
-      Cookies.set(AUTH_TOKEN_KEY, res.data.token);
+      const token = res.data.token;
+      const { exp } = jwtDecode<AuthTokenPayload>(token.replace(/^Bearer\s+/i, ''));
+
+      Cookies.set(AUTH_TOKEN_KEY, token, {
+        expires: new Date(exp * 1000),
+        sameSite: 'lax',
+        secure: import.meta.env.PROD,
+      });
       return res;
     } catch (error: unknown) {
       throw new Error(getErrorMessage(error, "Login failed"));
