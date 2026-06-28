@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+﻿import { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { auctionService } from '../services/auction.service';
@@ -59,7 +59,7 @@ const STATUS_CONFIG: Record<string, { label: string; bg: string; text: string }>
   COMPLETED: { label: 'Completed', bg: 'bg-slate-100', text: 'text-slate-700' },
 };
 
-//  Countdown hook 
+//  Countdown hook
 function useCountdown(targetIso: string | undefined) {
   const [timeLeft, setTimeLeft] = useState<{ d: number; h: number; m: number; s: number; expired: boolean } | null>(null);
   useEffect(() => {
@@ -164,7 +164,9 @@ export default function AuctionDetailPage() {
   useEffect(() => {
     if (!id || auctionStatus !== AuctionStatus.ON_GOING) return;
 
-    const wsUrl = `ws://localhost:8080/ws/auctions/${id}`;
+    const baseWsUrl = import.meta.env.VITE_WS_URL || 'ws://localhost:8080';
+
+    const wsUrl = `${baseWsUrl}/ws/auctions/${id}`;
     const ws = new WebSocket(wsUrl);
 
     ws.onmessage = (event) => {
@@ -239,7 +241,7 @@ export default function AuctionDetailPage() {
       ws.close();
     };
   }, [auctionStatus, id, profileFullname, profileId, queryClient, showToast]);
-  // 
+  //
 
   const isPostAuction = !!auction && POST_AUCTION.has(auction.status);
   const isShipmentPhase = !!auction && SHIPMENT_PHASE.has(auction.status);
@@ -285,7 +287,9 @@ export default function AuctionDetailPage() {
   const { data: addressesData } = useQuery({
     queryKey: ['user-addresses'],
     queryFn: () => ownService.listUserAddresses(),
-    enabled: isCurrentUserBuyer && (auction?.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction?.status === AuctionStatus.WAITING_FOR_SHIPMENT),
+    enabled:
+      isCurrentUserBuyer &&
+      (auction?.status === AuctionStatus.WAITING_FOR_BUYER_ADDRESS || auction?.status === AuctionStatus.WAITING_FOR_SHIPMENT),
   });
   const addresses = addressesData?.nodes ?? [];
 
@@ -426,7 +430,7 @@ export default function AuctionDetailPage() {
             <>
               <TrendingUp className="h-5 w-5 text-amber-700 flex-shrink-0" />
               <p className="text-sm font-semibold text-amber-800">
-                You've bid <strong>{formatIDR(myTopBid.amount)}</strong>  currently outbid. Raise your bid!
+                You've bid <strong>{formatIDR(myTopBid.amount)}</strong> currently outbid. Raise your bid!
               </p>
             </>
           ) : (
@@ -762,7 +766,7 @@ export default function AuctionDetailPage() {
                                   )}
                                 </p>
                                 <p className="text-xs text-slate-500 mt-0.5">
-                                  {addr.recipient_name}  {addr.phone}
+                                  {addr.recipient_name} {addr.phone}
                                 </p>
                                 <p className="text-xs text-slate-500">
                                   {addr.address}, {addr.city_name}, {addr.province_name} {addr.postal_code}
@@ -837,7 +841,7 @@ export default function AuctionDetailPage() {
                     <div className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:justify-between">
                       <span className="text-slate-500">Courier</span>
                       <span className="font-semibold text-slate-800 sm:text-right">
-                        {shipment.courier_code}  {shipment.service_code}
+                        {shipment.courier_code} {shipment.service_code}
                       </span>
                     </div>
                     {shipment.shipping_cost != null && (
@@ -909,7 +913,10 @@ export default function AuctionDetailPage() {
 
           <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
             <p className="text-sm font-semibold text-slate-900">Need to check bidder responsibilities?</p>
-            <Link to="/auction-rules#bidder" className="mt-1 inline-flex text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline">
+            <Link
+              to="/auction-rules#bidder"
+              className="mt-1 inline-flex text-sm font-semibold text-slate-600 underline-offset-4 hover:text-slate-950 hover:underline"
+            >
               View bidder auction rules
             </Link>
           </div>
