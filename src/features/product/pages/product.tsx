@@ -16,6 +16,7 @@ const productStatusFilterOption: { text: string; value: ProductStatus | undefine
   { text: 'All', value: undefined },
   { text: 'Request', value: ProductStatus.REQUEST },
   { text: 'Verified', value: ProductStatus.VERIFIED },
+  { text: 'Scheduled', value: ProductStatus.SCHEDULED },
   { text: 'On Bids', value: ProductStatus.ON_BIDS },
   { text: 'Rejected', value: ProductStatus.REJECTED },
 ];

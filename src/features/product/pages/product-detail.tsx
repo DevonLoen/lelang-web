@@ -7,6 +7,7 @@ const statusStyles: Record<string, string> = {
   DRAFT: 'border-slate-200 bg-slate-100 text-slate-700',
   REQUEST: 'border-slate-200 bg-slate-50 text-slate-700',
   VERIFIED: 'border-slate-200 bg-slate-50 text-slate-800',
+  SCHEDULED: 'border-indigo-200 bg-indigo-50 text-indigo-800',
   ON_BIDS: 'border-amber-200 bg-amber-50 text-amber-800',
   REJECTED: 'border-red-200 bg-red-50 text-red-800',
   COMPLETED: 'border-slate-300 bg-slate-100 text-slate-800',

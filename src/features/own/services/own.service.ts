@@ -32,6 +32,7 @@ import type {
   UserAddressUpdateRequest,
   UserAddressFetchRequest,
 } from '../../user-address/services/user-address.schema';
+import { toIntegerId } from '../../../utils/id';
 
 type ApiResult<T> = {
   data: T;
@@ -144,7 +145,10 @@ export const ownService = {
 
   createAuction: async (payload: OwnAuctionCreateRequest): Promise<{ data: AuctionResponse; message: string }> => {
     try {
-      const res = await apiClient.post('/own/auctions', payload) as ApiResult<{ auction: AuctionResponse }>;
+      const res = await apiClient.post('/own/auctions', {
+        ...payload,
+        product_id: toIntegerId(payload.product_id, 'product_id'),
+      }) as ApiResult<{ auction: AuctionResponse }>;
       return { data: res.data.auction, message: res.message ?? '' };
     } catch (e) {
       return throwMsg(e, 'Failed to create auction');
@@ -190,7 +194,10 @@ export const ownService = {
   //  Bids 
   listBids: async (params: OwnBidFetchRequest): Promise<PaginatedData<AuctionBidResponse>> => {
     try {
-      const res = await apiClient.post('/own/bids/filter', params);
+      const res = await apiClient.post('/own/bids/filter', {
+        ...params,
+        ...(params.auction_id != null ? { auction_id: toIntegerId(params.auction_id, 'auction_id') } : {}),
+      });
       return res.data;
     } catch (e) {
       return throwMsg(e, 'Failed to load bids');
@@ -209,7 +216,10 @@ export const ownService = {
   //  Payments 
   listPayments: async (params: OwnPaymentFetchRequest): Promise<PaginatedData<PaymentResponse>> => {
     try {
-      const res = await apiClient.post('/own/payments/filter', params);
+      const res = await apiClient.post('/own/payments/filter', {
+        ...params,
+        ...(params.auction_id != null ? { auction_id: toIntegerId(params.auction_id, 'auction_id') } : {}),
+      });
       return res.data;
     } catch (e) {
       return throwMsg(e, 'Failed to load payments');

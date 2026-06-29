@@ -10,6 +10,7 @@ import type {
   ShipmentTrackingResponse,
   PaginatedData,
 } from './auction.schema';
+import { toIntegerId } from '../../../utils/id';
 
 const throwMsg = (e: unknown, fallback: string): never => {
   if (e instanceof Error) throw new Error(e.message || fallback);
@@ -118,18 +119,22 @@ export const auctionService = {
     }
   },
 
-  updateBuyerAddress: async (auctionId: string | number, shipmentId: string | number, address_id: string | number): Promise<ShipmentResponse> => {
+  updateBuyerAddress: async (auctionId: string | number, shipmentId: string | number, address_id: number): Promise<ShipmentResponse> => {
     try {
-      const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/buyer-address`, { address_id });
+      const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/buyer-address`, {
+        address_id: toIntegerId(address_id, 'address_id'),
+      });
       return res.data.shipment;
     } catch (e) {
       return throwMsg(e, 'Failed to update buyer address');
     }
   },
 
-  updateSellerAddress: async (auctionId: string | number, shipmentId: string | number, address_id: string | number): Promise<ShipmentResponse> => {
+  updateSellerAddress: async (auctionId: string | number, shipmentId: string | number, address_id: number): Promise<ShipmentResponse> => {
     try {
-      const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/seller-address`, { address_id });
+      const res = await apiClient.patch(`/auctions/${auctionId}/shipments/${shipmentId}/seller-address`, {
+        address_id: toIntegerId(address_id, 'address_id'),
+      });
       return res.data.shipment;
     } catch (e) {
       return throwMsg(e, 'Failed to update seller address');

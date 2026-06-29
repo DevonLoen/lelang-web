@@ -19,6 +19,7 @@ const statusStyles: Record<ProductStatus, string> = {
   DRAFT: 'bg-slate-100 text-slate-700',
   REQUEST: 'bg-slate-50 text-slate-700',
   VERIFIED: 'bg-slate-50 text-slate-800',
+  SCHEDULED: 'bg-indigo-50 text-indigo-800',
   ON_BIDS: 'bg-amber-50 text-amber-800',
   REJECTED: 'bg-red-50 text-red-700',
   COMPLETED: 'bg-slate-50 text-slate-800',

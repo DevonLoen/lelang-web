@@ -81,14 +81,14 @@ export default function OwnNotificationDetailPage() {
             </span>
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">{meta.label}</p>
-              <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-950">{notification.title}</h1>
+              <h1 className="mt-1 break-words text-xl font-bold tracking-tight text-slate-950 sm:text-2xl">{notification.title}</h1>
               <p className="mt-1 text-sm text-slate-500">{formatDate(notification.created_at)}</p>
             </div>
           </div>
         </div>
 
         <div className="space-y-6 p-5 sm:p-6">
-          <p className="whitespace-pre-line text-base leading-7 text-slate-700">{notification.body}</p>
+          <p className="whitespace-pre-line break-words text-base leading-7 text-slate-700">{notification.body}</p>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <p className="text-sm font-semibold text-slate-900">{meta.label}</p>

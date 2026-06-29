@@ -10,6 +10,7 @@ const OwnAuctionDetailPage = lazyPage(() => import('../features/own/pages/own-au
 const OwnBidsPage = lazyPage(() => import('../features/own/pages/own-bids'));
 const OwnBidDetailPage = lazyPage(() => import('../features/own/pages/own-bid-detail'));
 const OwnPaymentPage = lazyPage(() => import('../features/own/pages/own-payment'));
+const PaymentErrorPage = lazyPage(() => import('../features/own/pages/payment-error'));
 const OwnPaymentsPage = lazyPage(() => import('../features/own/pages/own-payments'));
 const ProfilePage = lazyPage(() => import('../features/own/pages/profile'));
 const OwnWithdrawalPage = lazyPage(() => import('../features/own/pages/own-withdrawal'));
@@ -55,6 +56,7 @@ export const ownRoutes: RouteObject[] = [
       { path: '/own/withdrawal', element: withRouteSuspense(<OwnWithdrawalPage />) },
       { path: '/own/addresses', element: withRouteSuspense(<UserAddressesPage />) },
       { path: '/auctions/:auctionId/payments/:paymentId/pay', element: withRouteSuspense(<OwnPaymentPage />) },
+      { path: '/payment/error', element: withRouteSuspense(<PaymentErrorPage />) },
     ],
   },
 ];

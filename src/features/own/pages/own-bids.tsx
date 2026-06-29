@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQueries, useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
+import { auctionService } from '../../auction/services/auction.service';
 import { Link } from 'react-router';
 import { Trophy, ChevronRight, Gavel, Clock, Tag, ImageOff, CreditCard } from 'lucide-react';
 import { AppPagination } from '@/components/pagination';
@@ -17,28 +18,60 @@ export default function OwnBidsPage() {
   const limit = 6;
 
   const { data, isLoading } = useQuery({
-    queryKey: ['own-bids', page],
-    queryFn: () =>
-      ownService.listBids({
-        page,
-        limit,
+    queryKey: ['own-bids', 'winner-aware'],
+    queryFn: async () => {
+      const firstPage = await ownService.listBids({
+        page: 1,
+        limit: 100,
         sorts: [{ field: 'created_at', direction: 'desc' }],
-      }),
+      });
+      const pageCount = Math.ceil(firstPage.total / 100);
+      if (pageCount <= 1) return firstPage;
+
+      const remainingPages = await Promise.all(
+        Array.from({ length: pageCount - 1 }, (_, index) =>
+          ownService.listBids({
+            page: index + 2,
+            limit: 100,
+            sorts: [{ field: 'created_at', direction: 'desc' }],
+          }),
+        ),
+      );
+      return {
+        ...firstPage,
+        nodes: [firstPage, ...remainingPages].flatMap((result) => result.nodes),
+      };
+    },
   });
 
   const allBids = data?.nodes ?? [];
-  const total = data?.total ?? 0;
+  const auctionIds = [...new Set(allBids.map((bid) => bid.auction_id))];
+  const auctionQueries = useQueries({
+    queries: auctionIds.map((auctionId) => ({
+      queryKey: ['auction', String(auctionId)],
+      queryFn: () => auctionService.getAuction(auctionId),
+      staleTime: 30_000,
+    })),
+  });
+  const auctionById = new Map(auctionIds.map((auctionId, index) => [auctionId, auctionQueries[index]?.data]));
+  const isWinningBid = (bid: (typeof allBids)[number]) => {
+    const resolvedAuction = auctionById.get(bid.auction_id) ?? bid.auction;
+    return bid.is_winner === true || resolvedAuction?.winner?.auction_bid_id === bid.id;
+  };
 
   // Filter bids based on winner status
-  const bids =
+  const filteredBids =
     filter === 'all'
       ? allBids
       : filter === 'won'
-        ? allBids.filter((b) => b.is_winner === true)
-        : allBids.filter((b) => b.is_winner !== true);
+        ? allBids.filter(isWinningBid)
+        : allBids.filter((bid) => !isWinningBid(bid));
+  const total = filteredBids.length;
+  const bids = filteredBids.slice((page - 1) * limit, page * limit);
 
-  const wonCount = allBids.filter((b) => b.is_winner === true).length;
-  const notWonCount = allBids.filter((b) => b.is_winner !== true).length;
+  const wonCount = allBids.filter(isWinningBid).length;
+  const notWonCount = allBids.length - wonCount;
+  const isResolvingWinners = auctionQueries.some((query) => query.isLoading);
 
   return (
     <main className="bidify-page-narrow">
@@ -80,7 +113,7 @@ export default function OwnBidsPage() {
       </div>
       <AppPagination page={page} total={total} limit={limit} onPageChange={setPage} className="mb-4 mt-0" />
 
-      {isLoading ? (
+      {isLoading || isResolvingWinners ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
             <div key={i} className="bidify-card p-4 flex gap-4 animate-pulse">
@@ -106,8 +139,9 @@ export default function OwnBidsPage() {
       ) : (
         <div className="space-y-3">
           {bids.map((bid) => {
-            const product = bid.auction?.product;
-            const isWinner = bid.is_winner === true;
+            const resolvedAuction = auctionById.get(bid.auction_id) ?? bid.auction;
+            const product = resolvedAuction?.product;
+            const isWinner = isWinningBid(bid);
             const paymentPending = isWinner && bid.payment?.status === 'WAITING_FOR_PAYMENT';
             const paymentPaid = isWinner && bid.payment?.status === 'PAID';
             const cardBorder = paymentPending

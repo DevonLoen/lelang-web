@@ -16,6 +16,7 @@ export const ProductStatus = {
   DRAFT: 'DRAFT',
   REQUEST: 'REQUEST',
   VERIFIED: 'VERIFIED',
+  SCHEDULED: 'SCHEDULED',
   REJECTED: 'REJECTED',
   ON_BIDS: 'ON_BIDS',
   COMPLETED: 'COMPLETED',
@@ -35,13 +36,26 @@ export interface UserResponse {
   birth: string;
   gender: string;
   nik?: string;
+  bank_name?: string;
+  bank_account_name?: string;
   bank_account_number?: string;
   is_verified: boolean;
   is_deleted: boolean;
   identity_image_link?: string;
   selfie_identity_image_link?: string;
   roles?: UserRoleResponse[];
+  role_requests?: UserRoleRequestResponse[];
   balance?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserRoleRequestResponse {
+  id: number;
+  user_id: number;
+  role: 'BIDDER' | 'SELLER';
+  status: 'REQUESTED' | 'APPROVED' | 'REJECTED';
+  message?: string;
   created_at: string;
   updated_at: string;
 }

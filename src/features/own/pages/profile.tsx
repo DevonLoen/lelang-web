@@ -5,7 +5,8 @@ import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { User, Edit3, X, CheckCircle, BadgeCheck, Calendar, Gavel, Package, Loader2, ShieldCheck, Upload, ChevronRight, Mail } from 'lucide-react';
+import { User, Edit3, X, CheckCircle, BadgeCheck, Calendar, Gavel, Package, Loader2, ShieldCheck, Upload, ChevronRight, Mail, CreditCard, IdCard, Landmark, WalletCards } from 'lucide-react';
+import { useLocation } from 'react-router';
 
 const formatDate = (s?: string) => {
   if (!s) return '-';
@@ -14,15 +15,24 @@ const formatDate = (s?: string) => {
 
 const getErrorMessage = (error: unknown, fallback: string) => (error instanceof Error ? error.message : fallback);
 
+const formatIDR = (value: number) =>
+  new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(value);
+
 export default function ProfilePage() {
   const { showToast } = useToast();
   const qc = useQueryClient();
+  const location = useLocation();
   const [isEditing, setIsEditing] = useState(false);
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['own-profile'],
     queryFn: () => ownService.getProfile(),
   });
+
+  useEffect(() => {
+    if (location.hash !== '#role-access' || isLoading) return;
+    requestAnimationFrame(() => document.getElementById('role-access')?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }, [isLoading, location.hash]);
 
   const [form, setForm] = useState({
     fullname: '',
@@ -118,6 +128,8 @@ export default function ProfilePage() {
   if (!user) return <div className="text-center py-20 text-slate-400">Failed to load profile.</div>;
 
   const isSeller = user.roles?.some((r) => r.role === 'SELLER') ?? false;
+  const pendingBidderRequest = requestedRole === 'BIDDER' || user.role_requests?.some((request) => request.role === 'BIDDER' && request.status === 'REQUESTED');
+  const pendingSellerRequest = requestedRole === 'SELLER' || user.role_requests?.some((request) => request.role === 'SELLER' && request.status === 'REQUESTED');
   const showRoleCard = !isSuperAdmin && (!isBidder || !isSeller);
 
   return (
@@ -165,17 +177,42 @@ export default function ProfilePage() {
               {[
                 { icon: User, label: 'Full Name', value: user.fullname },
                 { icon: Mail, label: 'Email', value: user.email },
+                { icon: IdCard, label: 'NIK', value: user.nik || '-' },
                 { icon: Calendar, label: 'Date of Birth', value: formatDate(user.birth) },
                 { icon: User, label: 'Gender', value: user.gender || '-' },
+                { icon: WalletCards, label: 'Balance', value: formatIDR(user.balance ?? 0) },
+                { icon: Landmark, label: 'Bank Name', value: user.bank_name || '-' },
+                { icon: User, label: 'Bank Account Name', value: user.bank_account_name || '-' },
+                { icon: CreditCard, label: 'Bank Account Number', value: user.bank_account_number || '-' },
               ].map((item, i) => (
                 <div key={i} className="flex items-center gap-4 py-3">
                   <item.icon className="h-4 w-4 text-slate-400 flex-shrink-0" />
-                  <div className="flex-1 min-w-0 flex items-center justify-between gap-4">
+                  <div className="flex min-w-0 flex-1 flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                     <span className="text-sm text-slate-500">{item.label}</span>
-                    <span className="text-sm font-semibold text-slate-900">{item.value}</span>
+                    <span className="break-words text-left text-sm font-semibold text-slate-900 sm:text-right">{item.value}</span>
                   </div>
                 </div>
               ))}
+
+              {(user.identity_image_link || user.selfie_identity_image_link) && (
+                <div className="pt-4">
+                  <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500">Identity Documents</p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {user.identity_image_link && (
+                      <a href={user.identity_image_link} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                        <img src={user.identity_image_link} alt="Identity card" className="h-36 w-full object-cover transition-transform group-hover:scale-[1.02]" />
+                        <p className="px-3 py-2 text-xs font-semibold text-slate-700">Identity Card</p>
+                      </a>
+                    )}
+                    {user.selfie_identity_image_link && (
+                      <a href={user.selfie_identity_image_link} target="_blank" rel="noreferrer" className="group overflow-hidden rounded-xl border border-slate-200 bg-slate-50">
+                        <img src={user.selfie_identity_image_link} alt="Selfie with identity card" className="h-36 w-full object-cover transition-transform group-hover:scale-[1.02]" />
+                        <p className="px-3 py-2 text-xs font-semibold text-slate-700">Selfie Verification</p>
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-4">
@@ -214,7 +251,7 @@ export default function ProfilePage() {
       </div>
 
       {showRoleCard && (
-        <div className="bidify-panel overflow-hidden">
+        <div id="role-access" className="bidify-panel scroll-mt-24 overflow-hidden">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3">
             <div className="h-8 w-8 rounded-xl bg-slate-50 flex items-center justify-center">
               <ShieldCheck className="h-4 w-4 text-slate-600" />
@@ -235,10 +272,11 @@ export default function ProfilePage() {
                     <p className="text-xs text-slate-500">Participate in live auctions and place bids.</p>
                   </div>
                 </div>
-                {requestedRole === 'BIDDER' ? (
-                  <p className="text-xs text-slate-700 font-medium text-center py-2 bg-slate-50 rounded-xl border border-slate-200">
-                    Request sent - awaiting approval
-                  </p>
+                {pendingBidderRequest ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center">
+                    <p className="text-sm font-semibold text-amber-900">Bidder request is under review</p>
+                    <p className="mt-1 text-xs text-amber-700">Inputs are locked until an admin approves or rejects your request.</p>
+                  </div>
                 ) : (
                   <div className="space-y-2.5">
                     <div>
@@ -292,10 +330,11 @@ export default function ProfilePage() {
                     <p className="text-xs text-slate-500">List products and run your own auctions.</p>
                   </div>
                 </div>
-                {requestedRole === 'SELLER' ? (
-                  <p className="text-xs text-slate-700 font-medium text-center py-2 bg-slate-50 rounded-xl border border-slate-200">
-                    Request sent - awaiting approval
-                  </p>
+                {pendingSellerRequest ? (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-center">
+                    <p className="text-sm font-semibold text-amber-900">Seller request is under review</p>
+                    <p className="mt-1 text-xs text-amber-700">Inputs are locked until an admin approves or rejects your request.</p>
+                  </div>
                 ) : (
                   <div className="space-y-2.5">
                     <div>

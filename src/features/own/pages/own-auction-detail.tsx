@@ -197,7 +197,7 @@ export default function OwnAuctionDetailPage() {
   }, [shipment, ownerAddresses]);
 
   const { mutate: updateSellerAddress, isPending: isUpdatingSellerAddress } = useMutation({
-    mutationFn: () => auctionService.updateSellerAddress(id!, shipment!.id, selectedSellerAddressId),
+    mutationFn: () => auctionService.updateSellerAddress(id!, shipment!.id, Number(selectedSellerAddressId)),
     onSuccess: () => {
       showToast('Sender address selected!', ToastType.SUCCESS);
       qc.invalidateQueries({ queryKey: ['own-auction-shipments', id] });
