@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams, useNavigate } from 'react-router';
+import { Link, useParams, useNavigate, useSearchParams } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
 import { CreditCard, Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
@@ -38,11 +38,14 @@ type PaymentState = 'idle' | 'embedded' | 'success' | 'pending' | 'error';
 export default function OwnPaymentPage() {
   const { auctionId, paymentId } = useParams<{ auctionId: string; paymentId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isPaymentErrorPage = searchParams.get('status') === 'error';
   const snapScriptRef = useRef<HTMLScriptElement | null>(null);
   const snapEmbedded = useRef(false);
   const [paymentState, setPaymentState] = useState<PaymentState>('idle');
   const [snapReady, setSnapReady] = useState(false);
   const [snapError, setSnapError] = useState(false);
+  const [hasStartedPayment, setHasStartedPayment] = useState(false);
 
   const {
     data: payment,
@@ -95,25 +98,39 @@ export default function OwnPaymentPage() {
 
   // Auto-embed when snap is ready and payment token exists
   useEffect(() => {
-    if (snapReady && payment?.snap_token && !snapEmbedded.current && window.snap) {
+    if (hasStartedPayment && !isPaymentErrorPage && snapReady && payment?.snap_token && !snapEmbedded.current && window.snap) {
       snapEmbedded.current = true;
       setPaymentState('embedded');
 
-      window.snap.embed(payment.snap_token, {
-        embedId: 'snap-container',
-        onSuccess: () => {
-          setPaymentState('success');
-        },
-        onPending: () => {
-          setPaymentState('pending');
-        },
-        onError: (result) => {
-          console.error(' Payment error:', result);
-          setPaymentState('error');
-        },
-      });
+      try {
+        window.snap.embed(payment.snap_token, {
+          embedId: 'snap-container',
+          onSuccess: () => {
+            setPaymentState('success');
+          },
+          onPending: () => {
+            setPaymentState('pending');
+          },
+          onError: (result) => {
+            console.error('Payment error:', result);
+            setPaymentState('error');
+            navigate('/payment/error', { replace: true });
+          },
+        });
+      } catch (error) {
+        console.error('Failed to initialize Midtrans Snap:', error);
+        snapEmbedded.current = false;
+        navigate('/payment/error', { replace: true });
+      }
     }
-  }, [snapReady, payment?.snap_token]);
+  }, [hasStartedPayment, isPaymentErrorPage, navigate, payment?.snap_token, snapReady]);
+
+  const retryPayment = () => {
+    snapEmbedded.current = false;
+    setPaymentState('idle');
+    setHasStartedPayment(false);
+    navigate(`/auctions/${auctionId}/payments/${paymentId}/pay`, { replace: true });
+  };
 
   const retrySnapInit = () => {
     setSnapError(false);
@@ -222,7 +239,7 @@ export default function OwnPaymentPage() {
     );
   }
 
-  if (paymentState === 'error') {
+  if (isPaymentErrorPage || paymentState === 'error') {
     return (
       <main className="min-h-[70vh] flex items-center justify-center px-4">
         <div className="text-center max-w-sm">
@@ -239,7 +256,7 @@ export default function OwnPaymentPage() {
               Back
             </button>
             <button
-              onClick={() => setPaymentState('idle')}
+              onClick={retryPayment}
               className="flex-1 py-3 bg-slate-900 hover:bg-slate-800 text-white font-semibold rounded-xl transition-colors"
             >
               Retry
@@ -372,7 +389,27 @@ export default function OwnPaymentPage() {
               </div>
             )}
 
-            {payment.snap_token && snapReady && !snapError && <div id="snap-container" className="min-h-[600px]" />}
+            {payment.snap_token && snapReady && !snapError && !hasStartedPayment && (
+              <div className="flex min-h-[460px] flex-col items-center justify-center px-6 py-16 text-center">
+                <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
+                  <CreditCard className="h-8 w-8 text-slate-700" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900">Ready to pay</h3>
+                <p className="mt-2 max-w-sm text-sm leading-relaxed text-slate-500">
+                  Review the amount, then continue to load the secure Midtrans payment form.
+                </p>
+                <p className="mt-5 text-2xl font-extrabold text-slate-950">{formatIDR(payment.amount)}</p>
+                <button
+                  type="button"
+                  onClick={() => setHasStartedPayment(true)}
+                  className="mt-6 rounded-xl bg-slate-900 px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+                >
+                  Continue to Midtrans
+                </button>
+              </div>
+            )}
+
+            {payment.snap_token && snapReady && !snapError && hasStartedPayment && <div id="snap-container" className="min-h-[600px]" />}
 
             {!payment.snap_token && !isLoading && (
               <div className="flex flex-col items-center justify-center py-20 px-6">

@@ -16,6 +16,7 @@ import DropdownField from "../../../components/dropdown";
 import { DatePicker } from "../../../components/date-picker";
 import { useNavigate } from "react-router";
 import { formatDateReq } from "../../../utils/date";
+import { getPasswordValidationError } from "../../../utils/password";
 
 interface SignupFieldState {
   fullname: string;
@@ -84,9 +85,7 @@ export default function SignupPage() {
       newErrors.birth = "Birth date is required";
     }
 
-    if (!field.password.trim()) {
-      newErrors.password = "Password is required";
-    }
+    newErrors.password = getPasswordValidationError(field.password);
 
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error);
@@ -129,7 +128,11 @@ export default function SignupPage() {
 
     setErrors((prev) => ({
       ...prev,
-      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : "",
+      [name]: name === "password"
+        ? getPasswordValidationError(value)
+        : !value.trim()
+          ? `${capitalizeWords(name)} is required`
+          : "",
     }));
   };
 
@@ -233,6 +236,10 @@ export default function SignupPage() {
               error={!!errors.password}
               errorMessage={errors.password}
             />
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Password rules: minimum 8 characters, maximum 255 characters.
+            </p>
 
             <p className="text-xs text-slate-500 leading-relaxed">
               By selecting <span className="font-medium text-slate-300">Sign Up</span>,

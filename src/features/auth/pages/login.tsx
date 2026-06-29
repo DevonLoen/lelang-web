@@ -10,6 +10,7 @@ import { InputFieldPassword } from '../../../components/input-field-password';
 import { capitalizeWords } from '../../../utils/string';
 import { useNavigate } from 'react-router';
 import { initFCM } from '@/utils/fcm';
+import { getPasswordValidationError } from '@/utils/password';
 
 interface LoginFieldState {
   email: string;
@@ -51,9 +52,7 @@ export default function LoginPage() {
       newErrors.email = 'Email is invalid';
     }
 
-    if (!field.password.trim()) {
-      newErrors.password = 'Password is required';
-    }
+    newErrors.password = getPasswordValidationError(field.password);
 
     setErrors(newErrors);
     return Object.values(newErrors).every((error) => !error);
@@ -85,7 +84,11 @@ export default function LoginPage() {
 
     setErrors((prev) => ({
       ...prev,
-      [name]: !value.trim() ? `${capitalizeWords(name)} is required` : '',
+      [name]: name === 'password'
+        ? getPasswordValidationError(value)
+        : !value.trim()
+          ? `${capitalizeWords(name)} is required`
+          : '',
     }));
   };
 

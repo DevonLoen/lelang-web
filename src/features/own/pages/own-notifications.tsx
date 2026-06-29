@@ -47,12 +47,12 @@ export default function OwnNotificationsPage() {
 
   return (
     <main className="bidify-page-narrow">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="bidify-title">Notifications</h1>
           <p className="bidify-subtitle">Review account activity, auction movement, and payment updates.</p>
         </div>
-        <div className="bidify-card grid grid-cols-2 divide-x divide-slate-100 overflow-hidden text-right">
+        <div className="bidify-card grid w-full grid-cols-2 divide-x divide-slate-100 overflow-hidden text-center sm:w-auto sm:text-right">
           <div className="px-4 py-3">
             <p className="text-xs uppercase tracking-wide text-slate-500">Unread</p>
             <p className="text-xl font-bold text-slate-900">{unreadTotal}</p>
@@ -95,7 +95,7 @@ export default function OwnNotificationsPage() {
               <Link
                 key={notification.id}
                 to={`/own/notifications/${notification.id}`}
-                className={`block border-b border-slate-100 px-5 py-4 transition-colors last:border-b-0 hover:bg-slate-50 ${
+                className={`block border-b border-slate-100 px-3 py-4 transition-colors last:border-b-0 hover:bg-slate-50 sm:px-5 ${
                   notification.is_read ? 'bg-white' : 'bg-slate-50/70'
                 }`}
               >
@@ -104,12 +104,12 @@ export default function OwnNotificationsPage() {
                     <Icon className="h-4 w-4" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="font-semibold text-slate-900">{notification.title}</p>
+                    <div className="flex flex-wrap items-start gap-2">
+                      <p className="min-w-0 break-words font-semibold text-slate-900">{notification.title}</p>
                       {!notification.is_read && <span className="rounded-full bg-slate-900 px-2 py-0.5 text-[11px] font-semibold text-white">New</span>}
                     </div>
                     <p className="mt-1 line-clamp-2 text-sm text-slate-600">{notification.body}</p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-400">
+                    <div className="mt-2 flex flex-col gap-0.5 text-xs text-slate-400 sm:flex-row sm:flex-wrap sm:gap-2">
                       <span>{meta.label}</span>
                       <span>{formatDate(notification.created_at)}</span>
                     </div>

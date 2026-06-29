@@ -28,6 +28,7 @@ const statusStyles: Record<string, string> = {
   DRAFT: 'bg-gray-100 text-gray-700',
   REQUEST: 'bg-slate-100 text-slate-700',
   VERIFIED: 'bg-slate-100 text-slate-800',
+  SCHEDULED: 'bg-indigo-100 text-indigo-900',
   ON_BIDS: 'bg-amber-100 text-amber-900',
   REJECTED: 'bg-red-100 text-red-800',
   COMPLETED: 'bg-slate-100 text-slate-800',
@@ -38,6 +39,7 @@ const STATUS_OPTIONS = [
   { label: 'Draft', value: ProductStatus.DRAFT },
   { label: 'Request', value: ProductStatus.REQUEST },
   { label: 'Verified', value: ProductStatus.VERIFIED },
+  { label: 'Scheduled', value: ProductStatus.SCHEDULED },
   { label: 'Rejected', value: ProductStatus.REJECTED },
   { label: 'On Bids', value: ProductStatus.ON_BIDS },
   { label: 'Completed', value: ProductStatus.COMPLETED },
@@ -227,6 +229,7 @@ export default function OwnProductsPage() {
   const productSummary = [
     { label: 'Request', value: summaryProducts.filter((product) => product.status === ProductStatus.REQUEST).length, tone: 'bg-amber-400' },
     { label: 'Verified', value: summaryProducts.filter((product) => product.status === ProductStatus.VERIFIED).length, tone: 'bg-slate-500' },
+    { label: 'Scheduled', value: summaryProducts.filter((product) => product.status === ProductStatus.SCHEDULED).length, tone: 'bg-indigo-500' },
     { label: 'On Bids', value: summaryProducts.filter((product) => product.status === ProductStatus.ON_BIDS).length, tone: 'bg-slate-500' },
     { label: 'Rejected', value: summaryProducts.filter((product) => product.status === ProductStatus.REJECTED).length, tone: 'bg-red-500' },
   ];
@@ -241,6 +244,12 @@ export default function OwnProductsPage() {
           <div>
             <h1 className="bidify-title">My Products</h1>
             <p className="bidify-subtitle">Submit products for review and manage auction-ready inventory.</p>
+            <div className="mt-3 inline-flex max-w-2xl items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+              <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-600" />
+              <p>
+                Products must be reviewed and approved by an admin before they can be scheduled for auction.
+              </p>
+            </div>
           </div>
           <button onClick={() => setIsCreateOpen(true)}
             className="bidify-primary">
@@ -261,7 +270,7 @@ export default function OwnProductsPage() {
                 />
               </div>
               <div className="mt-3 rounded bg-slate-200 p-1">
-                <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-7">
+                <div className="grid grid-cols-2 gap-1 sm:grid-cols-4 lg:grid-cols-8">
                 {STATUS_OPTIONS.map((o) => (
                   <button
                     key={o.value}

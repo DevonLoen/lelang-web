@@ -8,6 +8,7 @@ import { AuthService } from '../services/auth.service';
 import { InputField } from '../../../components/input-field';
 import { InputFieldPassword } from '../../../components/input-field-password';
 import { capitalizeWords } from '../../../utils/string';
+import { getPasswordValidationError } from '../../../utils/password';
 
 interface ResetPasswordFieldState {
   email: string;
@@ -79,13 +80,7 @@ export default function ResetPasswordPage() {
       newErrors.otp = 'Reset code must be 6 digits';
     }
 
-    if (!field.password.trim()) {
-      newErrors.password = 'Password is required';
-    } else if (field.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    } else if (field.password.length > 255) {
-      newErrors.password = 'Password must be at most 255 characters';
-    }
+    newErrors.password = getPasswordValidationError(field.password);
 
     if (!field.confirmPassword.trim()) {
       newErrors.confirmPassword = 'Confirm password is required';
@@ -125,13 +120,7 @@ export default function ResetPasswordPage() {
       if (name === 'password') {
         return {
           ...prev,
-          password: !value.trim()
-            ? 'Password is required'
-            : value.length < 8
-              ? 'Password must be at least 8 characters'
-              : value.length > 255
-                ? 'Password must be at most 255 characters'
-                : '',
+          password: getPasswordValidationError(value),
         };
       }
 

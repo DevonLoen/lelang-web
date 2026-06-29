@@ -6,12 +6,14 @@ import { useToast } from '../../../contexts/toast-context';
 import { ToastType } from '../../../enums/toast-type';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { ChevronLeft, Edit3, Send, Upload, CheckCircle, X, Clock, ImageOff, Loader2 } from 'lucide-react';
+import { ChevronLeft, Edit3, Send, Upload, CheckCircle, X, Clock, ImageOff, Loader2, Gavel, ZoomIn } from 'lucide-react';
+import { ScheduleAuctionModal } from '../components/schedule-auction-modal';
 
 const statusStyles: Record<string, string> = {
   DRAFT: 'border-slate-200 bg-slate-100 text-slate-700',
   REQUEST: 'border-slate-200 bg-slate-50 text-slate-700',
   VERIFIED: 'border-slate-200 bg-slate-50 text-slate-800',
+  SCHEDULED: 'border-indigo-200 bg-indigo-50 text-indigo-800',
   ON_BIDS: 'border-amber-200 bg-amber-50 text-amber-800',
   REJECTED: 'border-red-200 bg-red-50 text-red-800',
   COMPLETED: 'border-slate-300 bg-slate-100 text-slate-800',
@@ -27,6 +29,8 @@ export default function OwnProductDetailPage() {
   const qc = useQueryClient();
   const [isEditing, setIsEditing] = useState(false);
   const [selectedImg, setSelectedImg] = useState(0);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isScheduleOpen, setIsScheduleOpen] = useState(false);
   const coverRef = useRef<HTMLInputElement>(null);
   const imagesRef = useRef<HTMLInputElement>(null);
 
@@ -57,17 +61,17 @@ export default function OwnProductDetailPage() {
     mutationFn: async () => {
       const image_paths = imageFiles.length > 0
         ? await Promise.all(imageFiles.map((f) => ownService.uploadFile(f)))
-        : (product?.image_links ?? []);
+        : undefined;
       const cover_image_path = coverFile
         ? await ownService.uploadFile(coverFile)
-        : product?.cover_image_link;
+        : undefined;
       return ownService.updateProduct(id!, {
         name,
         description: description || undefined,
         condition,
         weight_gram: product?.weight_gram ?? 0,
-        image_paths,
-        cover_image_path,
+        ...(image_paths ? { image_paths } : {}),
+        ...(cover_image_path ? { cover_image_path } : {}),
       });
     },
     onSuccess: (res) => {
@@ -108,7 +112,33 @@ export default function OwnProductDetailPage() {
   const canRequestReview = product.status === 'DRAFT' || product.status === 'REJECTED';
 
   return (
-    <main className="bidify-page-narrow">
+    <>
+      {isScheduleOpen && (
+        <ScheduleAuctionModal
+          initialProduct={{ id: product.id, name: product.name }}
+          onClose={() => setIsScheduleOpen(false)}
+        />
+      )}
+      {isLightboxOpen && images[selectedImg] && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4" onClick={() => setIsLightboxOpen(false)}>
+          <button
+            type="button"
+            aria-label="Close image preview"
+            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white/80 hover:bg-white/20 hover:text-white"
+            onClick={() => setIsLightboxOpen(false)}
+          >
+            <X className="h-6 w-6" />
+          </button>
+          <img
+            src={images[selectedImg]}
+            alt={product.name}
+            className="max-h-[90vh] max-w-[95vw] rounded-xl object-contain shadow-2xl"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
+
+      <main className="bidify-page-narrow">
       {/* Breadcrumb */}
       <button onClick={() => navigate('/own/products')} className="flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors mb-6">
         <ChevronLeft className="h-4 w-4" /> My Products
@@ -117,16 +147,25 @@ export default function OwnProductDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.05fr)_minmax(340px,0.95fr)] gap-8">
         {/* Images */}
         <div className="space-y-3">
-          <div className="rounded-lg overflow-hidden bg-slate-50 border border-slate-200 aspect-square shadow-sm">
+          <button
+            type="button"
+            className="group relative block w-full rounded-lg overflow-hidden bg-slate-50 border border-slate-200 aspect-square shadow-sm cursor-zoom-in"
+            onClick={() => images[selectedImg] && setIsLightboxOpen(true)}
+          >
             {images[selectedImg] ? (
-              <img src={images[selectedImg]} alt={product.name} className="w-full h-full object-cover" />
+              <>
+                <img src={images[selectedImg]} alt={product.name} className="w-full h-full object-cover" />
+                <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-all group-hover:bg-black/10 group-hover:opacity-100">
+                  <span className="rounded-full bg-white/90 p-2.5 shadow-lg"><ZoomIn className="h-5 w-5 text-slate-700" /></span>
+                </span>
+              </>
             ) : (
               <div className="w-full h-full flex flex-col items-center justify-center gap-3">
                 <ImageOff className="h-12 w-12 text-slate-300" />
                 <span className="text-sm text-slate-400">No image available</span>
               </div>
             )}
-          </div>
+          </button>
           {images.length > 1 && (
             <div className="flex gap-2 flex-wrap">
               {images.map((url, i) => (
@@ -170,6 +209,11 @@ export default function OwnProductDetailPage() {
                       {isRequesting ? 'Requesting...' : product.status === 'REJECTED' ? 'Request Review Again' : 'Request Review'}
                     </button>
                   </>
+                )}
+                {product.status === 'VERIFIED' && (
+                  <button onClick={() => setIsScheduleOpen(true)} className="bidify-primary">
+                    <Gavel className="h-4 w-4" /> Schedule Auction
+                  </button>
                 )}
               </div>
 
@@ -256,6 +300,7 @@ export default function OwnProductDetailPage() {
           )}
         </div>
       </div>
-    </main>
+      </main>
+    </>
   );
 }

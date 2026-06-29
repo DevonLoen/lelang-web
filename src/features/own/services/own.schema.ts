@@ -12,7 +12,7 @@ export interface OwnProductUpdateRequest {
   description?: string;
   condition: 'NEW' | 'PRELOVED';
   weight_gram: number;
-  image_paths: string[];
+  image_paths?: string[];
   cover_image_path?: string;
 }
 

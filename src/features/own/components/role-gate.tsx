@@ -51,6 +51,9 @@ export default function RoleGate({ requiredRole, children }: Props) {
   const hasRole = user?.roles?.some((r) => r.role === requiredRole) ?? false;
   const hasBidderRole = user?.roles?.some((r) => r.role === 'BIDDER') ?? false;
   const needsBidderFirst = requiredRole === 'SELLER' && !hasBidderRole;
+  const hasPendingRequest = user?.role_requests?.some(
+    (request) => request.role === requiredRole && request.status === 'REQUESTED',
+  ) ?? false;
 
   const { mutate: requestRole, isPending, isSuccess } = useMutation({
     mutationFn: async () => {
@@ -153,7 +156,7 @@ export default function RoleGate({ requiredRole, children }: Props) {
           ))}
         </ul>
 
-        {isSuccess ? (
+        {isSuccess || hasPendingRequest ? (
           <div className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 font-medium">
              Request submitted  awaiting admin approval
           </div>

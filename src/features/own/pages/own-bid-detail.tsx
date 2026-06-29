@@ -1,6 +1,7 @@
 import { useParams, useNavigate, Link } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { ownService } from '../services/own.service';
+import { auctionService } from '../../auction/services/auction.service';
 import {
   ChevronLeft, Trophy, Tag, Clock, Package, ImageOff, CreditCard,
   Banknote, CalendarDays, AlertCircle, ExternalLink, Gavel,
@@ -29,13 +30,19 @@ export default function OwnBidDetailPage() {
     enabled: !!id,
   });
 
-  const auction = bid?.auction;
+  const { data: publicAuction, isLoading: isLoadingAuction } = useQuery({
+    queryKey: ['auction', bid?.auction_id ? String(bid.auction_id) : ''],
+    queryFn: () => auctionService.getAuction(bid!.auction_id),
+    enabled: !!bid?.auction_id,
+  });
+
+  const auction = publicAuction ?? bid?.auction;
   const product = auction?.product;
   const payment = bid?.payment;
-  const isWinner = bid?.is_winner === true;
+  const isWinner = bid?.is_winner === true || (!!bid && auction?.winner?.auction_bid_id === bid.id);
   const paymentPending = isWinner && payment?.status === 'WAITING_FOR_PAYMENT';
 
-  if (isLoading) {
+  if (isLoading || isLoadingAuction) {
     return (
       <main className="max-w-3xl mx-auto px-4 py-10">
         <div className="space-y-4 animate-pulse">

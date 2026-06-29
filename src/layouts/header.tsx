@@ -123,7 +123,7 @@ export default function Header() {
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 top-full z-50 mt-3 w-80 overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-950/10">
+                <div className="fixed left-3 right-3 top-16 z-50 mt-2 max-h-[calc(100vh-5rem)] overflow-hidden rounded-lg border border-slate-200 bg-white text-slate-900 shadow-xl shadow-slate-950/10 sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-3 sm:w-80">
                   <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
                     <p className="text-sm font-semibold text-slate-900">Notifications</p>
                     <Link
@@ -162,7 +162,7 @@ export default function Header() {
           ) : (
             <Link
               to="/login"
-              className="hidden rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100 sm:inline-flex"
+              className="inline-flex rounded-lg bg-white px-3 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-slate-100"
             >
               Sign In
             </Link>

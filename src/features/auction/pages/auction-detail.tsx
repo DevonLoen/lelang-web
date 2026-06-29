@@ -27,6 +27,7 @@ import {
   TrendingUp,
   Crown,
   Timer,
+  UserPlus,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -160,6 +161,7 @@ export default function AuctionDetailPage() {
   const auctionStatus = auction?.status;
   const profileId = profile?.id;
   const profileFullname = profile?.fullname;
+  const hasBidderRole = profile?.roles?.some((role) => role.role === 'BIDDER') ?? false;
 
   useEffect(() => {
     if (!id || auctionStatus !== AuctionStatus.ON_GOING) return;
@@ -224,6 +226,7 @@ export default function AuctionDetailPage() {
         }
 
         queryClient.invalidateQueries({ queryKey: ['my-bids-for-auction', id] });
+        queryClient.invalidateQueries({ queryKey: ['auction-bid-history', id] });
 
         if (payload.user) {
           showToast(`New bid placed by ${payload.user}: ${formatIDR(payload.amount)}`, ToastType.SUCCESS);
@@ -266,14 +269,31 @@ export default function AuctionDetailPage() {
     retry: false,
   });
   const myBids = myBidsData?.nodes ?? [];
-  const myTopBid = myBids.find((b) => b.is_winner === true) ?? myBids[0];
-  const isCurrentUserBuyer = myTopBid?.is_winner === true;
-  const payment = myTopBid?.payment;
-
-  // Highest bid from auction.winner relation (available from public endpoint)
+  const winnerAuctionBidId = auction?.winner?.auction_bid_id;
   const highestBid = auction?.winner?.auction_bid?.amount;
   const highestBidUserId = auction?.winner?.auction_bid?.user_id;
-  const iAmWinning = !!profile && !!highestBidUserId && highestBidUserId === profile.id;
+  const myWinningBid = myBids.find((bid) => bid.id === winnerAuctionBidId || bid.is_winner === true);
+  const myTopBid = myWinningBid ?? myBids[0];
+  const isCurrentUserBuyer = !!profile && (highestBidUserId === profile.id || !!myWinningBid);
+
+  const { data: bidHistoryData } = useQuery({
+    queryKey: ['auction-bid-history', id],
+    queryFn: async () => {
+      try {
+        return await auctionService.listBids(id!, 1, 100);
+      } catch {
+        // Current backend versions may still limit the auction-wide endpoint to the seller.
+        return ownService.listBids({ auction_id: Number(id), limit: 100, sorts: [{ field: 'amount', direction: 'desc' }] });
+      }
+    },
+    enabled: !!id && hasBidderRole,
+    retry: false,
+  });
+  const bidHistory = bidHistoryData?.nodes ?? [];
+
+  // Highest bid from auction.winner relation (available from public endpoint)
+  const iAmWinning = !!profile && highestBidUserId === profile.id;
+  const minimumBid = highestBid != null ? highestBid + 1 : (auction?.starting_price ?? 1);
 
   // Shipments
   const { data: shipments } = useQuery({
@@ -300,13 +320,15 @@ export default function AuctionDetailPage() {
       showToast('Bid placed successfully!', ToastType.SUCCESS);
       setBidAmount('');
       queryClient.invalidateQueries({ queryKey: ['auction', id] });
+      queryClient.invalidateQueries({ queryKey: ['my-bids-for-auction', id] });
+      queryClient.invalidateQueries({ queryKey: ['auction-bid-history', id] });
     },
     onError: (e: unknown) => showToast(getErrorMessage(e, 'Failed to place bid'), ToastType.ERROR),
   });
 
   // Set shipping address
   const { mutate: updateAddress, isPending: isUpdatingAddress } = useMutation({
-    mutationFn: () => auctionService.updateBuyerAddress(id!, shipment!.id, selectedAddressId),
+    mutationFn: () => auctionService.updateBuyerAddress(id!, shipment!.id, parseInt(selectedAddressId, 10)),
     onSuccess: () => {
       showToast('Shipping address saved!', ToastType.SUCCESS);
       queryClient.invalidateQueries({ queryKey: ['auction-shipments', id] });
@@ -332,7 +354,9 @@ export default function AuctionDetailPage() {
 
   const handleBid = () => {
     const amount = Number(bidAmount);
-    if (!amount || amount <= 0) return showToast('Enter a valid bid amount', ToastType.ERROR);
+    if (!amount || amount < minimumBid) {
+      return showToast(`Minimum bid is ${formatIDR(minimumBid)}`, ToastType.ERROR);
+    }
     placeBid(amount);
   };
 
@@ -371,7 +395,8 @@ export default function AuctionDetailPage() {
   }
 
   const product = auction.product;
-  const canBid = auction.status === AuctionStatus.ON_GOING && !!profile;
+  const canBid = auction.status === AuctionStatus.ON_GOING && hasBidderRole;
+  const winningBidAmount = highestBid ?? myTopBid?.amount;
   const images = [product?.cover_image_link, ...(product?.image_links ?? [])].filter(Boolean) as string[];
   const cfg = STATUS_CONFIG[auction.status] ?? { label: auction.status, bg: 'bg-slate-100', text: 'text-slate-700' };
   const isLive = auction.status === AuctionStatus.ON_GOING;
@@ -391,20 +416,24 @@ export default function AuctionDetailPage() {
       </div>
 
       {/*  Winner banner (buyer-only, post-auction)  */}
-      {isCurrentUserBuyer && isPostAuction && (
-        <div className="mb-6 rounded-2xl bg-gradient-to-r from-amber-50 to-yellow-50 border border-amber-200 px-5 py-4 flex items-center gap-4 shadow-sm">
-          <div className="h-12 w-12 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0">
-            <Trophy className="h-6 w-6 text-amber-600" />
+      {isCurrentUserBuyer && isPostAuction && winningBidAmount != null && (
+        <div className="mb-6 rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-white px-5 py-4 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+            <div className="h-12 w-12 rounded-2xl bg-amber-100 flex items-center justify-center flex-shrink-0 ring-4 ring-amber-50">
+              <Trophy className="h-6 w-6 text-amber-600" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold uppercase tracking-wider text-amber-600">Auction Winner</p>
+              <p className="mt-1 font-bold text-amber-950">Congratulations, you won this auction.</p>
+            </div>
+            <div className="sm:text-right">
+              <p className="text-xs font-medium text-amber-700">Winning bid</p>
+              <p className="text-xl font-extrabold text-amber-950">{formatIDR(winningBidAmount)}</p>
+              <span className={`mt-1 inline-flex px-2.5 py-1 rounded-full text-[10px] font-bold ${cfg.bg} ${cfg.text}`}>
+                {cfg.label}
+              </span>
+            </div>
           </div>
-          <div>
-            <p className="font-bold text-amber-900 text-lg leading-tight">Congratulations, you won!</p>
-            <p className="text-amber-700 text-sm mt-0.5">
-              Winning bid: <strong>{formatIDR(payment?.amount ?? 0)}</strong>
-            </p>
-          </div>
-          <span className={`ml-auto px-3 py-1 rounded-full text-xs font-semibold flex-shrink-0 ${cfg.bg} ${cfg.text}`}>
-            {cfg.label}
-          </span>
         </div>
       )}
 
@@ -589,13 +618,13 @@ export default function AuctionDetailPage() {
                 <div className="relative flex-1">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/50 text-sm font-medium">Rp</span>
                   <input
-                    type="number"
-                    value={bidAmount}
-                    onChange={(e) => setBidAmount(e.target.value)}
+                    type="text"
+                    inputMode="numeric"
+                    value={bidAmount ? Number(bidAmount).toLocaleString('id-ID') : ''}
+                    onChange={(e) => setBidAmount(e.target.value.replace(/\D/g, ''))}
                     onKeyDown={(e) => e.key === 'Enter' && handleBid()}
                     placeholder="0"
                     className="w-full pl-10 pr-4 py-3 rounded-xl border-0 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm bg-white/10 text-white placeholder-indigo-300"
-                    min={highestBid != null ? highestBid + 1 : auction.starting_price}
                   />
                 </div>
                 <button
@@ -608,7 +637,7 @@ export default function AuctionDetailPage() {
                 </button>
               </div>
               <p className="text-slate-300 text-xs mt-2">
-                Minimum: {formatIDR(highestBid != null ? highestBid + 1 : auction.starting_price)}
+                Minimum: {formatIDR(minimumBid)}
               </p>
             </div>
           )}
@@ -624,20 +653,39 @@ export default function AuctionDetailPage() {
               </Link>
             </div>
           )}
+
+          {profile && !hasBidderRole && auction.status === AuctionStatus.ON_GOING && (
+            <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
+              <UserPlus className="mx-auto h-7 w-7 text-red-500" />
+              <p className="mt-2 text-sm font-semibold text-red-900">Bidder role required</p>
+              <p className="mt-1 text-xs leading-relaxed text-red-700">Request bidder access before placing a bid in this auction.</p>
+              <Link
+                to="/profile#role-access"
+                className="mt-4 inline-flex rounded-xl bg-red-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+              >
+                Request Bidder Role
+              </Link>
+            </div>
+          )}
         </div>
       </div>
 
-      {/*  My Bids History  */}
-      {profile && myBids.length > 0 && (
+      {/*  Auction Bid History  */}
+      {hasBidderRole && (
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white shadow-sm p-6">
           <h3 className="font-semibold text-slate-800 flex items-center gap-2 mb-4">
-            <Gavel className="h-4 w-4 text-slate-500" /> My Bids for This Auction
+            <Gavel className="h-4 w-4 text-slate-500" /> Auction Bid History
             <span className="ml-auto text-xs text-slate-400 font-normal">
-              {myBids.length} {myBids.length === 1 ? 'bid' : 'bids'}
+              {bidHistory.length} {bidHistory.length === 1 ? 'bid' : 'bids'}
             </span>
           </h3>
+          {bidHistory.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-200 px-4 py-8 text-center text-sm text-slate-500">
+              No bids have been placed yet.
+            </div>
+          ) : (
           <div className="divide-y divide-slate-100 max-h-80 overflow-y-auto">
-            {myBids.map((bid) => (
+            {bidHistory.map((bid) => (
               <div
                 key={bid.id}
                 className={`flex flex-col items-start gap-2 py-3 sm:flex-row sm:items-center sm:justify-between ${bid.is_winner ? 'bg-slate-50 -mx-4 px-4 rounded-xl' : ''}`}
@@ -646,6 +694,9 @@ export default function AuctionDetailPage() {
                   {bid.is_winner && <Trophy className="h-4 w-4 text-amber-500 flex-shrink-0" />}
                   <div>
                     <p className="text-sm font-medium text-slate-800">{formatIDR(bid.amount)}</p>
+                    <p className="text-xs font-medium text-slate-500">
+                      {bid.user_id === profileId ? 'You' : (bid.user?.fullname ?? 'Bidder')}
+                    </p>
                     <p className="text-xs text-slate-400">
                       {new Date(bid.created_at).toLocaleString('en-US', {
                         day: '2-digit',
@@ -662,6 +713,7 @@ export default function AuctionDetailPage() {
               </div>
             ))}
           </div>
+          )}
         </div>
       )}
 
